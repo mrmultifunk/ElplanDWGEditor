@@ -928,7 +928,7 @@ class ElplanEditor(tk.Tk):
                 pts=[]
                 for x,y in prim[1]: pts.extend(pt(x,y))
                 if len(pts)>=4: canvas.create_line(*pts,fill=pen,width=1.4)
-            elif typ=="text":
+            elif typ in {"text","upright_text"}:
                 _,x,y,t,hh=prim; sx,sy=pt(x,y)
                 fs=max(7,min(14,int(hh*scale*.8)))
                 canvas.create_text(sx,sy,text=t,fill=pen,font=("Segoe UI",fs,"bold"))
@@ -2143,7 +2143,7 @@ class ElplanEditor(tk.Tk):
                         a=math.radians(float(a1)+delta*j/steps)
                         pts.append(world(cx+r*math.cos(a),cy+r*math.sin(a)))
                     for a,b in zip(pts,pts[1:]):segdist(a,b)
-                elif typ=="text":
+                elif typ in {"text","upright_text"}:
                     _,x,y,_t,h=prim; wx,wy=world(x,y); tx,ty=self.cad_to_screen(wx,wy)
                     best=min(best,math.hypot(float(sx)-tx,float(sy)-ty))
             except Exception:
@@ -2500,7 +2500,7 @@ class ElplanEditor(tk.Tk):
                         pts=[]
                         for x,y in prim[1]:pts.extend(scr(x,y))
                         if len(pts)>=4:self.canvas.create_line(*pts,fill=pen,width=1,dash=(3,2),tags=("snap_feedback",))
-                    elif typ=="text":
+                    elif typ in {"text","upright_text"}:
                         _,x,y,t,h=prim; sx,sy=scr(x,y); fs=max(7,min(28,int(h*self.view_scale*.8))); self.canvas.create_text(sx,sy,text=t,fill=pen,font=("Segoe UI",fs,"bold"),tags=("snap_feedback",))
                 except tk.TclError:pass
         if kind and kind!="fri":
@@ -3916,7 +3916,7 @@ class ElplanEditor(tk.Tk):
                 pts=[]
                 for x,y in prim[1]:pts.extend(scr(x,y))
                 self.canvas.create_line(*pts,fill=pen,width=width,tags=tags)
-            elif typ=="text":
+            elif typ in {"text","upright_text"}:
                 _,x,y,t,h=prim; sx,sy=scr(x,y); fs=max(7,min(40,int(h*self.view_scale*.8))); self.canvas.create_text(sx,sy,text=t,fill=pen,font=("Segoe UI",fs,"bold"),tags=tags)
         if selected:
             x1,y1,x2,y2=self.placement_screen_bbox(p,pad=6)
@@ -4078,9 +4078,10 @@ class ElplanEditor(tk.Tk):
                         scr=[]
                         for q in prim[1]:scr.extend(mappt(*world(*q)))
                         if len(scr)>=4:canvas.create_line(*scr,fill=pen,width=lw,tags=("preview_content",))
-                    elif typ=="text":
+                    elif typ in {"text","upright_text"}:
                         _,x,y,t,h=prim; sx,sy=mappt(*world(x,y)); fs=max(5,min(22,int(h*scale*ps)))
-                        canvas.create_text(sx,sy,text=str(t),fill=pen,font=("Segoe UI",fs,"bold"),angle=-float(pl.rotation),tags=("preview_content",))
+                        angle=0.0 if typ=="upright_text" else -float(pl.rotation)
+                        canvas.create_text(sx,sy,text=str(t),fill=pen,font=("Segoe UI",fs,"bold"),angle=angle,tags=("preview_content",))
                 except Exception:pass
             # Printmærkning svarer til PDF: fixed page-space, diskret hvid baggrund.
             assoc=association_display(pl)

@@ -6013,6 +6013,15 @@ def _arc_points(cx, cy, r, a1, a2, steps=24):
     ]
 
 
+# Stikkontakternes synlige grundform skal have samme mål ved samme ``size``.
+# 3F+N+PE beholder sit historiske væganker på 1,48 x size, så eksisterende
+# projekter ikke flytter sig, men selve grundformen forskydes tilsvarende og
+# får samme 1,00 x size stamme som de øvrige stikkontakter.
+SOCKET_STEM_FACTOR = 1.00
+EXTENDED_SOCKET_MOUNT_FACTOR = 1.48
+SOCKET_3FN_BODY_OFFSET_FACTOR = EXTENDED_SOCKET_MOUNT_FACTOR - SOCKET_STEM_FACTOR
+
+
 @lru_cache(maxsize=2048)
 def symbol_primitives(symbol: str, size: float):
     """Returnér rene vektorprimitiver for installationstegningssymbolerne.
@@ -6043,8 +6052,9 @@ def symbol_primitives(symbol: str, size: float):
     def circle(x, y, r): p.append(("circle", x, y, r))
     def arc(x, y, r, a1, a2): p.append(("arc", x, y, r, a1, a2))
     def poly(points): p.append(("polyline", points))
-    def text(x, y, value, h): p.append(("text", x, y, value, s*h))
-    def upright_text(x, y, value, h): p.append(("upright_text", x, y, value, s*h))
+    def mark(x, y, value, h):
+        """Centreret intern symbolmærkning, som altid forbliver læsbar."""
+        p.append(("upright_text", x, y, value, s*h))
 
     def ellipse_poly(cx, cy, rx, ry, steps=48):
         # Lukket CAD-vektorpolyline. Bruges kun til shaver-transformerens
@@ -6055,13 +6065,13 @@ def symbol_primitives(symbol: str, size: float):
             pts.append((cx + rx * math.cos(a), cy + ry * math.sin(a)))
         poly(pts)
 
-    def socket_arch(stem=1.0):
+    def socket_arch(stem=SOCKET_STEM_FACTOR, top_y=0.0):
         # Cubus-reference (normaliseret efter buens bredde):
         # - lodret stamme ~= 1 x buebredde
         # - buen er øverste halvdel af en cirkel med diameter = buebredde
         # - samlingspunktet ligger i buens top, ikke i cirklens centrum.
-        line(0, 0, 0, s * stem)
-        arc(0, -s * 0.50, s * 0.50, 0, 180)
+        line(0, top_y, 0, top_y + s * stem)
+        arc(0, top_y - s * 0.50, s * 0.50, 0, 180)
 
     def switch_base():
         circle(0, 0, s * 0.205)
@@ -6095,7 +6105,7 @@ def symbol_primitives(symbol: str, size: float):
         elif kind=="switch_cross":
             arm(64); arm(116); arm(244); arm(296)
         elif kind=="switch_double_2way":
-            arm(64); arm(244); text(ox+ss*.35, oy-ss*.10, "2", .24*scale)
+            arm(64); arm(244); mark(ox+ss*.35, oy-ss*.10, "2", .24*scale)
         elif kind=="pushbutton":
             arm(); line(ox-ss*.18, oy-ss*.31, ox+ss*.18, oy-ss*.31)
         elif kind=="pushbutton_indicator":
@@ -6197,18 +6207,19 @@ def symbol_primitives(symbol: str, size: float):
 
     elif symbol == "socket_switch":
         # Kombinationssymbolet i referencen har en længere lodret stamme.
-        socket_arch(stem=1.48)
+        socket_arch(stem=EXTENDED_SOCKET_MOUNT_FACTOR)
         # Afbryderarmen starter i samme knudepunkt som buen/stammen.
         line(0, 0, s * 0.78, s * 1.33)
         line(s * 0.78, s * 1.33, s * 1.19, s * 1.11)
 
     elif symbol == "socket_3fn":
-        socket_arch(stem=1.48)
-        line(-s * 0.50, 0, s * 0.50, 0)
-        # 3F+N-markeringen ligger midt i buen, men holdes vandret, når selve
-        # vægsymbolet roteres. Det forhindrer den lodrette/overlappende "3N",
-        # som ellers opstår på en lodret væg.
-        upright_text(0, -s * 0.50, "3N", 0.44)
+        # Det historiske væganker ligger ved 1,48 x size. Forskyd grundformen
+        # 0,48 x size i stedet for at forlænge stammen; dermed står den på samme
+        # væglinje og får samme synlige mål som en almindelig stikkontakt.
+        top_y=s * SOCKET_3FN_BODY_OFFSET_FACTOR
+        socket_arch(top_y=top_y)
+        line(-s * 0.50, top_y, s * 0.50, top_y)
+        mark(0, top_y - s * 0.50, "3N", 0.44)
 
     elif symbol == "socket_shaver":
         # To overlappende, flade transformerviklinger som på referencebilledet.
@@ -6229,21 +6240,21 @@ def symbol_primitives(symbol: str, size: float):
         # læseligt 2-tal. Tallet tegnes som CAD-tekst, så symbolet stadig er
         # ren vektorgrafik i både viewer, PDF og DXF/DWG.
         socket_arch(stem=1.0)
-        text(s * 0.18, s * 0.23, "2", 0.44)
+        mark(0, -s * 0.50, "2", 0.44)
 
     elif symbol == "socket_triple_box":
         socket_arch(stem=1.0)
-        text(s * 0.18, s * 0.23, "3", 0.44)
+        mark(0, -s * 0.50, "3", 0.44)
 
     elif symbol == "socket_double_box_earth":
         socket_arch(stem=1.0)
         line(-s * 0.50, 0, s * 0.50, 0)
-        text(s * 0.18, s * 0.23, "2", 0.44)
+        mark(0, -s * 0.50, "2", 0.44)
 
     elif symbol == "socket_triple_box_earth":
         socket_arch(stem=1.0)
         line(-s * 0.50, 0, s * 0.50, 0)
-        text(s * 0.18, s * 0.23, "3", 0.44)
+        mark(0, -s * 0.50, "3", 0.44)
 
     elif symbol == "socket_double":
         # To fulde stikkontakter samlet som ét symbol.
@@ -6308,13 +6319,13 @@ def symbol_primitives(symbol: str, size: float):
     elif symbol == "switch_cross":
         switch_base(); switch_arm(64); switch_arm(116); switch_arm(244); switch_arm(296)
     elif symbol == "switch_double_2way":
-        switch_base(); switch_arm(64); switch_arm(244); text(s*.35, -s*.10, "2", .24)
+        switch_base(); switch_arm(64); switch_arm(244); mark(s*.35, -s*.10, "2", .24)
     elif symbol == "pushbutton":
         switch_base(); switch_arm(); line(-s*.18, -s*.31, s*.18, -s*.31)
     elif symbol == "pushbutton_indicator":
         switch_base(); switch_arm(); line(-s*.18, -s*.31, s*.18, -s*.31); circle(0, -s*.48, s*.06)
     elif symbol == "pushbutton_4":
-        switch_base(); switch_arm(); text(s*.35, -s*.08, "4", .24)
+        switch_base(); switch_arm(); mark(s*.35, -s*.08, "4", .24)
 
     # --- BELYSNING -----------------------------------------------------
     elif symbol == "light_connection":
@@ -6327,7 +6338,7 @@ def symbol_primitives(symbol: str, size: float):
         line(-s*.50, 0, s*.50, 0); line(-s*.50, -s*.16, -s*.50, s*.16); line(s*.50, -s*.16, s*.50, s*.16)
         line(-s*.24, -s*.30, s*.24, s*.30); line(-s*.24, s*.30, s*.24, -s*.30)
     elif symbol == "emergency_light":
-        q=s*.45; line(-q,-q,q,-q); line(q,-q,q,q); line(q,q,-q,q); line(-q,q,-q,-q); text(0,0,"N",.34)
+        q=s*.45; line(-q,-q,q,-q); line(q,-q,q,q); line(q,q,-q,q); line(-q,q,-q,-q); mark(0,0,"N",.34)
     elif symbol == "spot":
         circle(0,0,s*.42); circle(0,0,s*.10)
 
@@ -6352,18 +6363,18 @@ def symbol_primitives(symbol: str, size: float):
         line(-w*.26,-h/2,-w*.26,h/2); line(0,-h/2,0,h/2); line(w*.26,-h/2,w*.26,h/2)
         line(-w/2,0,w/2,0)
     elif symbol == "water_heater":
-        circle(0,0,s*.42); text(0,0,"VV",.25)
+        circle(0,0,s*.42); mark(0,0,"VV",.25)
     elif symbol == "heater":
         q=s*.42; line(-q,-q,q,-q); line(q,-q,q,q); line(q,q,-q,q); line(-q,q,-q,-q)
         poly([(-s*.27,-s*.12),(-s*.14,s*.12),(0,-s*.12),(s*.14,s*.12),(s*.27,-s*.12)])
     elif symbol == "electric_lock":
-        q=s*.40; line(-q,-q,q,-q); line(q,-q,q,q); line(q,q,-q,q); line(-q,q,-q,-q); text(0,0,"L",.34)
+        q=s*.40; line(-q,-q,q,-q); line(q,-q,q,q); line(q,q,-q,q); line(-q,q,-q,-q); mark(0,0,"L",.34)
     elif symbol == "connection":
         line(-s*.45,-s*.45,s*.45,s*.45); line(-s*.45,s*.45,s*.45,-s*.45); circle(0,0,s*.08)
     elif symbol == "pir":
         circle(-s*.22,0,s*.12); arc(-s*.10,0,s*.28,-55,55); arc(-s*.10,0,s*.45,-45,45)
     elif symbol == "smoke":
-        circle(0,0,s*.42); text(0,0,"R",.34)
+        circle(0,0,s*.42); mark(0,0,"R",.34)
     else:
         circle(0,0,s*.30)
     return p
@@ -6403,8 +6414,13 @@ def symbol_connection_points(symbol: str, size: float) -> list[tuple[float, floa
         return [(0.0, s * .72), (-s*.34, s*.72), (s*.34, s*.72), (-s*.34,0.0), (s*.34,0.0)]
     if symbol in {"socket_triple", "socket_triple_earth"}:
         return [(0.0, s * .72), (-s*.58, s*.72), (s*.58, s*.72), (-s*.58,0.0), (0.0,0.0), (s*.58,0.0)]
-    if symbol in {"socket_switch", "socket_3fn"}:
-        return [(0.0, s * 1.48), (0.0,0.0)]
+    if symbol == "socket_switch":
+        return [(0.0, s * EXTENDED_SOCKET_MOUNT_FACTOR), (0.0,0.0)]
+    if symbol == "socket_3fn":
+        return [
+            (0.0, s * EXTENDED_SOCKET_MOUNT_FACTOR),
+            (0.0, s * SOCKET_3FN_BODY_OFFSET_FACTOR),
+        ]
     if symbol == "socket_shaver":
         return [(0.0, s * 0.82), (0.0,0.0)]
     if symbol == "patch_panel":
@@ -6438,7 +6454,7 @@ def symbol_mount_points(symbol: str, size: float) -> list[tuple[float, float]]:
     if symbol in {"socket_double", "socket_double_earth", "socket_triple", "socket_triple_earth"}:
         return [(0.0,s*.72)]
     if symbol in {"socket_switch","socket_3fn"}:
-        return [(0.0,s*1.48)]
+        return [(0.0,s*EXTENDED_SOCKET_MOUNT_FACTOR)]
     if symbol in {"socket_shaver"}:
         return [(0.0,s*.82)]
     if symbol in {"socket_tele"}:
@@ -6483,13 +6499,9 @@ def symbol_local_bbox(symbol: str, size: float) -> tuple[float,float,float,float
             _,cx,cy,r,*_=prim; xs.extend((cx-r,cx+r)); ys.extend((cy-r,cy+r))
         elif typ=="polyline":
             xs.extend(q[0] for q in prim[1]); ys.extend(q[1] for q in prim[1])
-        elif typ=="text":
+        elif typ in {"text","upright_text"}:
             _,x,y,t,h=prim
-            xs.extend((x-h,x+h)); ys.extend((y-h,y+h))
-        elif typ=="upright_text":
-            _,x,y,t,h=prim
-            # Centreret, kompakt tekstextent. Markeringen er placeret inde i
-            # symbolgeometrien og må derfor ikke gøre vægsymbolet bredere.
+            # Intern tekst er centreret i både Qt, PDF, DXF og print.
             w=max(float(h)*0.55*len(str(t)),float(h)*0.6)
             xs.extend((x-w*.5,x+w*.5)); ys.extend((y-h*.5,y+h*.5))
     if not xs:return (-size*.5,-size*.5,size*.5,size*.5)

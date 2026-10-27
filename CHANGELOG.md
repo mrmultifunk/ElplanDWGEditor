@@ -1,4 +1,4 @@
-## 0.59.73 - Artikeltypefilter i BOM og Excel
+## 0.59.73 - Artikeltypefilter og ensartede symbolmærkninger
 
 - BOM-fanen har fået et dynamisk `Artikeltype`-filter baseret på de typer, der faktisk findes i den aktuelle BOM.
 - Artikler kan sorteres og grupperes efter samme brugerrettede type.
@@ -8,6 +8,10 @@
 - Excel får en filterbar `Type/kategori`-kolonne og eksporterer kun de artikeltyper, som er synlige efter det aktuelle BOM-filter.
 - Rumopdelt Excel, CSV, PDF-preview og udskrift følger samme artikeltypefilter som BOM-tabellen.
 - Filterlinjen er delt i to rækker, så de nye valg ikke gør BOM-toppen kompakt eller uoverskuelig.
+- `3F+N+PE` har nu samme synlige højde og afstand til væggen som de øvrige stikkontakter ved samme symbolstørrelse, uden at eksisterende placeringers historiske væganker flyttes.
+- De forenklede dobbelt- og tredobbelte stikkontakter viser `2` og `3` centreret i buen i stedet for ved symbolstammen.
+- Alle interne symbolmærkninger (`2`, `3`, `4`, `3N`, `N`, `VV`, `L` og `R`) bruger nu samme centrerede, fede og rotationsuafhængige tekst i editor, palette, PDF, DXF/DWG og direkte udskrift.
+- Symbolgennemgangen har fået regressionstest for geometri, vægjustering, kvartdrejninger og gyldige bounding boxes for hele det indbyggede symbolbibliotek.
 
 ## 0.59.72 - Effektiv artikel- og styklistehåndtering
 

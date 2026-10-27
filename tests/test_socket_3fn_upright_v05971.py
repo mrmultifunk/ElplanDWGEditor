@@ -23,5 +23,10 @@ def test_all_symbol_outputs_handle_upright_text_explicitly():
     assert '0.0 if typ=="upright_text" else pl.rotation' in core_source
 
     qt_source=Path(core.__file__).with_name("qt_graphics.py").read_text(encoding="utf-8")
-    assert 'elif kind == "upright_text"' in qt_source
+    assert 'elif kind in {"text", "upright_text"}' in qt_source
+    assert 'if kind == "upright_text"' in qt_source
     assert "True,self.placement.rotation" in qt_source
+
+    legacy_source=Path(core.__file__).with_name("legacy_tk_app.py").read_text(encoding="utf-8")
+    assert legacy_source.count('typ in {"text","upright_text"}') >= 5
+    assert '0.0 if typ=="upright_text" else -float(pl.rotation)' in legacy_source

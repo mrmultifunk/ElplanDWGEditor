@@ -4,6 +4,9 @@
 - `Type/kategori` beregnes ved visning og eksport ud fra eksisterende artikelmetadata og styklisteroller; der skrives ingen nye obligatoriske projektfelter.
 - Eksisterende projekter og OneDrive-baserede artikeldata kan åbnes direkte uden migrering.
 - Excel-filer får én ekstra kolonne. Eksisterende Excel-/CSV-import påvirkes ikke, fordi BOM-eksport ikke bruges som autoritativ artikelimport.
+- Gemte symbolkoordinater og størrelser ændres ikke. `3F+N+PE` beholder sit historiske væganker på `1,48 × size`; kun den synlige grundform og dens kropsport forskydes, så vægjusteringen matcher de øvrige stikkontakter.
+- Kabler, der er tilknyttet `3F+N+PE`-symbolets kropsport, følger automatisk den korrigerede synlige tilslutning. Der kræves ingen manuel projekt- eller databasemigrering.
+- Interne symbolmærkninger ændrer kun rendering og gemmer ingen nye projektfelter.
 
 ## 0.59.71 → 0.59.72
 

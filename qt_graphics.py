@@ -122,21 +122,15 @@ def _draw_symbol_primitives(
                     for point in points[1:]:
                         path.lineTo(point)
                     painter.drawPath(path)
-            elif kind == "text":
-                _, x, y, txt, h = prim
-                painter.save()
-                font = QFont("Segoe UI")
-                font.setPointSizeF(max(1.0, h * 0.6))
-                painter.setFont(font)
-                painter.drawText(_mapped_point(x, y), str(txt))
-                painter.restore()
-            elif kind == "upright_text":
+            elif kind in {"text", "upright_text"}:
                 _, x, y, txt, h = prim
                 painter.save()
                 painter.translate(_mapped_point(x, y))
-                # ElectricalSymbolItem roterer hele item'et -placement.rotation.
-                # Den modsatte lokale rotation holder mærkningen vandret.
-                painter.rotate(float(upright_rotation))
+                if kind == "upright_text":
+                    # ElectricalSymbolItem roterer hele item'et
+                    # -placement.rotation. Den modsatte lokale rotation holder
+                    # interne mærkninger vandrette.
+                    painter.rotate(float(upright_rotation))
                 font = QFont("Segoe UI")
                 font.setBold(True)
                 font.setPointSizeF(max(1.0, h * 0.6))
