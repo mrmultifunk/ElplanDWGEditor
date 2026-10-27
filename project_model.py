@@ -11,7 +11,7 @@ from typing import Any
 import core_logic as core
 from storage_utils import atomic_write_text
 
-APP_VERSION = "0.59.73"
+APP_VERSION = "0.59.74"
 
 
 def _finite_float(value: Any, field_name: str) -> float:
@@ -300,6 +300,16 @@ class ProjectDocument:
                 default = next((row for row in core.DEFAULT_CABLE_CATEGORIES if row.get("id") == "spots"), None)
                 if default is not None:
                     categories.append(dict(default))
+        # 0.59.74 tilføjer separate standardkategorier til jord/udligning og
+        # stik-/hovedledninger. De indsættes kun én gang i ældre projekter, så
+        # en bruger efterfølgende fortsat kan slette eller tilpasse dem.
+        if _version_tuple(data.get("version", "")) < (0, 59, 74):
+            existing_ids = {str(row.get("id", "")) for row in categories}
+            for default in core.DEFAULT_CABLE_CATEGORIES:
+                category_id = str(default.get("id", ""))
+                if category_id in {"earthing_bonding", "service_main"} and category_id not in existing_ids:
+                    categories.append(dict(default))
+                    existing_ids.add(category_id)
         obj.raw["cable_categories"] = core.normalize_cable_category_records(categories)
         # Valider hele projektet før brugerdefinerede symboler registreres globalt.
         # Ellers kunne en korrupt/afvist projektfil efterlade symbolpaletten ændret,

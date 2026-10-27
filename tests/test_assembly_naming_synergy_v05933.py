@@ -6,7 +6,7 @@ from project_model import APP_VERSION
 
 
 def test_version_and_compact_name_keep_canonical_filter_value_separate():
-    assert APP_VERSION == core.APP_VERSION == "0.59.73"
+    assert APP_VERSION == core.APP_VERSION == "0.59.74"
     fields=assembly_naming.normalize_naming_fields({
         "product_type":"Stikkontakt", "configuration":"2×1M",
         "function":"Med jord", "system_series":"FUGA SLIM",

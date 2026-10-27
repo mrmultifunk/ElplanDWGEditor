@@ -32,7 +32,7 @@ from ezdxf import bbox, disassemble, path as ezpath
 from ezdxf.addons import odafc
 
 APP_NAME = "Elplan DWG Editor"
-APP_VERSION = "0.59.73"
+APP_VERSION = "0.59.74"
 ODA_DOWNLOAD_URL = "https://www.opendesign.com/guestfiles/oda_file_converter"
 # Programmet bruger separate lag til forskellige typer el-installationer.
 # EL-SYMBOLER beholdes kun som navn af hensyn til ældre eksporter, men nye
@@ -47,6 +47,7 @@ LIGHT_OUTLET_LAYER = "EL-LYSUDTAG"
 LIGHTING_LAYER = "EL-BELYSNING"
 APPLIANCE_LAYER = "EL-BRUGSGENSTANDE"
 BOARD_LAYER = "EL-TAVLER"
+EARTHING_LAYER = "EL-JORDING"
 DETECTOR_LAYER = "EL-DETEKTORER"
 MISC_LAYER = "EL-DIVERSE"
 CABLE_LAYER = "EL-KABLER"
@@ -65,6 +66,7 @@ GENERATED_LAYER_COLORS = {
     LIGHTING_LAYER: 1,
     APPLIANCE_LAYER: 1,
     BOARD_LAYER: 1,
+    EARTHING_LAYER: 3,
     DETECTOR_LAYER: 1,
     MISC_LAYER: 1,
     CABLE_LAYER: 1,
@@ -84,7 +86,9 @@ CABLE_TYPES = {
 # Almindelige installationskabler. Feltet er frit redigerbart i GUI'en, så
 # andre betegnelser kan stadig anvendes.
 CABLE_SPEC_PRESETS = (
-    "3G1,5", "3G2,5", "5G1,5", "5G2,5", "5G4", "5G6", "7G1,5", "4x1,5"
+    "1G2,5", "1G6", "1G10",
+    "3G1,5", "3G2,5", "5G1,5", "5G2,5", "5G4", "5G6", "7G1,5",
+    "4X10", "4x1,5",
 )
 
 # Kabelvisning gemmes pr. kabel. Interne værdier holdes stabile, mens GUI'en
@@ -114,6 +118,8 @@ DEFAULT_CABLE_CATEGORIES = (
     {"id":"ev_charger", "name":"Ladeboks", "description":"Kabel til ladeboks.", "color":"#0f766e", "line_style":"dash"},
     {"id":"appliances", "name":"Hvidevarer / faste forbrugere", "description":"Kabel til hvidevarer og andre faste elektriske forbrugere.", "color":"#be123c", "line_style":"dashdot"},
     {"id":"data", "name":"Data / netværk", "description":"Kabel til data- og netværksinstallationer.", "color":"#0369a1", "line_style":"dot"},
+    {"id":"earthing_bonding", "name":"Udligning / beskyttelsesleder", "description":"Beskyttelsesleder og potentialudligning, herunder hovedjordforbindelse.", "color":"#16a34a", "line_style":"solid"},
+    {"id":"service_main", "name":"Stikledning / hovedledning", "description":"Forsyningskabel mellem tilslutningspunkt, måler- og fordelingstavle.", "color":"#7f1d1d", "line_style":"solid"},
     {"id":"other", "name":"Øvrige", "description":"Kabler som ikke passer i en af de øvrige kategorier.", "color":"#d00000", "line_style":"solid"},
 )
 
@@ -467,11 +473,15 @@ SYMBOL_GROUPS = {
         "Ventilator": "fan",
         "Elbilslader / ladeboks": "ev_charger",
     },
+    "Tavler / forsyning": {
+        "Fordelingsanlæg / tavle": "distribution_board",
+        "Gruppetavle": "group_board",
+        "Målertavle": "meter_board",
+        "Hovedjordforbindelse": "main_earthing_connection",
+    },
     "Diverse": {
         "Elektrisk lås": "electric_lock",
         "Tilslutningssted, ikke belysning": "connection",
-        "Fordelingsanlæg / tavle": "distribution_board",
-        "Gruppetavle": "group_board",
         "Bevægelsesdetektor / PIR": "pir",
         "Røgdetektor": "smoke",
     },
@@ -1814,22 +1824,33 @@ PL_CONDUCTOR_VISUALS = {
 
 
 def cable_conductor_preset(cable_spec: str) -> list[dict]:
-    """Returnér generelle lederfarver for 3G, 5G og 7G kabelbetegnelser.
+    """Returnér generelle lederfarver for almindelige G- og 4X-kabler.
 
+    G angiver en gul/grøn beskyttelsesleder. 1G bruges derfor til en enkelt
+    beskyttelses-/udligningsleder. X angiver, at kablet ikke indeholder en
+    gul/grøn leder; 4X vises som tre faser og nul, men aldrig som PE.
     7G-profilen i Elplan er: gul/grøn, blå, brun, sort, grå, rød og hvid.
     Ukendte kabelopbygninger returnerer en tom liste og kan derfor ikke blive
     fejlagtigt planlagt ud fra et gæt. Den konkrete kabelartikel/datablad har
     altid forrang for denne generelle planlægningsprofil.
     """
     text=str(cable_spec or "").upper().replace(" ", "")
-    m=re.search(r"(3|5|7)G(?=\d|[,\.]|MM|$)", text)
+    m=re.search(r"(1|3|4|5|7)(G|X)(?=\d|[,\.]|MM|$)", text)
     if not m:
-        # Accepter også fx "N1XZ1 5G4" hvor G efterfølges af anden normal tekst.
-        m=re.search(r"(3|5|7)G", text)
+        # Accepter også fx "N1XZ1 5G4" hvor markøren indgår i anden normal tekst.
+        m=re.search(r"(1|3|4|5|7)(G|X)", text)
     if not m:
         return []
     count=int(m.group(1))
-    if count==3:
+    marker=m.group(2)
+    if marker == "X":
+        # Kun den kendte 4X-profil kan beskrives sikkert uden kabeldatablad.
+        if count != 4:
+            return []
+        ids=["brown","black","grey","blue"]
+    elif count==1:
+        ids=["pe"]
+    elif count==3:
         ids=["pe","blue","brown"]
     elif count==5:
         ids=["pe","blue","brown","black","grey"]
@@ -5436,8 +5457,10 @@ def symbol_layer(symbol: str) -> str:
         return LIGHTING_LAYER
     if symbol in {"water_heater", "heater", "fan", "ev_charger"}:
         return APPLIANCE_LAYER
-    if symbol in {"distribution_board", "group_board"}:
+    if symbol in {"distribution_board", "group_board", "meter_board"}:
         return BOARD_LAYER
+    if symbol == "main_earthing_connection":
+        return EARTHING_LAYER
     if symbol in {"pir", "smoke"}:
         return DETECTOR_LAYER
     return MISC_LAYER
@@ -6362,6 +6385,19 @@ def symbol_primitives(symbol: str, size: float):
         line(-w/2,-h/2,w/2,-h/2); line(w/2,-h/2,w/2,h/2); line(w/2,h/2,-w/2,h/2); line(-w/2,h/2,-w/2,-h/2)
         line(-w*.26,-h/2,-w*.26,h/2); line(0,-h/2,0,h/2); line(w*.26,-h/2,w*.26,h/2)
         line(-w/2,0,w/2,0)
+    elif symbol == "meter_board":
+        # Målertavle: tavlekapsling med den internationalt genkendelige
+        # målercirkel og M-mærkning. Mærkningen holdes læsbar ved rotation.
+        w,h=s*.92,s*.68
+        line(-w/2,-h/2,w/2,-h/2); line(w/2,-h/2,w/2,h/2); line(w/2,h/2,-w/2,h/2); line(-w/2,h/2,-w/2,-h/2)
+        circle(0,0,s*.23); mark(0,0,"M",.27)
+    elif symbol == "main_earthing_connection":
+        # Hovedjordforbindelse efter jordingsprincippet: tilslutningspunkt,
+        # leder og tre aftagende jordstreger. Øverste punkt kan kabelsnappes.
+        circle(0,s*.62,s*.07); line(0,s*.55,0,0)
+        line(-s*.42,0,s*.42,0)
+        line(-s*.28,-s*.15,s*.28,-s*.15)
+        line(-s*.14,-s*.30,s*.14,-s*.30)
     elif symbol == "water_heater":
         circle(0,0,s*.42); mark(0,0,"VV",.25)
     elif symbol == "heater":
@@ -6428,6 +6464,10 @@ def symbol_connection_points(symbol: str, size: float) -> list[tuple[float, floa
         return [(x,y) for y in (s*.14,-s*.14) for x in xs]
     if symbol == "socket_tele":
         return [(0.0, s), (0.0,0.0)]
+    if symbol == "meter_board":
+        return [(0.0,s*.34),(0.0,-s*.34),(0.0,0.0)]
+    if symbol == "main_earthing_connection":
+        return [(0.0,s*.62),(0.0,0.0)]
     # Kontakter og alle øvrige komponenter kan tilsluttes i deres logiske centrum.
     if symbol in SYMBOL_NAMES_BY_CODE:
         return [(0.0, 0.0)]
@@ -6463,7 +6503,7 @@ def symbol_mount_points(symbol: str, size: float) -> list[tuple[float, float]]:
         return [(0.0,0.0)]
     if symbol.startswith("switch_") or symbol.startswith("pushbutton"):
         return [(0.0,0.0)]
-    if symbol in {"ev_charger","distribution_board","group_board","heater","electric_lock"}:
+    if symbol in {"ev_charger","distribution_board","group_board","meter_board","main_earthing_connection","heater","electric_lock"}:
         return [(0.0,0.0)]
     return []
 

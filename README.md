@@ -4,7 +4,7 @@ Windows-program til planlægning og dokumentation af elektriske installationer d
 
 [![Tests](https://github.com/mrmultifunk/ElplanDWGEditor/actions/workflows/tests.yml/badge.svg)](https://github.com/mrmultifunk/ElplanDWGEditor/actions/workflows/tests.yml)
 
-**Aktuel version:** `0.59.73`  
+**Aktuel version:** `0.59.74`  
 **Platform:** Windows 10/11 · Python 3.11 eller 3.12
 
 ## Hvad kan programmet?

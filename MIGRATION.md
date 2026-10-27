@@ -1,3 +1,11 @@
+## 0.59.73 → 0.59.74
+
+- Projektformatet er fortsat bagudkompatibelt. De to nye standardkategorier `Udligning / beskyttelsesleder` og `Stikledning / hovedledning` føjes én gang til kategorilisten i projekter gemt før 0.59.74.
+- Eksisterende kabelkategorier, farver og linjetyper ændres ikke. Når projektet først er gemt i 0.59.74, kan de nye kategorier også slettes eller tilpasses uden at blive gendannet ved næste åbning.
+- `Målertavle` og `Hovedjordforbindelse` er nye vektorsymbolkoder og kræver ingen ændring af eksisterende symbolplaceringer.
+- De nye 1G- og 4X10-profiler påvirker kun nye eller redigerede kabelvalg. Eksisterende kabelbetegnelser og lederfordelinger omskrives ikke.
+- Artikelbase, prisbog, styklister og OneDrive-placering er uændrede.
+
 ## 0.59.72 → 0.59.73
 
 - Projektformat, artikelbase, prisbog og globale styklister er uændrede.

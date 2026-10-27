@@ -5,7 +5,7 @@ from project_model import APP_VERSION
 
 
 def test_version_05014():
-    assert APP_VERSION == core.APP_VERSION == "0.59.73"
+    assert APP_VERSION == core.APP_VERSION == "0.59.74"
 
 
 def test_distribution_root_is_organized():
