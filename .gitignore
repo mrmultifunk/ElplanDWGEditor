@@ -1,0 +1,54 @@
+# Python og test
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Byg og distribution
+build/
+dist/
+deployment/
+*.spec
+*.exe
+*.msi
+
+# IDE og operativsystem
+.idea/
+.vscode/
+.vs/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Hemmeligheder og lokale miljøvalg
+.env
+.env.*
+!.env.example
+
+# Elplan: brugerdata, artikeldata og lokale indstillinger
+articles.json
+article_prices.json
+bom_assemblies.json
+settings.json
+logs/
+cache/
+*.log
+*.tmp
+*.bak
+
+# Elplan: projekter og transportpakker
+*.elplan.json
+*.elplan.autosave.json
+*.elplanproj
+*.elplancore
+*.dwg
+*.dxf
+!examples/**/*.elplan.json
+!examples/**/*.dxf
