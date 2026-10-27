@@ -1,0 +1,16 @@
+name: Funktionsønske
+about: Foreslå en forbedring med fokus på visualisering eller brugervenlighed
+title: "[Forslag] "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: Hvad vil du gerne kunne gøre?
+    validations:
+      required: true
+  - type: textarea
+    id: workflow
+    attributes:
+      label: Hvordan bør det fungere i praksis?
+      description: Beskriv gerne den enkleste arbejdsgang fra brugerens perspektiv.

@@ -1,0 +1,76 @@
+{
+  "version": "0.35.4",
+  "source_file": "demo_floor.dxf",
+  "placements": [
+    {
+      "symbol": "socket",
+      "x": 1000,
+      "y": 1500,
+      "rotation": 0,
+      "size": 300,
+      "label": "S01",
+      "group": "G01",
+      "line_width": 0.25,
+      "color": "#d00000",
+      "associations": [],
+      "locked": false,
+      "parent_light_uid": "",
+      "uid": "demo_socket"
+    },
+    {
+      "symbol": "switch_1",
+      "x": 1000,
+      "y": 2100,
+      "rotation": 0,
+      "size": 300,
+      "label": "",
+      "group": "G01",
+      "line_width": 0.25,
+      "color": "#d00000",
+      "associations": [
+        "a"
+      ],
+      "locked": false,
+      "parent_light_uid": "",
+      "uid": "demo_switch"
+    },
+    {
+      "symbol": "light_connection",
+      "x": 4500,
+      "y": 4000,
+      "rotation": 0,
+      "size": 300,
+      "label": "LYS-01",
+      "group": "G01",
+      "line_width": 0.25,
+      "color": "#d00000",
+      "associations": [
+        "a"
+      ],
+      "locked": false,
+      "parent_light_uid": "",
+      "uid": "demo_light"
+    }
+  ],
+  "cables": [],
+  "texts": [
+    {
+      "text": "Demo rum",
+      "x": 3500,
+      "y": 6500,
+      "height": 300,
+      "rotation": 0,
+      "color": "#202020",
+      "uid": "demo_text"
+    }
+  ],
+  "layer_visibility": {
+    "0": true,
+    "Walls": true,
+    "EL-STIKKONTAKTER": true,
+    "EL-AFBRYDERE": true,
+    "EL-LYSUDTAG": true,
+    "EL-TEKST": true,
+    "EL-FRITEKST": true
+  }
+}

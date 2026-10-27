@@ -1,0 +1,32 @@
+name: Fejlrapport
+about: Rapportér en fejl i Elplan DWG Editor
+title: "[Fejl] "
+labels: [bug]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Hvad sker der?
+      description: Beskriv kort problemet og hvad du forventede i stedet.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Sådan kan fejlen gentages
+      placeholder: "1. Åbn ...\n2. Klik ...\n3. ..."
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      placeholder: "0.59.73"
+  - type: input
+    id: windows
+    attributes:
+      label: Windows-version
+      placeholder: "Windows 11"
+  - type: textarea
+    id: extra
+    attributes:
+      label: Ekstra information
+      description: Screenshots, fejltekst eller oplysninger om DWG/DXF-filen.

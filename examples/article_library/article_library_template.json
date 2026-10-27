@@ -1,0 +1,41 @@
+{
+  "format": "ElplanDWGEditor article library",
+  "format_version": 1,
+  "application_version": "0.49.0",
+  "articles": [
+    {
+      "article_no": "ABC-123",
+      "description": "Dobbelt stikkontakt 2P+E, 2M",
+      "manufacturer": "Schneider Electric / Lauritz Knudsen",
+      "unit": "stk",
+      "category": "LK FUGA · Stikkontakter og udtag",
+      "series": "LK FUGA",
+      "product_type": "Stikkontakt / udtag",
+      "design_family": "FUGA",
+      "module_size": "2M",
+      "color": "Koksgrå",
+      "mounting_type": "Forfradåse",
+      "el_no": "1017056211",
+      "ean": "5703302157070",
+      "status": "Aktiv",
+      "kind": "component",
+      "cable_spec": "3G1,5",
+      "package_length_m": "100",
+      "product_page": "https://example.com/product",
+      "supplier_page": "https://example.com/supplier",
+      "datasheet_url": "https://example.com/datasheet.pdf",
+      "image_url": "https://example.com/product.jpg",
+      "image_source": "Producent",
+      "source": "https://example.com/catalog",
+      "source_checked": "2026-08-22",
+      "diameter_mm": "85",
+      "cutout_mm": "76",
+      "cct": "3000K",
+      "power_w": "7.5",
+      "ip_rating": "IP44",
+      "shape": "Rund",
+      "environment": "Inde",
+      "note": "Eksempelnote"
+    }
+  ]
+}
