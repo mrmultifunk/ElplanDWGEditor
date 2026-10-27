@@ -83,10 +83,9 @@ class CablePanelMixin:
 
         self.cable_spec_combo = QComboBox()
         self.cable_spec_combo.setEditable(True)
-        self.cable_spec_combo.addItems([
-            "3G1,5", "3G2,5", "5G1,5", "5G2,5", "5G4", "5G6", "7G1,5",
-            "CAT6 U/UTP", "CAT6A F/UTP", "CAT7 S/FTP",
-        ])
+        self.cable_spec_combo.addItems(
+            list(core.CABLE_SPEC_PRESETS) + ["CAT6 U/UTP", "CAT6A F/UTP", "CAT7 S/FTP"]
+        )
         self.cable_group_edit = QLineEdit()
         self.cable_group_edit.setPlaceholderText("fx G05")
         self.cable_group_edit.setToolTip(

@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import core_logic as core
 from project_model import APP_VERSION, ProjectDocument
@@ -44,6 +45,13 @@ def test_requested_supply_and_protective_conductor_presets():
     four_x = core.cable_conductor_preset("4X10")
     assert [row["core_id"] for row in four_x] == ["brown", "black", "grey", "blue"]
     assert all(not row.get("protective", False) for row in four_x)
+
+
+def test_main_cable_type_dropdown_uses_shared_presets():
+    source = Path("qt_cable_panel.py").read_text(encoding="utf-8")
+    assert "self.cable_spec_combo.addItems(" in source
+    assert "list(core.CABLE_SPEC_PRESETS)" in source
+    assert '"1G2,5", "1G6", "1G10"' not in source
 
 
 def test_supply_and_earthing_cable_categories_are_standard():

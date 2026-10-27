@@ -5,6 +5,7 @@
 - Nyt vektorsymbol `Hovedjordforbindelse` med standardiseret jordgrafik, tilslutningspunkt og eget grønne CAD-lag `EL-JORDING`.
 - Kabelvælgeren har fået `1G2,5`, `1G6` og `1G10` til beskyttelsesledere og potentialudligning.
 - Kabelvælgeren har fået `4X10` som stik-/hovedledning. X-betegnelsen behandles udtrykkeligt uden gul/grøn PE-leder og vises som brun, sort, grå og blå.
+- Den primære kabeltype-dropdown og kabelafsnitseditoren bruger nu samme centrale liste, så alle nye kabeltyper er synlige både ved oprettelse og redigering.
 - Nye kabelkategorier `Udligning / beskyttelsesleder` og `Stikledning / hovedledning` kan vælges, filtreres og lagstyres på samme måde som eksisterende kabelkategorier.
 - Eksisterende projekter får de to nye standardkategorier én gang ved åbning; brugerens eksisterende kategorier og tilpasninger bevares.
 
