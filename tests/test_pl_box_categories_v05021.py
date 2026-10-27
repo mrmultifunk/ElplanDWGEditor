@@ -34,7 +34,8 @@ def test_pl_configurator_exposes_project_cable_categories_visually():
     assert 'category_name=str(category.get("name") or "Øvrige")' in source
     assert 'self._category_pen_style(category.get("line_style"))' in source
     assert "cable_categories=self._cable_categories()" in source
-    assert "Kabelkategorier i PL-dåsekonfiguratoren" in Path("README.md").read_text(encoding="utf-8")
+    docs=Path("docs/history/PL_BOX_CATEGORIES_0.50.21.md").read_text(encoding="utf-8")
+    assert "PL-dåse og kabelkategorier" in docs
 
 
 def test_leader_distribution_cards_show_cable_category_between_id_and_spec():

@@ -94,8 +94,9 @@ def test_pl_box_entry_diagram_has_visual_cable_glands_and_connectors():
     assert "def _draw_entry_connector" in app
     assert "def _port_connector_geometry" in app
     assert "kabelindføringen fortsætter nu" in app
-    assert "knockout/gennemføringsmuffe" in Path("README.md").read_text(encoding="utf-8")
-    assert "tomme knockout" in Path("README.md").read_text(encoding="utf-8")
+    docs=Path("docs/history/PL_BOX_0.50.9.md").read_text(encoding="utf-8")
+    assert "gennemføringsmuffe" in docs
+    assert "tomme knockout" in docs
 
 
 def test_pl_box_entry_diagram_previews_3g_5g_7g_conductors_inside_box():
@@ -105,5 +106,5 @@ def test_pl_box_entry_diagram_previews_3g_5g_7g_conductors_inside_box():
     assert 'core.cable_conductor_preset(str(leg.get("cable_spec") or ""))' in app
     assert "self._draw_conductor_preview(painter,body,port,rect,leg,selected)" in app
     assert 'str(meta.get("core_id") or "")=="pe"' in app
-    assert "3G/5G/7G-lederopbygning" in Path("README.md").read_text(encoding="utf-8")
+    assert all(token in docs for token in ("3G", "5G", "7G"))
     assert "Ukendte kabelopbygninger" in docs
