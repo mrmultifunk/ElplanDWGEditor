@@ -20,7 +20,7 @@ def member(uid, core_id="blue"):
 
 
 def test_version_0508():
-    assert APP_VERSION == core.APP_VERSION == "0.59.74"
+    assert APP_VERSION == core.APP_VERSION == "0.59.75"
 
 
 def test_old_wago_defaults_to_outlet_bridge_and_loop_mode_is_preserved():

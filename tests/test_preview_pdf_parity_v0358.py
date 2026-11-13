@@ -16,4 +16,4 @@ def test_preview_uses_production_pdf_renderer():
 
 def test_version_is_0358():
     source = (Path(__file__).resolve().parents[1] / "project_model.py").read_text(encoding="utf-8")
-    assert 'APP_VERSION = "0.59.74"' in source
+    assert 'APP_VERSION = "0.59.75"' in source

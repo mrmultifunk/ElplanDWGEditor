@@ -6,7 +6,7 @@ from project_model import APP_VERSION, ProjectDocument
 
 
 def test_version_05974():
-    assert APP_VERSION == core.APP_VERSION == "0.59.74"
+    assert APP_VERSION == core.APP_VERSION == "0.59.75"
 
 
 def test_supply_symbols_are_available_on_dedicated_layers():

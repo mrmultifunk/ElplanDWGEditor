@@ -8,7 +8,7 @@ from project_model import APP_VERSION
 
 
 def test_version():
-    assert APP_VERSION == core.APP_VERSION == "0.59.74"
+    assert APP_VERSION == core.APP_VERSION == "0.59.75"
 
 
 def test_user_facing_bom_categories_use_role_before_broad_article_type():

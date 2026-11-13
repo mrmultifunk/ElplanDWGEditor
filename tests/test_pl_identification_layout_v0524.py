@@ -5,7 +5,7 @@ from project_model import APP_VERSION
 
 
 def test_version_0524():
-    assert APP_VERSION == core.APP_VERSION == "0.59.74"
+    assert APP_VERSION == core.APP_VERSION == "0.59.75"
 
 
 def test_pl_identification_keeps_group_and_marking_together():

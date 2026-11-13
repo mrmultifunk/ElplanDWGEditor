@@ -1,3 +1,12 @@
+## 0.59.74 → 0.59.75
+
+- Projektets PL-lampesteder kan nu indeholde det valgfrie felt `pl_field_record` med PWA-dåsens stabile id, tekst for de seks indføringer, noter, fotoadresser og markører.
+- Feltregistreringen er bevidst adskilt fra `pl_box_wiring` og `pl_box_splices`. Opgradering, hentning og opdatering fra PWA'en ændrer derfor ikke eksisterende lederfunktioner, lampeudtagsklemmer eller WAGO-samlinger.
+- Eksisterende projekter kræver ingen migrering. Feltet oprettes først, når en bruger aktivt knytter en PWA-registrering til en PL-dåse.
+- Serveradresse og API-token er lokale programindstillinger. Tokenet skrives ikke i projektfil, PDF, Excel, CSV eller andre eksporter.
+- Integrationens API-kald er read-only. Elplan sender ingen projekt- eller lederdata tilbage til PWA'en.
+- Artikelbase, prisbog, styklister, kabelmodel og OneDrive-placering er uændrede.
+
 ## 0.59.73 → 0.59.74
 
 - Projektformatet er fortsat bagudkompatibelt. De to nye standardkategorier `Udligning / beskyttelsesleder` og `Stikledning / hovedledning` føjes én gang til kategorilisten i projekter gemt før 0.59.74.

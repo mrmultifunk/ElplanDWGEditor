@@ -33,7 +33,7 @@ def _render(monkeypatch,room,**kwargs):
 
 
 def test_version_v05967():
-    assert APP_VERSION == core.APP_VERSION == "0.59.74"
+    assert APP_VERSION == core.APP_VERSION == "0.59.75"
 
 
 def test_pdf_renders_room_name_and_keeps_code_independent(monkeypatch):

@@ -121,7 +121,7 @@ def test_project_document_0450_does_not_serialize_core_libraries(tmp_path):
         'placement_articles':{'uid':{'symbol':[{'article_no':'A1','qty':1}]}}
     }
     data=doc.to_dict()
-    assert data['version']=='0.59.74'
+    assert data['version']=='0.59.75'
     assert 'article_catalog' not in data
     assert 'bom_assemblies' not in data
     assert 'custom_symbols' not in data

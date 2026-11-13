@@ -1930,6 +1930,7 @@ class PLBoxDialog(SwitchConductorUsageMixin, QDialog):
         self.splices=core.reconcile_pl_box_splices(getattr(placement,"pl_box_splices",[]),self.wiring,self.legs)
         self.outlet_type=core.normalize_pl_outlet_type(getattr(placement,"lamp_outlet_type","generic"))
         self.orientation=core.normalize_pl_box_orientation(getattr(placement,"pl_box_orientation",0))
+        self.field_record=core.normalize_pl_field_record(getattr(placement,"pl_field_record",{}))
         self.selected_conductor_key=None
         self.requirements=core.pl_expected_switch_connections(placement,self.placements,self.cables)
         self.selected_port=1
@@ -1948,6 +1949,14 @@ class PLBoxDialog(SwitchConductorUsageMixin, QDialog):
         head.addWidget(self.head_ident)
         root.addLayout(head)
         self.status_label=QLabel(); self.status_label.setWordWrap(True); root.addWidget(self.status_label)
+
+        field_row=QHBoxLayout(); field_row.setSpacing(7)
+        field_title=QLabel("Feltregistrering:"); field_title.setObjectName("sectionTitle"); field_row.addWidget(field_title)
+        self.field_status=QLabel(); self.field_status.setWordWrap(True); field_row.addWidget(self.field_status,1)
+        self.field_import_btn=QPushButton("Hent / opdatér fra PWA…"); self.field_import_btn.clicked.connect(self._import_field_record); field_row.addWidget(self.field_import_btn)
+        self.field_photos_btn=_set_role(QPushButton("Vis fotos…"),"quietButton"); self.field_photos_btn.clicked.connect(self._show_field_photos); field_row.addWidget(self.field_photos_btn)
+        self.field_unlink_btn=_set_role(QPushButton("Fjern tilknytning"),"quietButton"); self.field_unlink_btn.clicked.connect(self._unlink_field_record); field_row.addWidget(self.field_unlink_btn)
+        root.addLayout(field_row)
 
         self.tabs=QTabWidget(); root.addWidget(self.tabs,1)
 
@@ -2203,6 +2212,43 @@ class PLBoxDialog(SwitchConductorUsageMixin, QDialog):
         if hasattr(self,"orientation_combo"):
             idx=self.orientation_combo.findData(self.orientation)
             if idx>=0:self.orientation_combo.setCurrentIndex(idx)
+
+    def _refresh_field_status(self):
+        record=core.normalize_pl_field_record(self.field_record)
+        if not record:
+            self.field_status.setObjectName("subtleText"); self.field_status.setText("Ikke tilknyttet")
+            self.field_photos_btn.setEnabled(False); self.field_unlink_btn.setEnabled(False)
+        else:
+            filled=sum(core.pl_field_entry_state(row)!="unregistered" for row in record.get("entries",[]))
+            photos=len(record.get("photos",[]) or []); ref=str(record.get("ref","") or "").strip()
+            self.field_status.setObjectName("positiveText"); self.field_status.setText(
+                f"{record.get('name') or record.get('box_id')} · {filled}/6 registreret"+(f" · mod {ref}" if ref else "")+f" · {photos} foto(s)"
+            )
+            self.field_photos_btn.setEnabled(bool(photos)); self.field_unlink_btn.setEnabled(True)
+        self.field_status.style().unpolish(self.field_status); self.field_status.style().polish(self.field_status)
+
+    def _import_field_record(self):
+        from qt_pl_field import PLFieldImportDialog
+        dlg=PLFieldImportDialog(self,cable_legs=self.legs,current_entries=self.entries,current_record=self.field_record,orientation=self.orientation)
+        if dlg.exec()!=QDialog.DialogCode.Accepted:return
+        # Importen ændrer kun fysisk kabelplacering og feltmetadata. Den rører
+        # aldrig self.wiring eller self.splices.
+        self.entries=core.reconcile_pl_box_entries(dlg.result_entries,self.legs)
+        self.field_record=core.normalize_pl_field_record(dlg.result_record)
+        self.orientation=core.normalize_pl_box_orientation(dlg.result_orientation)
+        idx=self.orientation_combo.findData(self.orientation)
+        if idx>=0:self.orientation_combo.setCurrentIndex(idx)
+        self._refresh()
+
+    def _show_field_photos(self):
+        if not core.normalize_pl_field_record(self.field_record):return
+        from qt_pl_field import PLFieldPhotoDialog
+        PLFieldPhotoDialog(self,self.field_record).exec()
+
+    def _unlink_field_record(self):
+        if not self.field_record:return
+        if QMessageBox.question(self,"Feltregistrering","Fjern tilknytningen og den importerede feltmetadata? De nuværende kabelplaceringer og lederfordelingen bevares.")!=QMessageBox.StandardButton.Yes:return
+        self.field_record={}; self._refresh_field_status()
         if hasattr(self,"diagram"):self.diagram.set_orientation(self.orientation)
 
     def _category_for_leg(self,leg):
@@ -2389,6 +2435,7 @@ class PLBoxDialog(SwitchConductorUsageMixin, QDialog):
             if req_summary["missing"] or req_summary["wrong_cable"] or req_summary["duplicate"]:
                 text += " ⚠"
         self.status_label.setText(text); self.status_label.style().unpolish(self.status_label); self.status_label.style().polish(self.status_label)
+        self._refresh_field_status()
 
         self._refresh_category_legend()
         current_key=None
@@ -3654,7 +3701,7 @@ class PLBoxDialog(SwitchConductorUsageMixin, QDialog):
         self._save_note(); self.entries=core.reconcile_pl_box_entries(self.entries,self.legs)
         self.wiring=core.reconcile_pl_box_wiring(self.wiring,self.legs)
         self.splices=core.reconcile_pl_box_splices(self.splices,self.wiring,self.legs)
-        if callable(self.apply_callback): self.apply_callback(deepcopy(self.entries),deepcopy(self.wiring),self.outlet_type,deepcopy(self.splices),self.orientation)
+        if callable(self.apply_callback): self.apply_callback(deepcopy(self.entries),deepcopy(self.wiring),self.outlet_type,deepcopy(self.splices),self.orientation,deepcopy(self.field_record))
 
     def _accept(self):
         self._apply(); self.accept()

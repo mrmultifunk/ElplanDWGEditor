@@ -11,7 +11,7 @@ from typing import Any
 import core_logic as core
 from storage_utils import atomic_write_text
 
-APP_VERSION = "0.59.74"
+APP_VERSION = "0.59.75"
 
 
 def _finite_float(value: Any, field_name: str) -> float:
@@ -56,6 +56,7 @@ def placement_from_raw(raw: dict[str, Any]) -> core.Placement:
             "pl_box_splices": [],
             "pl_box_orientation": 0,
             "lamp_outlet_type": "generic",
+            "pl_field_record": {},
             "label_mode": "Fælles",
             "switch_label": "",
             "switch_group": "",
@@ -90,12 +91,14 @@ def placement_from_raw(raw: dict[str, Any]) -> core.Placement:
     item["pl_box_splices"] = core.normalize_pl_box_splices(item.get("pl_box_splices", []))
     item["pl_box_orientation"] = core.normalize_pl_box_orientation(item.get("pl_box_orientation", 0))
     item["lamp_outlet_type"] = core.normalize_pl_outlet_type(item.get("lamp_outlet_type", "generic"))
+    item["pl_field_record"] = core.normalize_pl_field_record(item.get("pl_field_record", {}))
     if str(item.get("symbol", "")) != "light_connection":
         item["pl_box_entries"] = {}
         item["pl_box_wiring"] = []
         item["pl_box_splices"] = []
         item["pl_box_orientation"] = 0
         item["lamp_outlet_type"] = "generic"
+        item["pl_field_record"] = {}
     return core.Placement(**item)
 
 
@@ -514,11 +517,13 @@ class ProjectDocument:
                 row["pl_box_wiring"]=core.reconcile_pl_box_wiring(existing_wiring,legs) if existing_wiring else []
                 row["pl_box_splices"]=core.reconcile_pl_box_splices(getattr(placement,"pl_box_splices",[]),row["pl_box_wiring"],legs)
                 row["pl_box_orientation"]=core.normalize_pl_box_orientation(getattr(placement,"pl_box_orientation",0))
+                row["pl_field_record"]=core.normalize_pl_field_record(getattr(placement,"pl_field_record",{}))
             else:
                 row["pl_box_entries"]={}
                 row["pl_box_wiring"]=[]
                 row["pl_box_splices"]=[]
                 row["pl_box_orientation"]=0
+                row["pl_field_record"]={}
             placement_rows.append(row)
         data["placements"] = placement_rows
         data["cable_categories"] = core.normalize_cable_category_records(data.get("cable_categories", []))

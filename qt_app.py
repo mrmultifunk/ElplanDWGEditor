@@ -4446,7 +4446,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self.pl_box_button.setEnabled(not bool(getattr(placement,"locked",False)))
         self.pl_box_group.show()
 
-    def _apply_pl_box_config(self, placement, entries, wiring, outlet_type=None, splices=None, orientation=None) -> None:
+    def _apply_pl_box_config(self, placement, entries, wiring, outlet_type=None, splices=None, orientation=None, field_record=None) -> None:
         if placement is None or placement.symbol != "light_connection":
             return
         self._hover_bom_cache.pop(str(getattr(placement,"uid","") or ""),None)
@@ -4461,6 +4461,9 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         after["pl_box_splices"]=deepcopy(normalized_splices)
         after["pl_box_orientation"]=core.normalize_pl_box_orientation(orientation if orientation is not None else getattr(placement,"pl_box_orientation",0))
         after["lamp_outlet_type"]=core.normalize_pl_outlet_type(outlet_type if outlet_type is not None else getattr(placement,"lamp_outlet_type","generic"))
+        after["pl_field_record"]=deepcopy(core.normalize_pl_field_record(
+            field_record if field_record is not None else getattr(placement,"pl_field_record",{})
+        ))
         if before != after:
             self.undo_stack.push(EditSymbolCommand(self,placement.uid,before,after,"Konfigurer PL-dåse"))
         else:
@@ -4469,6 +4472,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             placement.pl_box_splices=deepcopy(normalized_splices)
             placement.pl_box_orientation=after["pl_box_orientation"]
             placement.lamp_outlet_type=after["lamp_outlet_type"]
+            placement.pl_field_record=deepcopy(after["pl_field_record"])
             self._refresh_pl_box_group(placement)
 
     # Kompatibilitetswrapper for ældre interne kald/tests.
@@ -4482,7 +4486,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             QMessageBox.information(self,"PL-dåse","Lampestedet er låst. Lås symbolet op i Egenskaber før PL-dåsen ændres.")
             return
         from qt_pl_box import PLBoxDialog
-        dlg=PLBoxDialog(self,placement,self.project.cables,lambda entries,wiring,outlet_type,splices,orientation:self._apply_pl_box_config(placement,entries,wiring,outlet_type,splices,orientation),placements=self.project.placements,cable_categories=self._cable_categories())
+        dlg=PLBoxDialog(self,placement,self.project.cables,lambda entries,wiring,outlet_type,splices,orientation,field_record:self._apply_pl_box_config(placement,entries,wiring,outlet_type,splices,orientation,field_record),placements=self.project.placements,cable_categories=self._cable_categories())
         dlg.exec()
         self._refresh_pl_box_group(placement)
 
@@ -5424,7 +5428,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         try:
             for rec in sym:
                 rec=dict(rec); rec["uid"]=uuid.uuid4().hex; rec["x"]=float(rec.get("x",0))+dx; rec["y"]=float(rec.get("y",0))+dy
-                rec["associations"]=[]; rec["association_channels"]=[]; rec["parent_light_uid"]=""; rec["pl_box_entries"]={}; rec["pl_box_wiring"]=[]; rec["pl_box_splices"]=[]; rec["lamp_outlet_type"]=core.normalize_pl_outlet_type(rec.get("lamp_outlet_type","generic")); rec["locked"]=False
+                rec["associations"]=[]; rec["association_channels"]=[]; rec["parent_light_uid"]=""; rec["pl_box_entries"]={}; rec["pl_box_wiring"]=[]; rec["pl_box_splices"]=[]; rec["pl_field_record"]={}; rec["lamp_outlet_type"]=core.normalize_pl_outlet_type(rec.get("lamp_outlet_type","generic")); rec["locked"]=False
                 old_gid=str(rec.get("spot_group_id","") or "")
                 if rec.get("symbol")=="spot" and old_gid and copied_group_counts.get(old_gid,0)>=2:
                     rec["spot_group_id"]=copied_group_remap.setdefault(old_gid,uuid.uuid4().hex)
@@ -5771,6 +5775,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             "pl_box_splices": deepcopy(core.normalize_pl_box_splices(getattr(p, "pl_box_splices", []))),
             "pl_box_orientation": core.normalize_pl_box_orientation(getattr(p, "pl_box_orientation", 0)),
             "lamp_outlet_type": core.normalize_pl_outlet_type(getattr(p, "lamp_outlet_type", "generic")),
+            "pl_field_record": deepcopy(core.normalize_pl_field_record(getattr(p, "pl_field_record", {}))),
         }
 
     def _apply_symbol_state(self, uid: str, state: dict) -> None:

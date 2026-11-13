@@ -1,3 +1,13 @@
+## 0.59.75 - PL-dåse feltregistrering
+
+- PL-dåse-konfiguratoren kan nu hente feltregistreringer direkte fra `pl-daase` via dens read-only API.
+- Serveradresse og API-token konfigureres under `Indstillinger → Integrationer`; tokenet gemmes kun lokalt og kommer aldrig med i projektfilen.
+- Importen viser altid en forhåndsvisning af de seks fysiske indføringer, PWA'ens kabeltekst og eventuelle noter, før noget anvendes.
+- Et Elplan-kabelben foreslås kun, når kabeltypen giver ét entydigt match. Ved flere mulige kabler kræves et manuelt valg.
+- PWA'ens tælleretning kan omsættes til PL-dåsens fysiske orientering, og importerede fotos kan vises med markører for indføring 1–6.
+- Feltregistreringen og den valgte fysiske kabelplacering gemmes sammen med PL-dåsen og kan opdateres eller afkobles senere.
+- PWA-data kan ikke oprette eller ændre lederfunktioner, lampeudtagsklemmer, gennemsløjfninger eller WAGO-samlinger. De funktioner forbliver udelukkende i Elplans lederfordeling.
+
 ## 0.59.74 - Tavler, jordforbindelse og forsyningskabler
 
 - Symbolpaletten har fået den særskilte gruppe `Tavler / forsyning`, som samler fordelingsanlæg, gruppetavle og de nye symboler.

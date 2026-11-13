@@ -3062,14 +3062,14 @@ class ElplanEditor(tk.Tk):
         selected=[self.placements[i] for i in indices]
         if len(selected)==1:
             p=selected[0]; payload=symbol_clipboard_payload(p)
-            raw=asdict(p); raw["uid"]=uuid.uuid4().hex; raw["associations"]=[]; raw["association_channels"]=[]; raw["locked"]=False; raw["parent_light_uid"]=""
+            raw=asdict(p); raw["uid"]=uuid.uuid4().hex; raw["associations"]=[]; raw["association_channels"]=[]; raw["locked"]=False; raw["parent_light_uid"]=""; raw["pl_box_entries"]={}; raw["pl_box_wiring"]=[]; raw["pl_box_splices"]=[]; raw["pl_field_record"]={}
             self.symbol_clipboard=Placement(**raw); self.multi_symbol_clipboard=[]
             msg=f"Kopieret symbol: {symbol_display_name(p.symbol)}. Ctrl+V indsætter ved musemarkøren."
         else:
             payload=symbols_clipboard_payload(selected)
             self.multi_symbol_clipboard=[]
             for p in selected:
-                raw=asdict(p); raw["uid"]=uuid.uuid4().hex; raw["associations"]=[]; raw["association_channels"]=[]; raw["locked"]=False; raw["parent_light_uid"]=""
+                raw=asdict(p); raw["uid"]=uuid.uuid4().hex; raw["associations"]=[]; raw["association_channels"]=[]; raw["locked"]=False; raw["parent_light_uid"]=""; raw["pl_box_entries"]={}; raw["pl_box_wiring"]=[]; raw["pl_box_splices"]=[]; raw["pl_field_record"]={}
                 self.multi_symbol_clipboard.append(Placement(**raw))
             self.symbol_clipboard=None
             msg=f"Kopieret {len(selected)} symboler. Ctrl+V indsætter gruppen ved musemarkøren."
@@ -3097,7 +3097,7 @@ class ElplanEditor(tk.Tk):
         if not group and self.multi_symbol_clipboard:
             group=[]
             for source in self.multi_symbol_clipboard:
-                raw=asdict(source); raw["uid"]=uuid.uuid4().hex; raw["associations"]=[]; raw["association_channels"]=[]; raw["locked"]=False; raw["parent_light_uid"]=""; group.append(Placement(**raw))
+                raw=asdict(source); raw["uid"]=uuid.uuid4().hex; raw["associations"]=[]; raw["association_channels"]=[]; raw["locked"]=False; raw["parent_light_uid"]=""; raw["pl_box_entries"]={}; raw["pl_box_wiring"]=[]; raw["pl_box_splices"]=[]; raw["pl_field_record"]={}; group.append(Placement(**raw))
         if group:
             if self.last_canvas_mouse is not None:
                 tx,ty=self.screen_to_cad(*self.last_canvas_mouse)
@@ -3106,7 +3106,7 @@ class ElplanEditor(tk.Tk):
             cx,cy=self._placements_centroid(group); dx,dy=tx-cx,ty-cy
             before=self._capture_edit_state(); first=len(self.placements); new=[]
             for source in group:
-                raw=asdict(source); raw["uid"]=uuid.uuid4().hex; raw["associations"]=[]; raw["association_channels"]=[]; raw["locked"]=False; raw["parent_light_uid"]=""
+                raw=asdict(source); raw["uid"]=uuid.uuid4().hex; raw["associations"]=[]; raw["association_channels"]=[]; raw["locked"]=False; raw["parent_light_uid"]=""; raw["pl_box_entries"]={}; raw["pl_box_wiring"]=[]; raw["pl_box_splices"]=[]; raw["pl_field_record"]={}
                 pl=Placement(**raw); pl.x+=dx; pl.y+=dy; self.placements.append(pl); self.creation_history.append(("symbol",pl)); new.append(len(self.placements)-1)
             self._commit_history("Indsæt symbolgruppe",before); self._set_symbol_selection(new); self.mode="select"; self.canvas.configure(cursor="arrow")
             self.status_var.set(f"Indsat {len(new)} symboler som gruppe. Træk gruppen for at finplacere.")

@@ -4,7 +4,7 @@ Windows-program til planlægning og dokumentation af elektriske installationer d
 
 [![Tests](https://github.com/mrmultifunk/ElplanDWGEditor/actions/workflows/tests.yml/badge.svg)](https://github.com/mrmultifunk/ElplanDWGEditor/actions/workflows/tests.yml)
 
-**Aktuel version:** `0.59.74`  
+**Aktuel version:** `0.59.75`  
 **Platform:** Windows 10/11 · Python 3.11 eller 3.12
 
 ## Hvad kan programmet?
@@ -13,6 +13,7 @@ Windows-program til planlægning og dokumentation af elektriske installationer d
 - Placering og redigering af el-symboler med vægsnap, hjælpelinjer og relationer.
 - Fysiske kabelruter med knækpunkter, kabeltyper, længdeberegning og rumfordeling.
 - Konfiguration af PL-loftdåser, lampeudtag, ledere, WAGO-samlinger og gennemsløjfninger.
+- Read-only import af fysiske kabelindføringer, noter og feltfotos fra `pl-daase`-PWA'en.
 - Rumtegning, rumnavne, rumfiltrering og BOM pr. rum.
 - Fælles artikeldatabase, genbrugelige styklister og eksplicit artikeltilknytning.
 - Priser inkl. eller ekskl. moms, forhandlersammenligning og pakke-/stykpriser.

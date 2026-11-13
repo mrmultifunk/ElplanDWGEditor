@@ -32,7 +32,7 @@ from ezdxf import bbox, disassemble, path as ezpath
 from ezdxf.addons import odafc
 
 APP_NAME = "Elplan DWG Editor"
-APP_VERSION = "0.59.74"
+APP_VERSION = "0.59.75"
 ODA_DOWNLOAD_URL = "https://www.opendesign.com/guestfiles/oda_file_converter"
 # Programmet bruger separate lag til forskellige typer el-installationer.
 # EL-SYMBOLER beholdes kun som navn af hensyn til ældre eksporter, men nye
@@ -1122,6 +1122,10 @@ class Placement:
     # 0.50.12: den grafiske ledereditor kan vise terminalerne som et generisk
     # PL-punkt, et klassisk LK-lampeudtag eller et Wiser/dæmpbart udtag.
     lamp_outlet_type: str = "generic"
+    # Read-only feltdokumentation importeret fra PL-dåse-PWA'en. Posten
+    # indeholder kun fysisk indføring, kabeltekst, noter og fotoreferencer.
+    # Lederfunktioner og Wago-data ligger fortsat udelukkende i felterne ovenfor.
+    pl_field_record: dict = field(default_factory=dict)
     # Stabilt id bruges til egentlige kabeltilslutninger, også efter gem/åbn.
     uid: str = field(default_factory=lambda: uuid.uuid4().hex)
 
@@ -1526,6 +1530,103 @@ def normalize_pl_box_entries(records) -> dict[str, dict]:
             "note": str(raw.get("note", "") or "").strip(),
         }
     return out
+
+
+def normalize_pl_field_record(record) -> dict:
+    """Normalisér read-only feltdokumentation fra PL-dåse-PWA'en.
+
+    Posten må bevidst ikke indeholde eller påvirke lederfunktioner, terminaler
+    eller Wago-samlinger. Den beskriver alene de seks fysiske indføringer.
+    """
+    if not isinstance(record, dict):
+        return {}
+    box_id=str(record.get("box_id",record.get("id","")) or "").strip()[:80]
+    if not box_id:
+        return {}
+
+    entries_by_position={}
+    for raw in record.get("entries",[]) or []:
+        if not isinstance(raw,dict):continue
+        try:position=int(raw.get("position",0) or 0)
+        except (TypeError,ValueError):continue
+        if not 1<=position<=PL_BOX_ENTRY_COUNT:continue
+        marker=raw.get("marker"); normalized_marker=None
+        if isinstance(marker,dict):
+            try:
+                x=float(marker.get("x")); y=float(marker.get("y"))
+                if math.isfinite(x) and math.isfinite(y):
+                    normalized_marker={"x":max(0.0,min(1.0,x)),"y":max(0.0,min(1.0,y))}
+            except (TypeError,ValueError):pass
+        entries_by_position[position]={
+            "position":position,
+            "function":str(raw.get("function",raw.get("fn","")) or "").strip()[:80],
+            "cable":str(raw.get("cable","") or "").strip()[:160],
+            "note":str(raw.get("note","") or "").strip()[:500],
+            "marker":normalized_marker,
+        }
+    entries=[entries_by_position.get(position,{"position":position,"function":"","cable":"","note":"","marker":None}) for position in range(1,PL_BOX_ENTRY_COUNT+1)]
+
+    photos=[]; seen_photo_ids=set()
+    for raw in record.get("photos",[]) or []:
+        if not isinstance(raw,dict):continue
+        photo_id=str(raw.get("id","") or "").strip()[:80]
+        url=str(raw.get("url","") or "").strip()[:2000]
+        if not photo_id or photo_id in seen_photo_ids or not url:continue
+        seen_photo_ids.add(photo_id); markers=[]
+        for marker in raw.get("markers",[]) or []:
+            if not isinstance(marker,dict):continue
+            try:
+                position=int(marker.get("position",0) or 0); x=float(marker.get("x")); y=float(marker.get("y"))
+            except (TypeError,ValueError):continue
+            if 1<=position<=PL_BOX_ENTRY_COUNT and math.isfinite(x) and math.isfinite(y):
+                markers.append({"position":position,"x":max(0.0,min(1.0,x)),"y":max(0.0,min(1.0,y))})
+        photos.append({"id":photo_id,"url":url,"markers":markers})
+        if len(photos)>=10:break
+
+    return {
+        "source":"pl-daase",
+        "source_url":str(record.get("source_url","") or "").strip()[:2000],
+        "box_id":box_id,
+        "name":str(record.get("name","") or "").strip()[:160],
+        "ref":str(record.get("ref","") or "").strip()[:160],
+        "note":str(record.get("note","") or "").strip()[:2000],
+        "exported":str(record.get("exported","") or "").strip()[:80],
+        "imported_at":str(record.get("imported_at","") or "").strip()[:80],
+        "entries":entries,
+        "photos":photos,
+    }
+
+
+def pl_field_cable_spec_key(value: str) -> str:
+    """Udled sammenlignelig kabelopbygning fra fx ``NOMP 3G1,5``."""
+    text=str(value or "").upper().replace(" ","").replace("²","2")
+    match=re.search(r"(?<!\d)(\d{1,2}[GX]\d+(?:[,.]\d+)?)",text)
+    if not match:return ""
+    return match.group(1).replace(".",",")
+
+
+def pl_field_entry_state(entry) -> str:
+    """Returnér ``unregistered``, ``empty`` eller ``cable`` for en PWA-post."""
+    raw=entry if isinstance(entry,dict) else {}
+    function=str(raw.get("function",raw.get("fn","")) or "").strip()
+    cable=str(raw.get("cable","") or "").strip()
+    note=str(raw.get("note","") or "").strip()
+    if function.casefold()=="tom / ikke tilsluttet".casefold():return "empty"
+    return "cable" if function or cable or note else "unregistered"
+
+
+def pl_field_suggested_leg(entry, cable_legs, used_keys=None) -> dict | None:
+    """Foreslå kun et kabelben når kabeltypen giver ét entydigt match."""
+    if pl_field_entry_state(entry)!="cable":return None
+    wanted=pl_field_cable_spec_key(str((entry or {}).get("cable","") or ""))
+    if not wanted:return None
+    used=set(used_keys or set()); matches=[]
+    for leg in cable_legs or []:
+        if not isinstance(leg,dict):continue
+        key=(str(leg.get("cable_uid","") or ""),int(leg.get("point_index",0) or 0),str(leg.get("leg","") or ""))
+        if key in used:continue
+        if pl_field_cable_spec_key(str(leg.get("cable_spec","") or ""))==wanted:matches.append(dict(leg))
+    return matches[0] if len(matches)==1 else None
 
 
 def cable_neighbor_connection(cable: CablePlacement, point_index: int, leg: str):
@@ -5535,6 +5636,7 @@ def symbol_clipboard_payload(placement: Placement) -> str:
     data["pl_box_entries"] = {}
     data["pl_box_wiring"] = []
     data["pl_box_splices"] = []
+    data["pl_field_record"] = {}
     data["lamp_outlet_type"] = normalize_pl_outlet_type(data.get("lamp_outlet_type","generic"))
     return SYMBOL_CLIPBOARD_PREFIX + json.dumps({"type":"elplan_symbol","version":1,"placement":data},ensure_ascii=False)
 
@@ -5546,7 +5648,8 @@ def placement_from_clipboard_payload(text: str) -> Placement | None:
         if raw.get("type")!="elplan_symbol": return None
         item=dict(raw.get("placement") or {}); item.pop("uid",None)
         if item.get("symbol") not in SYMBOLS.values(): return None
-        item.setdefault("line_width",0.25); item.setdefault("color",DEFAULT_SYMBOL_COLOR); item.setdefault("associations",[]); item.setdefault("association_channels",[]); item.setdefault("locked",False); item.setdefault("parent_light_uid",""); item.setdefault("spot_group_id",""); item.setdefault("spot_group_name",""); item.setdefault("pl_box_entries",{}); item.setdefault("pl_box_wiring",[]); item.setdefault("pl_box_splices",[]); item.setdefault("pl_box_orientation",0); item.setdefault("lamp_outlet_type","generic")
+        item.setdefault("line_width",0.25); item.setdefault("color",DEFAULT_SYMBOL_COLOR); item.setdefault("associations",[]); item.setdefault("association_channels",[]); item.setdefault("locked",False); item.setdefault("parent_light_uid",""); item.setdefault("spot_group_id",""); item.setdefault("spot_group_name",""); item.setdefault("pl_box_entries",{}); item.setdefault("pl_box_wiring",[]); item.setdefault("pl_box_splices",[]); item.setdefault("pl_box_orientation",0); item.setdefault("lamp_outlet_type","generic"); item.setdefault("pl_field_record",{})
+        item["pl_field_record"]={}
         item.setdefault("label_mode","Fælles"); item.setdefault("switch_label",""); item.setdefault("switch_group",""); item.setdefault("socket_label",""); item.setdefault("socket_group","")
         item["label_mode"]=normalize_combo_label_mode(item.get("label_mode")); item["color"]=normalize_hex_color(item["color"]); item["associations"]=normalize_associations(item.get("associations",[])); item["pl_box_orientation"]=normalize_pl_box_orientation(item.get("pl_box_orientation",0)); item["lamp_outlet_type"]=normalize_pl_outlet_type(item.get("lamp_outlet_type","generic"))
         return Placement(**item)
@@ -5562,7 +5665,7 @@ def symbols_clipboard_payload(placements) -> str:
     """
     items=[]
     for placement in placements:
-        data=asdict(placement); data.pop("uid",None); data["associations"]=[]; data["association_channels"]=[]; data["locked"]=False; data["parent_light_uid"]=""; data["pl_box_entries"]={}; data["pl_box_wiring"]=[]; data["pl_box_splices"]=[]; data["lamp_outlet_type"]=normalize_pl_outlet_type(data.get("lamp_outlet_type","generic"))
+        data=asdict(placement); data.pop("uid",None); data["associations"]=[]; data["association_channels"]=[]; data["locked"]=False; data["parent_light_uid"]=""; data["pl_box_entries"]={}; data["pl_box_wiring"]=[]; data["pl_box_splices"]=[]; data["pl_field_record"]={}; data["lamp_outlet_type"]=normalize_pl_outlet_type(data.get("lamp_outlet_type","generic"))
         items.append(data)
     return SYMBOLS_CLIPBOARD_PREFIX + json.dumps({"type":"elplan_symbols","version":1,"placements":items},ensure_ascii=False)
 
@@ -5582,8 +5685,8 @@ def placements_from_clipboard_payload(text: str) -> list[Placement]:
         for source in sources:
             item=dict(source or {}); item.pop("uid",None)
             if item.get("symbol") not in SYMBOLS.values():continue
-            item.setdefault("line_width",0.25); item.setdefault("color",DEFAULT_SYMBOL_COLOR); item.setdefault("associations",[]); item.setdefault("association_channels",[]); item.setdefault("locked",False); item.setdefault("parent_light_uid",""); item.setdefault("spot_group_id",""); item.setdefault("spot_group_name",""); item.setdefault("pl_box_entries",{}); item.setdefault("pl_box_wiring",[]); item.setdefault("pl_box_splices",[]); item.setdefault("pl_box_orientation",0); item.setdefault("lamp_outlet_type","generic")
-            item["pl_box_entries"]={}; item["pl_box_wiring"]=[]; item["pl_box_splices"]=[]; item["pl_box_orientation"]=normalize_pl_box_orientation(item.get("pl_box_orientation",0)); item["lamp_outlet_type"]=normalize_pl_outlet_type(item.get("lamp_outlet_type","generic")); item["parent_light_uid"]=""; item["color"]=normalize_hex_color(item["color"]); item["associations"]=[]; item["association_channels"]=[]
+            item.setdefault("line_width",0.25); item.setdefault("color",DEFAULT_SYMBOL_COLOR); item.setdefault("associations",[]); item.setdefault("association_channels",[]); item.setdefault("locked",False); item.setdefault("parent_light_uid",""); item.setdefault("spot_group_id",""); item.setdefault("spot_group_name",""); item.setdefault("pl_box_entries",{}); item.setdefault("pl_box_wiring",[]); item.setdefault("pl_box_splices",[]); item.setdefault("pl_box_orientation",0); item.setdefault("lamp_outlet_type","generic"); item.setdefault("pl_field_record",{})
+            item["pl_box_entries"]={}; item["pl_box_wiring"]=[]; item["pl_box_splices"]=[]; item["pl_field_record"]={}; item["pl_box_orientation"]=normalize_pl_box_orientation(item.get("pl_box_orientation",0)); item["lamp_outlet_type"]=normalize_pl_outlet_type(item.get("lamp_outlet_type","generic")); item["parent_light_uid"]=""; item["color"]=normalize_hex_color(item["color"]); item["associations"]=[]; item["association_channels"]=[]
             old_gid=str(item.get("spot_group_id","") or "")
             if old_gid and item.get("symbol")=="spot" and group_counts.get(old_gid,0)>=2:
                 item["spot_group_id"]=group_remap.setdefault(old_gid,uuid.uuid4().hex)

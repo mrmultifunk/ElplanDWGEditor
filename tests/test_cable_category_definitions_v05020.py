@@ -6,7 +6,7 @@ from project_model import ProjectDocument, APP_VERSION
 
 
 def test_version_05020():
-    assert APP_VERSION == core.APP_VERSION == "0.59.74"
+    assert APP_VERSION == core.APP_VERSION == "0.59.75"
 
 
 def test_standard_cable_categories_have_definitions():

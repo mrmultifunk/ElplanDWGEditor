@@ -6,12 +6,13 @@ from pathlib import Path
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
-    QCheckBox, QComboBox, QDialog, QDialogButtonBox, QFormLayout, QHBoxLayout,
-    QLabel, QListWidget, QPushButton, QStackedWidget, QVBoxLayout, QWidget,
+    QApplication, QCheckBox, QComboBox, QDialog, QDialogButtonBox, QFormLayout, QHBoxLayout,
+    QLabel, QLineEdit, QListWidget, QPushButton, QStackedWidget, QVBoxLayout, QWidget,
 )
 
 import core_logic as core
 import price_display
+import pl_daase_api
 import project_storage
 import user_library
 from qt_ui import configure_modern_dialog, make_dialog_header
@@ -37,6 +38,7 @@ class ApplicationSettingsDialog(QDialog):
         self._add_category("Visning", self._view_page(appearance_mode, dark_canvas))
         self._add_category("Priser og BOM", self._price_page())
         self._add_category("Lager og synkronisering", self._storage_page())
+        self._add_category("Integrationer", self._integration_page())
         self.categories.currentRowChanged.connect(self.pages.setCurrentIndex)
         self.categories.setCurrentRow(1)
         buttons=QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
@@ -96,6 +98,44 @@ class ApplicationSettingsDialog(QDialog):
         layout.addStretch(1); self._refresh_storage_summaries()
         return page
 
+    def _integration_page(self):
+        page, layout=self._page(
+            "Integrationer",
+            "PL-dåse-PWA'en bruges som read-only feltdokumentation. Kun fysiske kabelindføringer, noter og fotos importeres; lederfordelingen forbliver i Elplan.",
+        )
+        form=QFormLayout(); form.setSpacing(10)
+        self.pl_daase_url=QLineEdit(str(self.settings.get("pl_daase_url","") or ""))
+        self.pl_daase_url.setPlaceholderText("https://pl.dit-domæne.dk")
+        self.pl_daase_token=QLineEdit(str(self.settings.get("pl_daase_token","") or ""))
+        self.pl_daase_token.setEchoMode(QLineEdit.EchoMode.Password)
+        self.pl_daase_token.setPlaceholderText("pl_…")
+        form.addRow("PL-dåse API",self.pl_daase_url)
+        form.addRow("API-token",self.pl_daase_token)
+        layout.addLayout(form)
+        actions=QHBoxLayout()
+        self.pl_daase_test=QPushButton("Test forbindelse")
+        self.pl_daase_test.clicked.connect(self._test_pl_daase_connection)
+        self.pl_daase_test_status=QLabel(""); self.pl_daase_test_status.setWordWrap(True)
+        actions.addWidget(self.pl_daase_test); actions.addWidget(self.pl_daase_test_status,1)
+        layout.addLayout(actions)
+        note=QLabel("Tokenet gemmes kun i programmets lokale indstillinger og skrives ikke i projektfilen eller eksporterne.")
+        note.setWordWrap(True); note.setObjectName("sectionHint"); layout.addWidget(note); layout.addStretch(1)
+        return page
+
+    def _test_pl_daase_connection(self):
+        self.pl_daase_test.setEnabled(False); self.pl_daase_test_status.setText("Kontakter serveren…")
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+        try:
+            result=pl_daase_api.fetch_export(self.pl_daase_url.text(),self.pl_daase_token.text(),timeout=8)
+            count=len(result.get("boxes",[])); user=str(result.get("user","") or "")
+            self.pl_daase_test_status.setObjectName("positiveText")
+            self.pl_daase_test_status.setText(f"Forbindelse OK · {count} dåse(r)"+(f" · bruger {user}" if user else ""))
+        except (ValueError,pl_daase_api.PLDaaseApiError) as exc:
+            self.pl_daase_test_status.setObjectName("dangerText"); self.pl_daase_test_status.setText(str(exc))
+        finally:
+            QApplication.restoreOverrideCursor(); self.pl_daase_test.setEnabled(True)
+            self.pl_daase_test_status.style().unpolish(self.pl_daase_test_status); self.pl_daase_test_status.style().polish(self.pl_daase_test_status)
+
     def _refresh_storage_summaries(self):
         settings=core.load_app_settings()
         project_mode, project_root=project_storage.configured_storage(settings)
@@ -123,6 +163,8 @@ class ApplicationSettingsDialog(QDialog):
             "appearance_mode":core.normalize_appearance_mode(self.appearance.currentData()),
             "dark_canvas":bool(self.dark_canvas.isChecked()),
             "price_vat_mode":price_display.normalize_vat_mode(self.price_vat.currentData()),
+            "pl_daase_url":self.pl_daase_url.text().strip(),
+            "pl_daase_token":self.pl_daase_token.text().strip(),
         }
 
 
