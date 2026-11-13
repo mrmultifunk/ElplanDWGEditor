@@ -191,7 +191,7 @@ class PLFieldPhotoDialog(QDialog):
         self.photo_combo.currentIndexChanged.connect(self._load); head.addWidget(self.photo_combo); root.addLayout(head)
         self.status=QLabel(""); self.status.setWordWrap(True); root.addWidget(self.status)
         scroll=QScrollArea(); scroll.setWidgetResizable(True); self.image=QLabel("Ingen fotos"); self.image.setAlignment(Qt.AlignmentFlag.AlignCenter); scroll.setWidget(self.image); root.addWidget(scroll,1)
-        buttons=QDialogButtonBox(QDialogButtonBox.StandardButton.Close); buttons.rejected.connect(self.reject); buttons.clicked.connect(self.accept); root.addWidget(buttons)
+        buttons=QDialogButtonBox(QDialogButtonBox.StandardButton.Close); buttons.rejected.connect(self.reject); root.addWidget(buttons)
         QTimer.singleShot(0,self._load)
 
     def _selected_photo(self):
@@ -201,7 +201,7 @@ class PLFieldPhotoDialog(QDialog):
     def _load(self):
         photo=self._selected_photo()
         if not photo:self.image.setText("Ingen fotos i feltregistreringen."); return
-        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor); self.status.setText("Henter foto…")
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor); self.status.setObjectName("sectionHint"); self.status.setText("Henter foto…")
         try:
             raw=pl_daase_api.fetch_photo(photo.get("url",""),self.token,source_url=self.source_url,timeout=15)
             pix=QPixmap();
