@@ -6,7 +6,7 @@ from project_model import ProjectDocument, APP_VERSION
 
 
 def test_version_and_room_layer():
-    assert APP_VERSION == core.APP_VERSION == "0.59.75"
+    assert APP_VERSION == core.APP_VERSION == "0.59.76"
     assert core.ROOM_LAYER == "EL-RUM"
     assert core.ROOM_LAYER in core.GENERATED_LAYERS
 
@@ -27,7 +27,7 @@ def test_room_project_roundtrip(tmp_path):
     doc.rooms=[room]
     path=tmp_path/'rooms.elplan.json'; doc.save(path)
     raw=json.loads(path.read_text(encoding='utf-8'))
-    assert raw['version']=='0.59.75'
+    assert raw['version']=='0.59.76'
     assert raw['rooms'][0]['name']=='Køkken'
     loaded=ProjectDocument.load(path)
     assert len(loaded.rooms)==1

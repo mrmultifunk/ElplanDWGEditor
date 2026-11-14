@@ -29,7 +29,7 @@ from storage_utils import atomic_write_json, read_json
 CACHE_VERSION = 3
 PRICE_NORMALIZATION_VERSION = 3
 DEFAULT_VAT_RATE = 0.25
-USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/151 Safari/537.36 ElplanDWGEditor/0.59.75"
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/151 Safari/537.36 ElplanDWGEditor/0.59.76"
 
 
 @dataclass(frozen=True)

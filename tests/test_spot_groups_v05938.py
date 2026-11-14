@@ -5,7 +5,7 @@ from project_model import APP_VERSION, placement_from_raw
 
 
 def test_version_and_spot_group_fields_are_persistent():
-    assert APP_VERSION == core.APP_VERSION == "0.59.75"
+    assert APP_VERSION == core.APP_VERSION == "0.59.76"
     p = placement_from_raw({
         "symbol": "spot", "x": 10, "y": 20,
         "spot_group_id": "group-a", "spot_group_name": "Spotgruppe 1",

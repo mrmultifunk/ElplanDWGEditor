@@ -6,7 +6,7 @@ from project_model import APP_VERSION
 ROOT=Path(__file__).resolve().parents[1]
 
 def test_version_and_visual_bling_modules():
-    assert APP_VERSION == core.APP_VERSION == "0.59.75"
+    assert APP_VERSION == core.APP_VERSION == "0.59.76"
     app=(ROOT/"qt_app.py").read_text(encoding="utf-8")
     visual=(ROOT/"qt_visual_workspace.py").read_text(encoding="utf-8")
     hover=(ROOT/"qt_hover.py").read_text(encoding="utf-8")

@@ -5,7 +5,7 @@ from project_model import APP_VERSION
 
 
 def test_wago_selector_polish_has_series_tabs_preview_and_capacity_guidance():
-    assert APP_VERSION == core.APP_VERSION == "0.59.75"
+    assert APP_VERSION == core.APP_VERSION == "0.59.76"
     source=(Path(__file__).resolve().parents[1]/"qt_pl_box.py").read_text(encoding="utf-8")
     for token in (
         '221 · universel med vippepal',

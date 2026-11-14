@@ -1,3 +1,10 @@
+## 0.59.75 → 0.59.76
+
+- Projektformat, symbolplaceringer, kabler, artikelbase, prisbog og styklister er uændrede. Eksisterende projekter åbnes direkte uden migrering.
+- Optimeringen ændrer kun, hvornår grafik og afledte kabelspor genberegnes under symboltræk; de gemte koordinater og fysiske kabelpunkter er fortsat autoritative.
+- Låste symboler følger samme sikkerhedsregel som før, men brugerfladen viser nu årsagen, når en sletning afvises.
+- GitHub Actions-workflowet er fjernet fra repositoryet. Det påvirker ikke programmet eller lokale tests.
+
 ## 0.59.74 → 0.59.75
 
 - Projektets PL-lampesteder kan nu indeholde det valgfrie felt `pl_field_record` med PWA-dåsens stabile id, tekst for de seks indføringer, noter, fotoadresser og markører.

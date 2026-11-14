@@ -1,3 +1,14 @@
+## 0.59.76 - Hurtigere symbolredigering og sikker sletning
+
+- Symboltræk opdaterer nu kun de kabler, der faktisk er forbundet til de flyttede symboler, i stedet for at gennemgå hele kabelmodellen ved hvert musepunkt.
+- Parallelle kabelspor, samlebadges og øvrig tung kabelgrafik genberegnes én gang, når symbolet slippes.
+- Symbolmærkningernes globale kollisionslayout samles i en kort, forsinket opdatering, og kun mærkningen for det gamle og nye valg opdateres straks.
+- Artikelkataloget genbruges i Egenskaber-panelet og genindlæses kun efter ændringer i artikel-/BOM-data.
+- Egenskaber-panelet og symbolets højrekliksmenu har fået en tydelig `Slet symbol`-handling; sletning kan fortsat fortrydes med `Ctrl+Z`.
+- Låste symboler slettes ikke utilsigtet, men programmet forklarer nu præcist, hvordan de låses op, i stedet for lydløst at ignorere sletningen.
+- Sletning af flere objekter opdaterer først valg og Egenskaber, når hele handlingen er færdig.
+- Repositoryets GitHub Actions-workflow og testbadge er fjernet. Regressionssuiten køres fortsat lokalt med `python -m pytest -q`.
+
 ## 0.59.75 - PL-dåse feltregistrering
 
 - PL-dåse-konfiguratoren kan nu hente feltregistreringer direkte fra `pl-daase` via dens read-only API.

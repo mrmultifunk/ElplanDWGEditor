@@ -61,7 +61,7 @@ def test_project_roundtrip_keeps_pl_entries_and_strips_dead_references(tmp_path:
     doc.placements=[lamp]; doc.cables=[cable]
     path=tmp_path/"p.elplan.json"; doc.save(path)
     raw=json.loads(path.read_text(encoding="utf-8"))
-    assert raw["version"]==APP_VERSION=="0.59.75"
+    assert raw["version"]==APP_VERSION=="0.59.76"
     assert raw["placements"][0]["pl_box_entries"]=={
         "1":{"cable_uid":"c1","point_index":0,"leg":"endpoint","note":"OK"}
     }

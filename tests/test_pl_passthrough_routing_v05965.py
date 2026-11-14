@@ -16,7 +16,7 @@ def _cable():
 
 
 def test_version_05965():
-    assert APP_VERSION == core.APP_VERSION == "0.59.75"
+    assert APP_VERSION == core.APP_VERSION == "0.59.76"
 
 
 def test_passthrough_functions_keep_switch_and_both_travellers_distinct():

@@ -52,7 +52,7 @@ def test_room_filtered_bom_splits_cable_article_by_actual_length_in_room():
 
 
 def test_bom_ui_has_room_filter_in_addition_to_room_sort_and_hover_preview():
-    assert APP_VERSION == core.APP_VERSION == '0.59.75'
+    assert APP_VERSION == core.APP_VERSION == '0.59.76'
     src=Path('qt_articles.py').read_text(encoding='utf-8')
     assert 'self.bom_room_filter.addItem("Alle rum","")' in src
     assert 'self.bom_room_filter.addItem("Uden rum","__outside__")' in src

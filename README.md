@@ -2,9 +2,7 @@
 
 Windows-program til planlægning og dokumentation af elektriske installationer direkte på DWG- og DXF-plantegninger.
 
-[![Tests](https://github.com/mrmultifunk/ElplanDWGEditor/actions/workflows/tests.yml/badge.svg)](https://github.com/mrmultifunk/ElplanDWGEditor/actions/workflows/tests.yml)
-
-**Aktuel version:** `0.59.75`  
+**Aktuel version:** `0.59.76`
 **Platform:** Windows 10/11 · Python 3.11 eller 3.12
 
 ## Hvad kan programmet?
@@ -69,8 +67,6 @@ Installer udviklingsafhængighederne og kør tests fra projektroden:
 python -m pip install -r requirements-dev.txt
 python -m pytest -q
 ```
-
-GitHub Actions kører den stabile regressionssuite og en Qt-importkontrol på Windows med Python 3.11 og 3.12.
 
 Nye funktioner bør som udgangspunkt reducere klik, gøre redigering mere forudsigelig eller forbedre overblikket uden at gøre brugerfladen unødigt CAD-tung. Se [CONTRIBUTING.md](CONTRIBUTING.md) for kode- og testprincipper.
 

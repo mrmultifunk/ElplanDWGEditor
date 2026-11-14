@@ -21,7 +21,7 @@ def _three_stop_cable():
 
 
 def test_version_and_mixed_route_field():
-    assert APP_VERSION == core.APP_VERSION == "0.59.75"
+    assert APP_VERSION == core.APP_VERSION == "0.59.76"
     cable=core.CablePlacement(points=[(0,0),(10,0)])
     assert cable.route_section_modes == []
 
@@ -139,7 +139,7 @@ def test_legacy_route_section_override_materialises_on_physical_cables(tmp_path)
     assert [c.orthogonal for c in loaded.cables] == [False,True]
     assert all(c.route_section_modes==[] for c in loaded.cables)
     assert all(core.cable_is_physical_segment(c) for c in loaded.cables)
-    assert loaded.raw["version"] == "0.59.75"
+    assert loaded.raw["version"] == "0.59.76"
 
 
 def test_qt_source_exposes_panel_and_context_shortcut():

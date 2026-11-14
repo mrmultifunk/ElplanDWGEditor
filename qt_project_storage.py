@@ -180,7 +180,7 @@ def configure_core_data_storage(window) -> bool:
         settings["core_data_storage_mode"]=new_mode
         settings["core_data_root"]=str(target) if new_mode==user_library.CORE_DATA_MODE_SYNCED else ""
         core.save_app_settings(settings); window.app_settings=settings
-        user_library.invalidate_core_data_caches(); user_library.load_core_article_catalog()
+        user_library.invalidate_core_data_caches(); window.global_article_catalog=user_library.load_core_article_catalog()
         window.global_bom_assemblies=deepcopy(user_library.load_global_bom_assemblies())
     except Exception as exc:
         QMessageBox.critical(window,"Artikeldata",f"Artikeldataene kunne ikke flyttes:\n{exc}"); return False

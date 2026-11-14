@@ -826,7 +826,7 @@ class ElectricalSymbolItem(QGraphicsItem):
                     return snapped_pos
                 except Exception:
                     pass
-        if change == QGraphicsItem.GraphicsItemChange.ItemPositionHasChanged and self.scene() is not None:
+        if change == QGraphicsItem.GraphicsItemChange.ItemPositionHasChanged and self.scene() is not None and not self._suppress_snap:
             pos = value
             self.placement.x = float(pos.x())
             self.placement.y = float(-pos.y())

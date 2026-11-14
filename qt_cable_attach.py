@@ -35,6 +35,10 @@ class CableAttachMixin:
         focus=menu.addAction(f"Fokusér gruppe · {group}" if group else "Fokusér gruppe")
         focus.setEnabled(bool(group))
         zoom=menu.addAction("Zoom til symbol")
+        menu.addSeparator()
+        delete=menu.addAction("Slet symbol")
+        delete.setEnabled(not bool(getattr(placement,"locked",False)))
+        delete.setToolTip("Lås symbolet op i Egenskaber før det slettes." if bool(getattr(placement,"locked",False)) else "Slet symbolet. Handlingen kan fortrydes.")
         chosen=menu.exec(screen_pos)
         if attach is not None and chosen is attach:
             self._start_cable_attach_mode(placement)
@@ -46,6 +50,8 @@ class CableAttachMixin:
             self.focus_selected_group()
         elif chosen is zoom:
             self.zoom_to_selection()
+        elif chosen is delete:
+            self.delete_selected_symbols()
 
 
     def start_cable_attach_for_selection(self) -> None:

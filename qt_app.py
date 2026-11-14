@@ -748,7 +748,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self.project = ProjectDocument()
         # Materialisér den globale artikelbase i kernedatamappen. Nye versioner
         # kan tilføje standardartikler uden at overskrive brugerens egne edits.
-        user_library.load_core_article_catalog()
+        self.global_article_catalog=user_library.load_core_article_catalog()
         self.global_bom_assemblies=deepcopy(user_library.load_global_bom_assemblies())
         self.doc = None
         self.cad_primitives = []
@@ -764,6 +764,9 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self._group_drag_before: dict[str, tuple[float,float,float]] = {}
         self._group_drag_sync = False
         self._group_drag_blocked = False
+        self._symbol_drag_cables: dict[str,list[core.CablePlacement]] = {}
+        self._symbol_drag_cables_changed = False
+        self._last_selected_annotation_uids: set[str] = set()
         self.spot_parent_pending: list[str] = []
         # Single spots placed from the palette are selected immediately so their
         # Spot → lampested relation can be assigned just like pattern-created spots.
@@ -865,6 +868,11 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         # status text still updates immediately.
         self._zoom_visual_refresh_timer=QTimer(self); self._zoom_visual_refresh_timer.setSingleShot(True); self._zoom_visual_refresh_timer.setInterval(80)
         self._zoom_visual_refresh_timer.timeout.connect(self._refresh_zoom_dependent_visuals)
+        # Selection and symbol movement can generate many events in one gesture.
+        # Metadata collision layout is global, so coalesce it instead of blocking
+        # every click/drag frame with a complete plan-wide recalculation.
+        self._symbol_metadata_refresh_timer=QTimer(self); self._symbol_metadata_refresh_timer.setSingleShot(True); self._symbol_metadata_refresh_timer.setInterval(45)
+        self._symbol_metadata_refresh_timer.timeout.connect(self._refresh_switch_association_badges)
         self.view.set_lighting_alignment_enabled(self.lighting_alignment_snap)
         self.setCentralWidget(self.view)
         self.cable_assistant_popup = CableAssistantPopup(self.view.viewport())
@@ -1939,7 +1947,12 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self.apply_button = QPushButton("Anvend ændringer")
         self.apply_button.setObjectName("primaryButton")
         self.apply_button.clicked.connect(self.apply_properties)
-        outer.addWidget(self.apply_button)
+        self.delete_symbol_button = _set_role(QPushButton("Slet symbol"), "dangerButton")
+        self.delete_symbol_button.setToolTip("Slet det valgte symbol. Handlingen kan fortrydes med Ctrl+Z.")
+        self.delete_symbol_button.clicked.connect(self.delete_selected_symbols)
+        property_actions=QHBoxLayout(); property_actions.setSpacing(7)
+        property_actions.addWidget(self.apply_button,1); property_actions.addWidget(self.delete_symbol_button)
+        outer.addLayout(property_actions)
         outer.addStretch(1)
 
         scroll.setWidget(widget)
@@ -1949,10 +1962,21 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
 
     def _enable_properties(self, enabled: bool) -> None:
         for w in (self.prop_label, self.prop_group, self.prop_size, self.prop_rotation, self.prop_line_width,
-                  self.prop_color, self.prop_locked, self.apply_button, self.prop_combo_mode,
+                  self.prop_color, self.prop_locked, self.apply_button, self.delete_symbol_button, self.prop_combo_mode,
                   self.prop_switch_label, self.prop_switch_group, self.prop_socket_label, self.prop_socket_group,
                   self.assoc_button, self.clear_assoc_button):
             w.setEnabled(enabled)
+
+    def _cached_article_catalog(self, *, refresh: bool = False) -> list[dict]:
+        """Return the materialized article catalog used by the inspector.
+
+        Loading the global catalog creates a defensive copy of thousands of
+        rows. Selection changes must stay instant, so refresh only after an
+        article/BOM operation that can actually have changed the catalog.
+        """
+        if refresh or not hasattr(self,"global_article_catalog"):
+            self.global_article_catalog=user_library.load_core_article_catalog()
+        return self.global_article_catalog
 
     def open_bom_manager(self) -> None:
         selected=self._selected_symbol_item()
@@ -1961,6 +1985,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         dlg=BomManagerDialog(self,focus_uid)
         result=dlg.exec(); self.clear_bom_article_highlight()
         if result==QDialog.DialogCode.Accepted:
+            self._cached_article_catalog(refresh=True)
             self._hover_bom_cache.clear()
             self._selection_changed()
             self._notify("Artikeltilknytninger/BOM opdateret.", kind="success")
@@ -1970,6 +1995,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         dlg=BomManagerDialog(self,"",initial_room_uid=str(room_uid or ""))
         result=dlg.exec(); self.clear_bom_article_highlight()
         if result==QDialog.DialogCode.Accepted:
+            self._cached_article_catalog(refresh=True)
             self._hover_bom_cache.clear(); self._selection_changed(); self._notify("Rum-BOM opdateret.",kind="success")
 
     def edit_bom_rooms_for_selection(self) -> None:
@@ -1995,6 +2021,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         dlg=BomManagerDialog(self,selected.placement.uid)
         result=dlg.exec(); self.clear_bom_article_highlight()
         if result==QDialog.DialogCode.Accepted:
+            self._cached_article_catalog(refresh=True)
             self._hover_bom_cache.clear()
             self._selection_changed()
             self._notify(f"Artikler opdateret for det valgte {core.symbol_display_name(selected.placement.symbol)}-symbol.", kind="success")
@@ -2895,6 +2922,8 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self._update_title()
 
     def _symbol_drag_started(self, item, old_pose) -> None:
+        self._symbol_drag_cables={}
+        self._symbol_drag_cables_changed=False
         selected=[x for x in self.scene.selectedItems() if isinstance(x,ElectricalSymbolItem) and not x.placement.locked]
         if item not in selected:
             selected=[item]
@@ -2930,6 +2959,18 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             return
 
         self._group_drag_before={x.placement.uid:(float(x.placement.x),float(x.placement.y),float(x.placement.rotation)) for x in expanded.values()}
+        drag_uids=set(self._group_drag_before)
+        self._symbol_drag_cables={uid:[] for uid in drag_uids}
+        seen={uid:set() for uid in drag_uids}
+        # Resolve connected cables once per gesture. Previously every mouse
+        # point scanned the complete cable collection for every moved symbol.
+        for cable in self.project.cables:
+            for rec in core.cable_symbol_connections(cable):
+                uid=str(rec.get("symbol_uid","") or "")
+                if uid not in self._symbol_drag_cables or id(cable) in seen[uid]:
+                    continue
+                self._symbol_drag_cables[uid].append(cable); seen[uid].add(id(cable))
+        self._clear_spot_link_visuals(); self._clear_relation_overview()
 
     def _symbol_drag_finished(self, item: ElectricalSymbolItem, old_pose, new_pose) -> None:
         self.view._clear_snap_feedback()
@@ -2939,6 +2980,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         blocked=bool(self._group_drag_blocked)
         self._group_drag_before={}; self._group_drag_anchor_uid=""; self._group_drag_blocked=False
         if blocked:
+            self._symbol_drag_cables={}; self._symbol_drag_cables_changed=False
             return
         if not before:
             before={item.placement.uid:tuple(old_pose)}
@@ -2949,7 +2991,20 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             now=(float(current.placement.x),float(current.placement.y),float(current.placement.rotation))
             if tuple(round(v,8) for v in old)!=tuple(round(v,8) for v in now):
                 changed.append((uid,old,now))
-        if not changed:return
+        if not changed:
+            self._symbol_drag_cables={}; self._symbol_drag_cables_changed=False
+            return
+        if self._symbol_drag_cables_changed:
+            self._rebuild_cable_visual_cache(refresh_items=True)
+            if self.selected_cable is not None:
+                self._load_selected_cable_into_panel(self.selected_cable)
+        self._symbol_drag_cables={}; self._symbol_drag_cables_changed=False
+        self._symbol_metadata_refresh_timer.start()
+        selected=self._selected_symbol_item()
+        if selected is not None:
+            self._refresh_spot_link_visuals(selected.placement)
+            self._refresh_relation_overview(selected.placement)
+        self.project.dirty=True; self._update_title()
         self.undo_stack.beginMacro("Flyt symboler" if len(changed)>1 else "Flyt symbol")
         try:
             for uid,old,now in changed:
@@ -2958,11 +3013,25 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             self.undo_stack.endMacro()
 
     def delete_selected_symbols(self) -> None:
-        symbols=[x for x in self.scene.selectedItems() if isinstance(x,ElectricalSymbolItem) and not x.placement.locked]
+        selected_symbol_items=[x for x in self.scene.selectedItems() if isinstance(x,ElectricalSymbolItem)]
+        locked_symbols=[x for x in selected_symbol_items if x.placement.locked]
+        symbols=[x for x in selected_symbol_items if not x.placement.locked]
         texts=[x for x in self.scene.selectedItems() if isinstance(x,FreeTextItem)]
         cables=[x for x in self.scene.selectedItems() if isinstance(x,CableItem)]
         rooms=self._selected_rooms_from_scene()
-        if not symbols and not texts and not cables and not rooms:return
+        if not symbols and not texts and not cables and not rooms:
+            if locked_symbols:
+                QMessageBox.information(
+                    self,"Symbolet er låst",
+                    "Det valgte symbol kan ikke slettes, mens det er låst.\n\n"
+                    "Fjern markeringen 'Lås position og redigering' i Egenskaber, "
+                    "vælg 'Anvend ændringer', og slet derefter symbolet."
+                )
+            return
+        # Removing several selected graphics items normally emits one expensive
+        # selectionChanged event per item. Keep the operation atomic and update
+        # the inspector once when the undo macro is complete.
+        selection_blocker=QSignalBlocker(self.scene)
         self.undo_stack.beginMacro("Slet valgte objekter")
         try:
             for item in symbols:
@@ -2981,7 +3050,12 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
                 try:index=self.project.rooms.index(room)
                 except ValueError:index=len(self.project.rooms)
                 self.undo_stack.push(DeleteRoomCommand(self,room,index))
-        finally:self.undo_stack.endMacro()
+        finally:
+            self.undo_stack.endMacro()
+            del selection_blocker
+        self._selection_changed()
+        if locked_symbols:
+            self._notify(f"{len(locked_symbols)} låst symbol blev ikke slettet.",kind="warning")
 
     def _next_cable_id(self, prefix: str = "K") -> str:
         used = set()
@@ -4561,16 +4635,28 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             changed=self._anchor_cable_connections(cable) or changed
         return changed
 
-    def _refresh_connected_cables(self, uid: str) -> None:
+    def _refresh_connected_cables(self, uid: str, *, finalize: bool = True) -> bool:
         """Følg et flyttet symbol for alle tilslutninger langs samme kabel."""
-        changed_any=False
-        for cable in self.project.cables:
+        drag_candidates=self._symbol_drag_cables.get(str(uid)) if self._symbol_drag_cables else None
+        candidates=drag_candidates if drag_candidates is not None else self.project.cables
+        changed=[]
+        for cable in candidates:
             if self._anchor_cable_connections(cable,uid):
-                changed_any=True
-        if changed_any:
+                changed.append(cable)
+        if changed and finalize:
             self._rebuild_cable_visual_cache(refresh_items=True)
             if self.selected_cable is not None:
                 self._load_selected_cable_into_panel(self.selected_cable)
+        elif changed:
+            # During drag, only repaint the physical cables that actually moved.
+            # Stable parallel lanes and bundle badges are rebuilt once on release.
+            self._symbol_drag_cables_changed=True
+            for cable in changed:
+                item=self.cable_items.get(id(cable))
+                if item is not None:
+                    item.set_visual_points(cable.points,refresh=False)
+                    item.refresh(update_handles=False)
+        return bool(changed)
 
     def rotate_selected_90(self) -> None:
         selected = [x for x in self.scene.selectedItems() if isinstance(x, ElectricalSymbolItem) and not x.placement.locked]
@@ -5564,20 +5650,25 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self._update_title()
 
     def _selection_changed(self) -> None:
+        selected_symbols=[x for x in self.scene.selectedItems() if isinstance(x,ElectricalSymbolItem)]
+        selected_cables=[x for x in self.scene.selectedItems() if isinstance(x,CableItem)]
+        selected_rooms=self._selected_rooms_from_scene()
         # Annotation detail is adaptive: selected symbols temporarily reveal
-        # full detail even when the overview is in Auto mode.
-        for ann in self.annotation_items.values():
-            ann.refresh()
-        self._refresh_switch_association_badges()
+        # full detail even when the overview is in Auto mode. Only the old and
+        # new selection can have changed detail; refreshing every label made
+        # selection noticeably slower on larger plans.
+        selected_annotation_uids={x.placement.uid for x in selected_symbols}
+        for uid in selected_annotation_uids | self._last_selected_annotation_uids:
+            ann=self.annotation_items.get(uid)
+            if ann is not None:ann.refresh()
+        self._last_selected_annotation_uids=selected_annotation_uids
+        self._symbol_metadata_refresh_timer.start()
         self._clear_spot_link_visuals()
         self._clear_relation_overview()
         self.spot_parent_group.hide()
         self.bom_group.hide()
         if hasattr(self,"symbol_cables_group"):self.symbol_cables_group.hide()
         if hasattr(self,"pl_box_group"):self.pl_box_group.hide()
-        selected_symbols=[x for x in self.scene.selectedItems() if isinstance(x,ElectricalSymbolItem)]
-        selected_cables=[x for x in self.scene.selectedItems() if isinstance(x,CableItem)]
-        selected_rooms=self._selected_rooms_from_scene()
         self._apply_visual_emphasis()
         if self._show_room_selection_inspector(selected_rooms,selected_symbols,selected_cables):return
 
@@ -5695,7 +5786,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             for a in core.normalize_bom_assemblies(self.project.raw.get("bom_assemblies",[])):
                 effective_assemblies.setdefault(a["id"],a)
             self.bom_summary.setText(core.bom_binding_summary(
-                p.symbol, user_library.load_core_article_catalog(), self.project.raw.get("placement_articles",{}),
+                p.symbol, self._cached_article_catalog(), self.project.raw.get("placement_articles",{}),
                 list(effective_assemblies.values()), self.project.raw.get("placement_assemblies",{}), binding_key=p.uid
             ))
             self._refresh_selected_bom_room_summary(p)
@@ -5749,6 +5840,11 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             self.prop_socket_group.setText(getattr(p,"socket_group","") or "")
         self._loading_properties=False
         self._enable_properties(True)
+        self.delete_symbol_button.setEnabled(not p.locked)
+        self.delete_symbol_button.setToolTip(
+            "Symbolet er låst. Fjern markeringen 'Lås position og redigering' og anvend ændringen før sletning."
+            if p.locked else "Slet det valgte symbol. Handlingen kan fortrydes med Ctrl+Z."
+        )
         self.assoc_button.setEnabled(role=="switch" and not p.locked)
         self.clear_assoc_button.setEnabled(bool(p.associations) and not p.locked)
 
@@ -5841,15 +5937,12 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
                         other.set_pose_silent(x0+dx,y0+dy,r0)
                         ann=self.annotation_items.get(uid)
                         if ann:ann.refresh()
-                        self._refresh_connected_cables(uid)
+                        self._refresh_connected_cables(uid,finalize=False)
             finally:
                 self._group_drag_sync=False
         annotation = self.annotation_items.get(item.placement.uid)
         if annotation: annotation.refresh()
-        self._refresh_switch_association_badges()
-        self._refresh_connected_cables(item.placement.uid)
-        self.project.dirty = True
-        self._update_title()
+        self._refresh_connected_cables(item.placement.uid,finalize=False)
 
     def export_core_data_package(self) -> None:
         summary=portability.core_data_summary()
@@ -5891,6 +5984,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             result=portability.import_core_data(path,replace=replace,app_version=APP_VERSION)
             self.app_settings=core.load_app_settings()
             core.register_custom_symbol_records(self.app_settings.get("custom_symbols",[]))
+            self._cached_article_catalog(refresh=True)
             self.global_bom_assemblies=deepcopy(user_library.load_global_bom_assemblies())
             self._refresh_palette_categories(); self._populate_symbol_palette(); self._refresh_cable_article_ui()
         except Exception as exc:

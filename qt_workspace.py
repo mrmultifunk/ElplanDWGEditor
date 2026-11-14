@@ -207,6 +207,8 @@ class WorkspaceUiMixin:
         self.context_cable_route_action.setVisible(False)
         self.act_ctx_cable_panel.setVisible(False)
         self.act_ctx_delete.setVisible(False)
+        self.act_ctx_delete.setEnabled(True)
+        self.act_ctx_delete.setToolTip("Slet valgte objekter. Handlingen kan fortrydes.")
         if hasattr(self, "act_ctx_focus_group"):
             self.act_ctx_focus_group.setVisible(False)
         if hasattr(self,"act_ctx_trace_group"):self.act_ctx_trace_group.setVisible(False)
@@ -258,9 +260,16 @@ class WorkspaceUiMixin:
             self.act_ctx_pl.setVisible(symbol.symbol == "light_connection")
             self.act_ctx_bom.setVisible(core.bom_supported_symbol(symbol.symbol))
             self.act_ctx_delete.setVisible(True)
+            unlocked=not bool(getattr(symbol,"locked",False))
+            self.act_ctx_delete.setEnabled(unlocked)
+            self.act_ctx_delete.setToolTip(
+                "Lås symbolet op i Egenskaber før det slettes."
+                if not unlocked else "Slet det valgte symbol. Handlingen kan fortrydes."
+            )
             self.act_ctx_zoom_selection.setVisible(True); self.act_ctx_trace_group.setVisible(bool(self._selected_focus_group()))
         elif total > 1:
             self.context_caption.setText(f"{total} objekter valgt")
+            self.act_ctx_delete.setEnabled(True); self.act_ctx_delete.setToolTip("Slet alle ulåste valgte objekter.")
             self.act_ctx_delete.setVisible(True); self.act_ctx_zoom_selection.setVisible(True)
         elif self._cable_tool_is_open():
             cid = self.cable_id_edit.text().strip() if hasattr(self, "cable_id_edit") else ""

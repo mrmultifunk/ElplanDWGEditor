@@ -87,7 +87,7 @@ def test_project_roundtrip_cable_article_binding_and_version():
     doc.raw['cable_instance_articles']={c.uid:'662425'}
     with tempfile.TemporaryDirectory() as td:
         path=Path(td)/'p.elplan.json'; doc.save(path); loaded=ProjectDocument.load(path)
-        assert loaded.raw['version']==APP_VERSION=='0.59.75'
+        assert loaded.raw['version']==APP_VERSION=='0.59.76'
         assert loaded.raw['cable_instance_articles']==doc.raw['cable_instance_articles']
         assert loaded.cables[0].uid==c.uid
 

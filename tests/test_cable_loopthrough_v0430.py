@@ -55,7 +55,7 @@ def test_legacy_multi_connection_cable_loads_as_physical_cables(tmp_path: Path):
         "cables":[asdict(cable)],"texts":[],"layer_visibility":{},
     }),encoding="utf-8")
     loaded=ProjectDocument.load(path)
-    assert loaded.raw["version"] == "0.59.75"
+    assert loaded.raw["version"] == "0.59.76"
     assert len(loaded.cables)==2
     assert [[r["symbol_uid"] for r in core.cable_symbol_connections(c)] for c in loaded.cables] == [["a","b"],["b","c"]]
     assert [c.cable_id for c in loaded.cables] == ["K01","K02"]

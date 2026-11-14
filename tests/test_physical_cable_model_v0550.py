@@ -62,14 +62,14 @@ def test_legacy_project_migration_avoids_existing_cable_ids_and_copies_uniform_a
     path=tmp_path/"legacy.elplan.json"
     _legacy_file(path,cable,bindings={"c1":"662425"},extra_cables=[existing])
     doc=ProjectDocument.load(path)
-    assert doc.raw["version"]==APP_VERSION=="0.59.75"
+    assert doc.raw["version"]==APP_VERSION=="0.59.76"
     assert [c.cable_id for c in doc.cables]==["K01","K03","K02"]
     migrated=doc.cables[:2]
     assert {doc.raw["cable_instance_articles"].get(c.uid) for c in migrated}=={"662425"}
     assert doc.dirty is True
     doc.save(path)
     saved=json.loads(path.read_text(encoding="utf-8"))
-    assert saved["version"]=="0.59.75"
+    assert saved["version"]=="0.59.76"
     assert all(core.cable_is_physical_segment(core.CablePlacement(**row)) for row in saved["cables"])
 
 
