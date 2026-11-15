@@ -766,6 +766,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self._group_drag_blocked = False
         self._symbol_drag_cables: dict[str,list[core.CablePlacement]] = {}
         self._symbol_drag_cables_changed = False
+        self._symbol_drag_visual_uids: set[str] = set()
         self._last_selected_annotation_uids: set[str] = set()
         self.spot_parent_pending: list[str] = []
         # Single spots placed from the palette are selected immediately so their
@@ -792,6 +793,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self.association_guided_setup = False
         self.association_channel_index = 0
         self.cable_items: dict[int, CableItem] = {}
+        self._cable_chain_hover_uids: set[str] = set()
         self._cable_visual_cache: dict[int, list[tuple[float,float]]] = {}
         self._cable_visual_meta: dict[int, dict] = {}
         self._cable_parallel_groups: list[dict] = []
@@ -873,6 +875,10 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         # every click/drag frame with a complete plan-wide recalculation.
         self._symbol_metadata_refresh_timer=QTimer(self); self._symbol_metadata_refresh_timer.setSingleShot(True); self._symbol_metadata_refresh_timer.setInterval(45)
         self._symbol_metadata_refresh_timer.timeout.connect(self._refresh_switch_association_badges)
+        # Keep the symbol itself under the pointer while dependent graphics are
+        # coalesced to at most one update per display frame.
+        self._symbol_drag_visual_timer=QTimer(self); self._symbol_drag_visual_timer.setSingleShot(True); self._symbol_drag_visual_timer.setInterval(16)
+        self._symbol_drag_visual_timer.timeout.connect(self._flush_symbol_drag_visuals)
         self.view.set_lighting_alignment_enabled(self.lighting_alignment_snap)
         self.setCentralWidget(self.view)
         self.cable_assistant_popup = CableAssistantPopup(self.view.viewport())
@@ -2377,6 +2383,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self.association_source_overlay=None
         self.scene.clear()
         self.layer_items.clear(); self.symbol_items.clear(); self.annotation_items.clear(); self.text_items.clear(); self.room_boundary_items.clear(); self.room_label_items.clear(); self.generated_layer_items.clear(); self.cable_items.clear()
+        self._cable_chain_hover_uids.clear()
         grouped: dict[str, list] = defaultdict(list)
         for primitive in self.cad_primitives:
             grouped[primitive.layer].append(primitive)
@@ -2442,6 +2449,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         item.snapper = self._snap_moving_symbol
 
     def _wire_cable_item(self, item: CableItem) -> None:
+        item.signals.editStarted.connect(self._cable_handle_edit_started)
         item.signals.editFinished.connect(self._cable_handle_edit_finished)
         item.signals.editRequested.connect(self._cable_insert_breakpoint)
         item.signals.selected.connect(self._cable_selected)
@@ -2461,10 +2469,15 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         # A one-piece pull needs no secondary highlight; the normal cable hover
         # animation already communicates it better.
         wanted={str(getattr(row,"uid","") or "") for row in members} if chain_key and len(members)>1 and active else set()
-        for item in getattr(self,"cable_items",{}).values():
-            if hasattr(item,"set_chain_highlight"):
-                uid=str(getattr(getattr(item,"cable",None),"uid","") or "")
-                item.set_chain_highlight(bool(uid and uid in wanted))
+        changed=self._cable_chain_hover_uids.symmetric_difference(wanted)
+        if not changed:
+            return
+        by_uid={str(getattr(getattr(obj,"cable",None),"uid","") or ""):obj for obj in getattr(self,"cable_items",{}).values()}
+        for uid in changed:
+            obj=by_uid.get(uid)
+            if obj is not None and hasattr(obj,"set_chain_highlight"):
+                obj.set_chain_highlight(uid in wanted)
+        self._cable_chain_hover_uids=wanted
 
     def _cable_hover_enter(self, item: CableItem) -> None:
         self._set_cable_chain_hover(item,True)
@@ -2773,7 +2786,11 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self.view._show_snap_feedback(QPointF(x,-y),kind)
         return x,y,uid,port,kind
 
+    def _cable_handle_edit_started(self, item: CableItem, _before: dict) -> None:
+        self.view.begin_cable_interaction_snapshot(item)
+
     def _cable_handle_edit_finished(self, item: CableItem, before: dict, after: dict) -> None:
+        self.view.end_cable_interaction_snapshot()
         self.view._clear_snap_feedback()
         # Sikkerhedsnet oven på de låste handles: en fysisk forbindelse skal altid
         # ende præcis i symbolporten, også hvis et ældre projekt allerede var skævt.
@@ -2835,6 +2852,11 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         placement = core.Placement(symbol=code, x=x, y=y, rotation=rotation,
                                    size=size, line_width=0.25, color=core.DEFAULT_SYMBOL_COLOR)
         self.undo_stack.push(AddSymbolCommand(self, placement, f"Placér {core.symbol_display_name(code)}"))
+        preview=getattr(self.view,"_preview_item",None)
+        if preview is not None and code in core.LIGHT_ASSOCIATION_SYMBOLS:
+            # Consecutive placements should snap to the symbol just added while
+            # still excluding the translucent preview itself.
+            self.view.begin_lighting_alignment_snapshot({preview.placement.uid})
         if code=="spot":
             self.project.raw["spot_default_size"]=size
             self.last_individual_spot_uid=placement.uid
@@ -2957,6 +2979,8 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self._update_title()
 
     def _symbol_drag_started(self, item, old_pose) -> None:
+        self._symbol_drag_visual_timer.stop()
+        self._symbol_drag_visual_uids.clear()
         self._symbol_drag_cables={}
         self._symbol_drag_cables_changed=False
         selected=[x for x in self.scene.selectedItems() if isinstance(x,ElectricalSymbolItem) and not x.placement.locked]
@@ -3005,9 +3029,13 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
                 if uid not in self._symbol_drag_cables or id(cable) in seen[uid]:
                     continue
                 self._symbol_drag_cables[uid].append(cable); seen[uid].add(id(cable))
+        self.view.begin_lighting_alignment_snapshot(drag_uids)
         self._clear_spot_link_visuals(); self._clear_relation_overview()
 
     def _symbol_drag_finished(self, item: ElectricalSymbolItem, old_pose, new_pose) -> None:
+        self._symbol_drag_visual_timer.stop()
+        self._flush_symbol_drag_visuals()
+        self.view.end_lighting_alignment_snapshot()
         self.view._clear_snap_feedback()
         if self.snap_engine is not None:
             self.snap_engine.clear_wall_lock(item.placement.uid)
@@ -3034,6 +3062,9 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             if self.selected_cable is not None:
                 self._load_selected_cable_into_panel(self.selected_cable)
         self._symbol_drag_cables={}; self._symbol_drag_cables_changed=False
+        for uid,_old,_now in changed:
+            annotation=self.annotation_items.get(uid)
+            if annotation is not None:annotation.reposition()
         self._symbol_metadata_refresh_timer.start()
         selected=self._selected_symbol_item()
         if selected is not None:
@@ -4615,6 +4646,9 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self._selection_changed()
 
     def _placement_by_uid(self, uid: str):
+        item=self.symbol_items.get(str(uid or ""))
+        if item is not None:
+            return item.placement
         return next((p for p in self.project.placements if p.uid == uid), None)
 
     def _anchor_cable_connections(self, cable: core.CablePlacement, only_uid: str | None = None) -> bool:
@@ -5985,6 +6019,29 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             return
         self.undo_stack.push(EditSymbolCommand(self, p.uid, before, after, "Redigér symbolegenskaber"))
 
+    def _flush_symbol_drag_visuals(self) -> None:
+        uids=set(self._symbol_drag_visual_uids)
+        self._symbol_drag_visual_uids.clear()
+        if not uids:
+            return
+        changed={}
+        for uid in uids:
+            annotation=self.annotation_items.get(uid)
+            if annotation is not None:
+                annotation.reposition_fast()
+            candidates=self._symbol_drag_cables.get(uid) if self._symbol_drag_cables else self.project.cables
+            for cable in candidates or ():
+                if self._anchor_cable_connections(cable,uid):
+                    changed[id(cable)]=cable
+        if not changed:
+            return
+        self._symbol_drag_cables_changed=True
+        for cable in changed.values():
+            cable_item=self.cable_items.get(id(cable))
+            if cable_item is not None:
+                cable_item.set_visual_points(cable.points,refresh=False)
+                cable_item.refresh(update_handles=False)
+
     def _symbol_moved(self, item: ElectricalSymbolItem) -> None:
         if self._group_drag_before and item.placement.uid==self._group_drag_anchor_uid and not self._group_drag_sync:
             self._group_drag_sync=True
@@ -5996,14 +6053,12 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
                     other=self.symbol_items.get(uid)
                     if other is not None:
                         other.set_pose_silent(x0+dx,y0+dy,r0)
-                        ann=self.annotation_items.get(uid)
-                        if ann:ann.refresh()
-                        self._refresh_connected_cables(uid,finalize=False)
+                        self._symbol_drag_visual_uids.add(uid)
             finally:
                 self._group_drag_sync=False
-        annotation = self.annotation_items.get(item.placement.uid)
-        if annotation: annotation.refresh()
-        self._refresh_connected_cables(item.placement.uid,finalize=False)
+        self._symbol_drag_visual_uids.add(item.placement.uid)
+        if not self._symbol_drag_visual_timer.isActive():
+            self._symbol_drag_visual_timer.start()
 
     def export_core_data_package(self) -> None:
         summary=portability.core_data_summary()

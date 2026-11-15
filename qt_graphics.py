@@ -941,6 +941,7 @@ class CableItem(QGraphicsPathItem):
         self._hover_progress = 0.0
         self._selection_progress = 0.0
         self._chain_hover_progress = 0.0
+        self._chain_highlight_target = 0.0
         self._hover_anim = QVariantAnimation()
         self._hover_anim.setDuration(120); self._hover_anim.setEasingCurve(QEasingCurve.Type.OutCubic)
         self._hover_anim.valueChanged.connect(lambda value: self._set_visual_progress("hover", value))
@@ -1016,6 +1017,9 @@ class CableItem(QGraphicsPathItem):
     def set_chain_highlight(self, active: bool) -> None:
         """Softly mark this piece as belonging to the currently hovered cable pull."""
         target=1.0 if bool(active) else 0.0
+        if abs(target-self._chain_highlight_target) <= 1e-9:
+            return
+        self._chain_highlight_target=target
         self._animate_to(self._chain_hover_anim,self._chain_hover_progress,target)
 
     @staticmethod
@@ -1527,6 +1531,7 @@ class AnnotationItem(QGraphicsItemGroup):
         self.setZValue(500)
         self._children = []
         self._render_signature = None
+        self._last_position_direction = (1.0,0.0)
         self.refresh()
 
     def _scale(self) -> float:
@@ -1799,23 +1804,27 @@ class AnnotationItem(QGraphicsItemGroup):
         self.reposition()
         self.setVisible(has_content and symbol_visible)
 
-    def reposition(self) -> None:
+    def reposition(self, *, use_cached_direction: bool = False) -> None:
         scale=self._scale()
         if self.symbol_item is not None and self.symbol_item.scene() is not None:
             rect=self.symbol_item.sceneBoundingRect()
         else:
             rect=QRectF(self.placement.x,-self.placement.y,1,1)
 
-        try:
-            dx,dy=self.position_direction_provider(self.placement) if callable(self.position_direction_provider) else (1.0,0.0)
-            dx=float(dx); dy=float(dy)
-        except Exception:
-            dx,dy=1.0,0.0
-        length=math.hypot(dx,dy)
-        if length<1e-9:
-            dx,dy=1.0,0.0
+        if use_cached_direction:
+            dx,dy=self._last_position_direction
         else:
-            dx/=length; dy/=length
+            try:
+                dx,dy=self.position_direction_provider(self.placement) if callable(self.position_direction_provider) else (1.0,0.0)
+                dx=float(dx); dy=float(dy)
+            except Exception:
+                dx,dy=1.0,0.0
+            length=math.hypot(dx,dy)
+            if length<1e-9:
+                dx,dy=1.0,0.0
+            else:
+                dx/=length; dy/=length
+            self._last_position_direction=(dx,dy)
 
         # Local annotation dimensions are screen-space because this item ignores
         # transformations. Convert them to scene units only for positioning.
@@ -1845,6 +1854,10 @@ class AnnotationItem(QGraphicsItemGroup):
                 y=rect.top()-gap-visual_h
 
         self.setPos(x,y)
+
+    def reposition_fast(self) -> None:
+        """Follow a moving symbol without rerunning room/wall heuristics."""
+        self.reposition(use_cached_direction=True)
 
     def toHtml(self) -> str:
         primary,secondary,assoc,extra,spot_parent=self._content()
@@ -1965,8 +1978,12 @@ class CadGraphicsView(QGraphicsView):
         self._nav_anim=QVariantAnimation(self); self._nav_anim.setDuration(280); self._nav_anim.setEasingCurve(QEasingCurve.Type.OutCubic); self._nav_anim.valueChanged.connect(self._apply_navigation_animation)
         self._nav_state=None
         self._lighting_alignment_enabled = True
+        self._lighting_alignment_snapshot: list[tuple[str,float,float,str]] | None = None
         self._align_vline: QGraphicsPathItem | None = None
         self._align_hline: QGraphicsPathItem | None = None
+        self._cable_alignment_snapshot: list[tuple[float,float]] | None = None
+        self._cable_route_snapshot: list[tuple[float,float,float,float,object,list[tuple[float,float]]]] | None = None
+        self._cable_snapshot_active_item = None
         self._cable_active = False
         self._cable_points: list[tuple[float, float]] = []
         self._cable_preview: QGraphicsPathItem | None = None
@@ -2087,6 +2104,49 @@ class CadGraphicsView(QGraphicsView):
             candidates.append((float(item.source.x),float(item.source.y)))
         return self._axis_alignment_snap(x,y,candidates,10.0)
 
+    def begin_lighting_alignment_snapshot(self, ignore_uids=None) -> None:
+        """Cache stable lighting centres for one placement/drag gesture."""
+        ignored={str(uid) for uid in (ignore_uids or ()) if str(uid)}
+        snapshot=[]
+        for item in self.scene().items():
+            if not isinstance(item,ElectricalSymbolItem) or not item.isVisible():
+                continue
+            p=item.placement
+            if p.uid in ignored or p.symbol not in core.LIGHT_ASSOCIATION_SYMBOLS:
+                continue
+            snapshot.append((p.symbol,float(p.x),float(p.y),str(p.uid)))
+        self._lighting_alignment_snapshot=snapshot
+
+    def end_lighting_alignment_snapshot(self) -> None:
+        self._lighting_alignment_snapshot=None
+
+    def begin_cable_interaction_snapshot(self, active_item=None) -> None:
+        """Cache stable cable vertices, routes and symbol ports for one edit."""
+        alignment=[]; routes=[]
+        for obj in self.scene().items():
+            if isinstance(obj,CableItem) and obj is not active_item and obj.isVisible():
+                points=[]
+                for point in getattr(obj.cable,"points",[]) or []:
+                    try:points.append((float(point[0]),float(point[1])))
+                    except (TypeError,ValueError,IndexError):continue
+                alignment.extend(points)
+                if len(points)>=2:
+                    xs=[p[0] for p in points]; ys=[p[1] for p in points]
+                    routes.append((min(xs),min(ys),max(xs),max(ys),obj,points))
+            elif isinstance(obj,ElectricalSymbolItem) and obj.isVisible():
+                try:
+                    alignment.extend((float(px),float(py)) for px,py,_port in core.placement_connection_ports(obj.placement))
+                except Exception:
+                    pass
+        self._cable_snapshot_active_item=active_item
+        self._cable_alignment_snapshot=alignment
+        self._cable_route_snapshot=routes
+
+    def end_cable_interaction_snapshot(self) -> None:
+        self._cable_snapshot_active_item=None
+        self._cable_alignment_snapshot=None
+        self._cable_route_snapshot=None
+
     def _cable_alignment_snap(self, active_item, index: int, x: float, y: float):
         """Align a dragged cable vertex to visible cable vertices and symbol ports."""
         candidates=[]
@@ -2097,15 +2157,18 @@ class CadGraphicsView(QGraphicsView):
             active_points=list(getattr(getattr(active_item,"cable",None),"points",[]) or [])
         for i,p in enumerate(active_points):
             if i != int(index):candidates.append((float(p[0]),float(p[1])))
-        for obj in self.scene().items():
-            if isinstance(obj,CableItem) and obj is not active_item and obj.isVisible():
-                for px,py in obj.cable.points:
-                    candidates.append((float(px),float(py)))
-            elif isinstance(obj,ElectricalSymbolItem) and obj.isVisible():
-                try:
-                    candidates.extend((float(px),float(py)) for px,py,_port in core.placement_connection_ports(obj.placement))
-                except Exception:
-                    pass
+        if self._cable_alignment_snapshot is not None and self._cable_snapshot_active_item is active_item:
+            candidates.extend(self._cable_alignment_snapshot)
+        else:
+            for obj in self.scene().items():
+                if isinstance(obj,CableItem) and obj is not active_item and obj.isVisible():
+                    for px,py in obj.cable.points:
+                        candidates.append((float(px),float(py)))
+                elif isinstance(obj,ElectricalSymbolItem) and obj.isVisible():
+                    try:
+                        candidates.extend((float(px),float(py)) for px,py,_port in core.placement_connection_ports(obj.placement))
+                    except Exception:
+                        pass
         return self._axis_alignment_snap(x,y,candidates,11.0)
 
     def _lighting_alignment_snap(self, symbol: str, x: float, y: float, ignore_uid: str = "", ignore_uids=None):
@@ -2130,16 +2193,21 @@ class CadGraphicsView(QGraphicsView):
             ignored.update(str(uid) for uid in ignore_uids)
 
         candidates=[]
-        for item in self.scene().items():
-            if not isinstance(item, ElectricalSymbolItem):
+        snapshot=self._lighting_alignment_snapshot
+        if snapshot is None:
+            snapshot=[]
+            for item in self.scene().items():
+                if not isinstance(item,ElectricalSymbolItem) or not item.isVisible():
+                    continue
+                p=item.placement
+                if p.symbol in core.LIGHT_ASSOCIATION_SYMBOLS:
+                    snapshot.append((p.symbol,float(p.x),float(p.y),str(p.uid)))
+        for code,px,py,uid in snapshot:
+            if uid in ignored:
                 continue
-            p=item.placement
-            if p.uid in ignored or not item.isVisible() or p.symbol not in core.LIGHT_ASSOCIATION_SYMBOLS:
-                continue
-            px=float(p.x); py=float(p.y)
             if not (xmin-margin <= px <= xmax+margin and ymin-margin <= py <= ymax+margin):
                 continue
-            candidates.append((p.symbol,px,py))
+            candidates.append((code,px,py))
 
         def best_axis(axis: str):
             target=float(x) if axis=="x" else float(y)
@@ -2221,6 +2289,8 @@ class CadGraphicsView(QGraphicsView):
         self._cable_preview = None
         self._cable_points = []
         self._cable_active = False
+        self.end_lighting_alignment_snapshot()
+        self.end_cable_interaction_snapshot()
         self._calibration_preview = None
         self._calibration_start = None
         self._calibration_active = False
@@ -2249,6 +2319,8 @@ class CadGraphicsView(QGraphicsView):
         self._preview_item.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable, False)
         self._preview_item.setOpacity(0.62); self._preview_item.setZValue(1000)
         self.scene().addItem(self._preview_item)
+        if self._placement_code in core.LIGHT_ASSOCIATION_SYMBOLS:
+            self.begin_lighting_alignment_snapshot({self._preview_item.placement.uid})
         if self.snap_engine is not None:
             self.snap_engine.clear_wall_lock(self._preview_item.placement.uid)
         self.setCursor(Qt.CursorShape.CrossCursor)
@@ -2491,6 +2563,7 @@ class CadGraphicsView(QGraphicsView):
         pen.setStyle(_qt_cable_pen_style(line_style))
         self._cable_preview.setPen(pen); self._cable_preview.setZValue(1500)
         self.scene().addItem(self._cable_preview)
+        self.begin_cable_interaction_snapshot(None)
         self.setCursor(Qt.CursorShape.CrossCursor)
 
     def update_cable_settings(self, *, layer=None, line_width=None, label=None, cable_spec=None, cable_id=None, circuit_id=None,
@@ -2567,10 +2640,21 @@ class CadGraphicsView(QGraphicsView):
         """
         tol=float(tolerance_px)/max(self.current_scale(),1e-9)
         best=None; best_d=float("inf"); best_item=None
-        for obj in self.scene().items():
-            if not isinstance(obj,CableItem) or obj is active_item or not obj.isVisible():
+        if self._cable_route_snapshot is not None and self._cable_snapshot_active_item is active_item:
+            routes=self._cable_route_snapshot
+        else:
+            routes=[]
+            for obj in self.scene().items():
+                if not isinstance(obj,CableItem) or obj is active_item or not obj.isVisible():
+                    continue
+                points=[(float(px),float(py)) for px,py in getattr(obj.cable,"points",[]) or []]
+                if len(points)<2:continue
+                xs=[p[0] for p in points]; ys=[p[1] for p in points]
+                routes.append((min(xs),min(ys),max(xs),max(ys),obj,points))
+        for minx,miny,maxx,maxy,obj,points in routes:
+            if float(x)<minx-tol or float(x)>maxx+tol or float(y)<miny-tol or float(y)>maxy+tol:
                 continue
-            hit=self._nearest_point_on_polyline(float(x),float(y),getattr(obj.cable,"points",[]))
+            hit=self._nearest_point_on_polyline(float(x),float(y),points)
             if hit is None or hit[2]>tol or hit[2]>=best_d:
                 continue
             best=(hit[0],hit[1]); best_d=hit[2]; best_item=obj
@@ -2743,6 +2827,7 @@ class CadGraphicsView(QGraphicsView):
         if self._room_axis_guide is not None and self._room_axis_guide.scene() is not None:
             self.scene().removeItem(self._room_axis_guide)
         self._preview_item = None; self._placement_code = ""
+        self.end_lighting_alignment_snapshot(); self.end_cable_interaction_snapshot()
         self._cable_preview = None; self._cable_points = []; self._cable_connections = []; self._cable_click_stack = []; self._cable_active = False
         self.cablePreviewChanged.emit([])
         self._calibration_preview = None; self._calibration_start = None; self._calibration_active = False

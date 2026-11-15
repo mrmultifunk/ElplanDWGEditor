@@ -7,7 +7,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_version_0540():
-    assert APP_VERSION == core.APP_VERSION == "0.59.77"
+    assert APP_VERSION == core.APP_VERSION == "0.59.78"
 
 
 def test_global_search_and_command_palette_are_wired():

@@ -7,7 +7,7 @@ ROOT=Path(__file__).resolve().parents[1]
 
 
 def test_version_0572():
-    assert APP_VERSION == core.APP_VERSION == "0.59.77"
+    assert APP_VERSION == core.APP_VERSION == "0.59.78"
 
 
 def test_navigator_is_minimal_and_hidden_by_default():

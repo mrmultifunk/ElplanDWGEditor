@@ -77,6 +77,6 @@ def test_project_roundtrip_assemblies():
         path=Path(td)/'x.elplan.json'
         doc.save(path)
         loaded=ProjectDocument.load(path)
-        assert loaded.raw['version']==APP_VERSION=='0.59.77'
+        assert loaded.raw['version']==APP_VERSION=='0.59.78'
         assert loaded.raw['bom_assemblies']==[]  # 0.45: global core data is not serialized in project files
         assert loaded.raw['placement_assemblies']['p1']['symbol']=='std'

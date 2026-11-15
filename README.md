@@ -2,7 +2,7 @@
 
 Windows-program til planlægning og dokumentation af elektriske installationer direkte på DWG- og DXF-plantegninger.
 
-**Aktuel version:** `0.59.77`
+**Aktuel version:** `0.59.78`
 **Platform:** Windows 10/11 · Python 3.11 eller 3.12
 
 ## Hvad kan programmet?

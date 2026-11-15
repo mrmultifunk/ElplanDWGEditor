@@ -13,7 +13,7 @@ ROOT=Path(__file__).resolve().parents[1]
 
 
 def test_version_and_actions_are_removed():
-    assert APP_VERSION==core.APP_VERSION=="0.59.77"
+    assert APP_VERSION==core.APP_VERSION=="0.59.78"
     assert not (ROOT/".github/workflows/tests.yml").exists()
     readme=(ROOT/"README.md").read_text(encoding="utf-8")
     assert "actions/workflows/tests.yml" not in readme
@@ -22,13 +22,16 @@ def test_version_and_actions_are_removed():
 
 def test_symbol_drag_defers_plan_wide_work_until_release():
     moved=inspect.getsource(MainWindow._symbol_moved)
+    flush=inspect.getsource(MainWindow._flush_symbol_drag_visuals)
     finished=inspect.getsource(MainWindow._symbol_drag_finished)
-    connected=inspect.getsource(MainWindow._refresh_connected_cables)
     assert "_refresh_switch_association_badges" not in moved
-    assert "finalize=False" in moved
+    assert "_symbol_drag_visual_timer.start()" in moved
+    assert "_refresh_connected_cables" not in moved
+    assert "reposition_fast" in flush
+    assert "refresh(update_handles=False)" in flush
+    assert "_flush_symbol_drag_visuals" in finished
     assert "_rebuild_cable_visual_cache" in finished
     assert "_symbol_drag_cables_changed" in finished
-    assert "item.refresh(update_handles=False)" in connected
 
 
 def test_selection_reuses_catalog_and_only_refreshes_changed_annotations():

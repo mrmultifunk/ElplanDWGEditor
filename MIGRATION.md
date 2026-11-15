@@ -1,3 +1,10 @@
+## 0.59.77 → 0.59.78
+
+- Projektformat, symbolplaceringer, kabler, artikelbase, prisbog og styklister er uændrede. Eksisterende projekter åbnes direkte uden migrering.
+- Snap- og render-cacherne eksisterer kun i hukommelsen under den aktuelle musegestus og gemmes ikke i projektfilen.
+- De autoritative symbol- og kabelkoordinater opdateres fortsat ved hvert træk; optimeringen begrænser alene, hvor ofte afhængig grafik genberegnes og males.
+- OneDrive-placering og eksportformater er uændrede.
+
 ## 0.59.76 → 0.59.77
 
 - Symbolplaceringer kan nu indeholde de valgfrie felter `mounting_zone`, `mounting_height_mm`, `material_color` og `already_purchased`.

@@ -71,7 +71,7 @@ def test_ui_exposes_mounting_controls_and_bom_filters():
     root=Path(__file__).resolve().parents[1]
     app=(root/"qt_app.py").read_text(encoding="utf-8")
     articles=(root/"qt_articles.py").read_text(encoding="utf-8")
-    assert APP_VERSION==core.APP_VERSION=="0.59.77"
+    assert APP_VERSION==core.APP_VERSION=="0.59.78"
     assert "prop_mounting_zone" in app and "prop_mounting_height" in app
     assert "prop_material_color" in app and "prop_already_purchased" in app
     assert "bom_mounting_filter" in articles and "bom_purchase_filter" in articles

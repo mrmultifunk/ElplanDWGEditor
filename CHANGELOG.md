@@ -1,3 +1,13 @@
+## 0.59.78 - Flydende redigering og gestus-cache
+
+- Symboler følger nu markøren med det samme, mens deres mærkninger og tilsluttede kabler samles til højst én grafisk opdatering pr. skærmframe.
+- Under symboltræk genbruges mærkningens senest beregnede retning; den præcise rum-/vægplacering beregnes igen én gang, når symbolet slippes.
+- Justering mod spots og andre lyssymboler bruger et stabilt øjebliksbillede af kandidaterne under hele træk- eller placeringsgestussen i stedet for at gennemsøge hele scenen ved hvert musepunkt.
+- Kabelknæk og kabeltegning cacher andre kabelruter, knækpunkter og symbolporte for den aktive gestus. En simpel afgrænsningskontrol springer fjerne kabelruter over før den dyrere afstandsberegning.
+- Kabel-hover ændrer kun fremhævning på de kabelstykker, hvis tilstand faktisk skifter; uændrede kabler starter ikke længere tomme animationer og genoptegninger.
+- Kabelankre finder normalt deres symbol direkte i det eksisterende symbolindeks i stedet for at gennemløbe alle projektets placeringer.
+- Projektformat, artikelbase, styklister, priser og eksporter er uændrede.
+
 ## 0.59.77 - Monteringsprofiler og indkøbsstatus
 
 - Hver symbolforekomst kan nu registreres med monteringsprofil (`Gulv`, `Afbryderhøjde`, `Loft` eller `Anden højde`), præcis monteringshøjde i millimeter og ønsket materialefarve.
