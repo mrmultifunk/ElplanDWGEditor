@@ -1,3 +1,11 @@
+## 0.59.78 → 0.59.79
+
+- Afbrydernes `association_channels` og stabile kanalrækkefølge er uændret. Flere korrespondance-/krydsningsafbrydere må fortsat pege på samme bogstav.
+- Et symbol med rollen `light` indlæses nu med højst ét element i `associations`. Hvis et ældre lampested indeholder flere bogstaver, bevares det første normaliserede bogstav deterministisk.
+- To reelt uafhængige tændte udgange skal efter opgraderingen modelleres som to lampesteder. PL-lederfordeling, kabeldata og gennemsløjfninger ændres ikke automatisk.
+- Tilknytningssessioner og kanaloversigten er brugerfladefunktioner og tilføjer ingen nye obligatoriske projektfelter.
+- Artikelbase, priser, styklister, BOM og OneDrive-placering er uændrede.
+
 ## 0.59.77 → 0.59.78
 
 - Projektformat, symbolplaceringer, kabler, artikelbase, prisbog og styklister er uændrede. Eksisterende projekter åbnes direkte uden migrering.

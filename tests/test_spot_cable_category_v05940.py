@@ -6,7 +6,7 @@ from project_model import APP_VERSION, ProjectDocument
 
 
 def test_spots_is_standard_cable_category():
-    assert APP_VERSION == core.APP_VERSION == "0.59.78"
+    assert APP_VERSION == core.APP_VERSION == "0.59.79"
     by_id = {row["id"]: row for row in core.default_cable_category_records()}
     assert by_id["spots"]["name"] == "Spots"
     assert "downlight" in by_id["spots"]["description"].lower()
@@ -30,7 +30,7 @@ def test_old_project_gets_spots_category_once(tmp_path: Path):
 def test_new_project_may_remove_spots_category(tmp_path: Path):
     path = tmp_path / "new.elplan.json"
     path.write_text(json.dumps({
-        "version": "0.59.78",
+        "version": "0.59.79",
         "source_file": "",
         "cable_categories": [
             {"id": "sockets", "name": "Stikkontakter", "color": "#d00000", "line_style": "solid"},

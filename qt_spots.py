@@ -118,7 +118,7 @@ class SpotUiMixin:
             if spot.locked:continue
             spot.spot_group_id=target_gid; spot.spot_group_name=name
             if parent is not None:
-                spot.parent_light_uid=parent.uid; spot.associations=core.normalize_associations(parent.associations)
+                spot.parent_light_uid=parent.uid; spot.associations=core.normalize_light_associations(parent.associations)
         after=self._spot_parent_snapshot()
         if before!=after:self.undo_stack.push(SpotParentCommand(self,before,after,"Gruppér spots"))
         self._refresh_spot_group_controls(self._selected_spots())

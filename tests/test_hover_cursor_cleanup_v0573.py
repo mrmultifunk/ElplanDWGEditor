@@ -7,7 +7,7 @@ ROOT=Path(__file__).resolve().parents[1]
 
 
 def test_version_0573():
-    assert APP_VERSION == core.APP_VERSION == "0.59.78"
+    assert APP_VERSION == core.APP_VERSION == "0.59.79"
 
 
 def test_hover_popup_cursor_import_and_live_cable_anchor():

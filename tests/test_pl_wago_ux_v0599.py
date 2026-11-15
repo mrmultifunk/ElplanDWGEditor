@@ -4,7 +4,7 @@ from pathlib import Path
 def test_version_0599():
     import core_logic as core
     from project_model import APP_VERSION
-    assert APP_VERSION == core.APP_VERSION == "0.59.78"
+    assert APP_VERSION == core.APP_VERSION == "0.59.79"
 
 
 def test_wago_workflow_is_function_based_in_primary_ui():

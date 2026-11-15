@@ -7,7 +7,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_version_and_workspace_modules_are_present():
-    assert APP_VERSION == core.APP_VERSION == "0.59.78"
+    assert APP_VERSION == core.APP_VERSION == "0.59.79"
     app = (ROOT / "qt_app.py").read_text(encoding="utf-8")
     panel = (ROOT / "qt_cable_panel.py").read_text(encoding="utf-8")
     workspace = (ROOT / "qt_workspace.py").read_text(encoding="utf-8")

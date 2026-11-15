@@ -5,7 +5,7 @@ from project_model import APP_VERSION
 
 
 def test_version_0597():
-    assert APP_VERSION == core.APP_VERSION == "0.59.78"
+    assert APP_VERSION == core.APP_VERSION == "0.59.79"
 
 
 def test_pl_entry_cards_prioritize_full_cable_marking():

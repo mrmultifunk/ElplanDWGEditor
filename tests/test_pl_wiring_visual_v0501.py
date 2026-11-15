@@ -4,7 +4,7 @@ from pathlib import Path
 def test_version_0504():
     import core_logic as core
     from project_model import APP_VERSION
-    assert core.APP_VERSION == APP_VERSION == "0.59.78"
+    assert core.APP_VERSION == APP_VERSION == "0.59.79"
 
 
 def test_visual_editor_supports_manual_wago_splices_and_loose_ends():

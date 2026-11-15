@@ -1951,6 +1951,7 @@ class CadGraphicsView(QGraphicsView):
     patternFinished = Signal(str, object, object, object)
     roomFinished = Signal(object)
     roomPreviewChanged = Signal(object)
+    associationFinishRequested = Signal()
     toolCancelled = Signal()
 
     def __init__(self, scene, parent=None):
@@ -1978,6 +1979,7 @@ class CadGraphicsView(QGraphicsView):
         self._nav_anim=QVariantAnimation(self); self._nav_anim.setDuration(280); self._nav_anim.setEasingCurve(QEasingCurve.Type.OutCubic); self._nav_anim.valueChanged.connect(self._apply_navigation_animation)
         self._nav_state=None
         self._lighting_alignment_enabled = True
+        self._association_mode_active = False
         self._lighting_alignment_snapshot: list[tuple[str,float,float,str]] | None = None
         self._align_vline: QGraphicsPathItem | None = None
         self._align_hline: QGraphicsPathItem | None = None
@@ -2050,6 +2052,9 @@ class CadGraphicsView(QGraphicsView):
         self._lighting_alignment_enabled = bool(enabled)
         if not self._lighting_alignment_enabled:
             self._clear_alignment_guides()
+
+    def set_association_mode_active(self, active: bool) -> None:
+        self._association_mode_active=bool(active)
 
     def refresh_theme(self) -> None:
         """Refresh temporary CAD helpers after a live light/dark switch."""
@@ -3028,6 +3033,8 @@ class CadGraphicsView(QGraphicsView):
         super().mouseReleaseEvent(event)
 
     def keyPressEvent(self, event) -> None:
+        if event.key() in (Qt.Key.Key_Return,Qt.Key.Key_Enter) and self._association_mode_active:
+            self.associationFinishRequested.emit(); event.accept(); return
         if event.key() == Qt.Key.Key_Escape and (self._preview_item is not None or self._cable_active or self._calibration_active or self._text_tool is not None or self._pattern_kind or self._room_active):
             self.cancel_tool(); event.accept(); return
         if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter) and self._room_active:

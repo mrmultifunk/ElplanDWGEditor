@@ -11,7 +11,7 @@ from typing import Any
 import core_logic as core
 from storage_utils import atomic_write_text
 
-APP_VERSION = "0.59.78"
+APP_VERSION = "0.59.79"
 
 
 def _finite_float(value: Any, field_name: str) -> float:
@@ -83,8 +83,12 @@ def placement_from_raw(raw: dict[str, Any]) -> core.Placement:
     item["mounting_height_mm"] = core.normalize_mounting_height_mm(item.get("mounting_height_mm"))
     item["material_color"] = core.normalize_material_color(item.get("material_color", ""))
     item["already_purchased"] = core.normalize_already_purchased(item.get("already_purchased", False))
-    item["associations"] = core.normalize_associations(item.get("associations", []))
-    if core.association_role(str(item.get("symbol", ""))) == "switch":
+    role=core.association_role(str(item.get("symbol", "")))
+    item["associations"] = (
+        core.normalize_light_associations(item.get("associations", []))
+        if role=="light" else core.normalize_associations(item.get("associations", []))
+    )
+    if role == "switch":
         item["association_channels"] = core.normalize_association_channels(
             str(item.get("symbol", "")),
             item.get("association_channels", []),
@@ -518,6 +522,14 @@ class ProjectDocument:
         placement_rows=[]
         for placement in self.placements:
             row=asdict(placement)
+            role=core.association_role(placement.symbol)
+            if role=="light":
+                row["associations"]=core.normalize_light_associations(getattr(placement,"associations",[]))
+                row["association_channels"]=[]
+            elif role=="switch":
+                channels=core.association_channel_letters(placement)
+                row["association_channels"]=channels
+                row["associations"]=core.normalize_associations([x for x in channels if x])
             if placement.symbol == "light_connection":
                 legs=core.cable_legs_at_symbol(self.cables,placement.uid)
                 row["pl_box_entries"]=core.reconcile_pl_box_entries(getattr(placement,"pl_box_entries",{}),legs)

@@ -1,3 +1,14 @@
+## 0.59.79 - Entydige lystilhørsforhold
+
+- Et lampested eller en selvstændig lampe kan nu højst have ét tilhørsbogstav. Flere afbrydere kan fortsat dele samme bogstav ved korrespondance og krydsning.
+- Hvis et lampested kobles til en anden tænding, flyttes det fra det tidligere bogstav i stedet for at samle flere bogstaver.
+- Ældre projektdata med flere bogstaver på samme lampested normaliseres ved åbning til én deterministisk relation. Uafhængige tændinger skal repræsenteres som separate lampesteder.
+- Egenskaber-panelet har fået en kompakt kanaloversigt med fysisk betjening, bogstav og tilknyttede lampesteder. Dobbeltklik på en kanal åbner den direkte på planen.
+- Tilknytning på planen understøtter flere klik i samme arbejdsgang. Blå viser valgte lampesteder, turkis ledige mål og orange lampesteder, der flyttes fra en anden tænding.
+- En hel tilknytningssession gemmes som én fortrydelseshandling med `Enter`; `Esc` gendanner tilstanden fra før sessionen uden delvise ændringer.
+- Afbryderkanaler bruger fortsat stabile interne kanal-id'er baseret på symbol-id og kanalnummer. Bogstavet er kun den synlige funktionsmærkning.
+- Projektkontrollen finder lampesteder uden afbryder, gamle flerbogstavsrelationer, manglende tilhørsforhold og afbryderkanaler uden lampesteder.
+
 ## 0.59.78 - Flydende redigering og gestus-cache
 
 - Symboler følger nu markøren med det samme, mens deres mærkninger og tilsluttede kabler samles til højst én grafisk opdatering pr. skærmframe.

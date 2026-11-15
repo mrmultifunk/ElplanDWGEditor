@@ -34,7 +34,7 @@ def test_one_switch_channel_can_control_multiple_lights():
     w.close()
 
 
-def test_light_can_have_multiple_association_letters():
+def test_light_moves_to_new_association_instead_of_collecting_letters():
     _app()
     w=MainWindow()
     a=core.Placement(symbol="switch_1",x=0,y=0,size=200,associations=["a"])
@@ -45,22 +45,22 @@ def test_light_can_have_multiple_association_letters():
     w._symbol_clicked(w.symbol_items[light.uid])
     w.association_source_uid=b.uid; w.association_active_letter="b"
     w._symbol_clicked(w.symbol_items[light.uid])
-    assert light.associations==["a","b"]
+    assert light.associations==["b"]
     w.close()
 
 
-def test_spot_parent_inherits_all_light_relations_and_has_visible_parent_chip():
+def test_spot_parent_inherits_the_single_light_relation_and_has_visible_parent_chip():
     _app()
     w=MainWindow()
     light=core.Placement(symbol="light_connection",x=0,y=0,size=200,group="G07",associations=["a","b"])
     spot=core.Placement(symbol="spot",x=500,y=0,size=150,parent_light_uid=light.uid)
     w._add_placement(light); w._add_placement(spot)
     w._sync_spot_parent_associations()
-    assert spot.associations==["a","b"]
+    assert spot.associations==["a"]
     ann=w.annotation_items[spot.uid]
     ann.refresh()
     assert "G07" in ann.toHtml()
-    assert "a, b" in ann.toHtml()
+    assert "a" in ann.toHtml()
     w.close()
 
 

@@ -32,7 +32,7 @@ from ezdxf import bbox, disassemble, path as ezpath
 from ezdxf.addons import odafc
 
 APP_NAME = "Elplan DWG Editor"
-APP_VERSION = "0.59.78"
+APP_VERSION = "0.59.79"
 ODA_DOWNLOAD_URL = "https://www.opendesign.com/guestfiles/oda_file_converter"
 # Programmet bruger separate lag til forskellige typer el-installationer.
 # EL-SYMBOLER beholdes kun som navn af hensyn til ældre eksporter, men nye
@@ -736,6 +736,17 @@ def normalize_associations(values) -> list[str]:
     return sorted(out, key=_association_text_to_index)
 
 
+def normalize_light_associations(values) -> list[str]:
+    """Normalisér den ene elektriske funktion, et lampested kan tilhøre.
+
+    Flere fysiske afbrydere kan dele samme bogstav ved korrespondance og
+    krydsning. Et lampested repræsenterer derimod én tændt udgang; to
+    uafhængige udgange skal modelleres som to lampesteder.
+    """
+    normalized=normalize_associations(values)
+    return normalized[:1]
+
+
 def normalize_association_channels(symbol: str, channels, associations=None) -> list[str]:
     """Normalisér fast kanal->bogstav mapping for et afbrydersymbol.
 
@@ -1164,7 +1175,8 @@ class Placement:
     line_width: float = 0.25
     # Individuel symbolfarve som #RRGGBB.
     color: str = DEFAULT_SYMBOL_COLOR
-    # Visuelle tilhørsforhold mellem kontakter og lys, f.eks. ["a", "b"].
+    # Visuelle tilhørsforhold mellem kontakter og lys. Afbrydere kan have ét
+    # bogstav pr. kanal; et lampested har højst ét bogstav.
     associations: list[str] = field(default_factory=list)
     # For afbrydere gemmes den fysiske kanal -> tilhørsbogstav separat.
     # Det er vigtigt for kombisymboler, fordi alfabetisk sorterede bogstaver ikke
@@ -4985,8 +4997,36 @@ def project_control_issues(placements, cables, rooms=None, project_raw=None, ass
         return ident or symbol_display_name(str(getattr(p,"symbol","") or ""))
     def add(severity,category,title,detail,object_type="",uid=""):
         issues.append({"severity":severity,"category":category,"title":title,"detail":detail,"object_type":object_type,"uid":str(uid or "")})
+    switch_channels_by_letter={}
+    light_targets_by_letter={}
+    for placement in placements:
+        role=association_role(str(getattr(placement,"symbol","") or ""))
+        if role=="switch":
+            for rec in association_channel_records(placement):
+                letter=str(rec.get("association","") or "")
+                if letter:switch_channels_by_letter.setdefault(letter,[]).append(rec)
+        elif role=="light":
+            if str(getattr(placement,"symbol","") or "")=="spot" and str(getattr(placement,"parent_light_uid","") or ""):
+                continue
+            for letter in normalize_light_associations(getattr(placement,"associations",[])):
+                light_targets_by_letter.setdefault(letter,[]).append(placement)
     for placement in placements:
         uid=str(getattr(placement,"uid","") or ""); symbol=str(getattr(placement,"symbol","") or ""); name=caption(placement)
+        role=association_role(symbol)
+        if role=="light" and symbol!="emergency_light" and not (symbol=="spot" and str(getattr(placement,"parent_light_uid","") or "")):
+            raw_letters=normalize_associations(getattr(placement,"associations",[]))
+            letters=normalize_light_associations(raw_letters)
+            if len(raw_letters)>1:
+                add("error","Tilknytning",f"{name} har flere tilhørsbogstaver","Et lampested kan kun repræsentere én tændt udgang. Opret et ekstra lampested for en uafhængig tænding.","placement",uid)
+            elif not letters:
+                add("warning","Tilknytning",f"{name} er ikke tilknyttet en afbryder","Vælg en afbryderkanal og tilknyt lampestedet på planen.","placement",uid)
+            elif letters[0] not in switch_channels_by_letter:
+                add("error","Tilknytning",f"{name} peger på et manglende tilhørsforhold",f"Bogstav {letters[0]} bruges ikke længere af en afbryderkanal.","placement",uid)
+        elif role=="switch":
+            for rec in association_channel_records(placement):
+                letter=str(rec.get("association","") or "")
+                if letter and not light_targets_by_letter.get(letter):
+                    add("warning","Tilknytning",f"{name}: {rec.get('channel_caption','Betjening')} har intet lampested",f"Tilhørsbogstav {letter} er ikke anvendt af et lampested.","placement",uid)
         ib=bindings.get(uid,{}) if uid else {}; ab=assembly_bindings.get(uid,{}) if uid else {}; missing=[]
         for part in bom_symbol_parts(symbol):
             if not part.get("required",True):continue

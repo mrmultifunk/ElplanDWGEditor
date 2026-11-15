@@ -16,7 +16,7 @@ def test_structured_project_migration_keeps_original_and_uses_relative_cad(tmp_p
     cad=old/"hus.dxf"; cad.write_text("0\nEOF\n",encoding="utf-8")
     project=old/"hus.elplan.json"; project.write_text("{}",encoding="utf-8")
     backup=old/"Elplan_backups"/"rev1"; backup.mkdir(parents=True); (backup/"note.txt").write_text("old",encoding="utf-8")
-    data={"version":"0.59.78","source_file":str(cad),"placements":[]}
+    data={"version":"0.59.79","source_file":str(cad),"placements":[]}
     result=project_storage.create_structured_project(
         storage_root=tmp_path/"OneDrive"/"Elplan"/"Projekter",project_name="Hus",project_data=data,
         source_cad=cad,storage_mode=project_storage.MODE_SYNCED,original_project_path=project,copy_existing_backups=True,

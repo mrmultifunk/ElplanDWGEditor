@@ -792,6 +792,8 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         # på fx krone, dobbelt korrespondance, 4-tryk og kombisymboler.
         self.association_guided_setup = False
         self.association_channel_index = 0
+        self._association_session_before = None
+        self._association_session_dirty_before = False
         self.cable_items: dict[int, CableItem] = {}
         self._cable_chain_hover_uids: set[str] = set()
         self._cable_visual_cache: dict[int, list[tuple[float,float]]] = {}
@@ -894,6 +896,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self.view.cablePointCommitted.connect(self._cable_point_committed)
         self.view.calibrationFinished.connect(self._length_calibration_finished)
         self.view.mouseSceneMoved.connect(self._association_mouse_moved)
+        self.view.associationFinishRequested.connect(self._finish_active_association)
         self.view.textPlacementRequested.connect(self._text_placement_requested)
         self.view.patternFinished.connect(self._spot_pattern_finished)
         self.view.roomFinished.connect(self._room_sketch_finished)
@@ -1867,15 +1870,27 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self.prop_assoc.setWordWrap(True)
         self.prop_assoc.setObjectName("accentText")
         al.addWidget(self.prop_assoc)
+        self.assoc_channels_table=QTableWidget(0,3)
+        self.assoc_channels_table.setHorizontalHeaderLabels(["Betjening","Bogstav","Lampesteder"])
+        self.assoc_channels_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.assoc_channels_table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.assoc_channels_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.assoc_channels_table.verticalHeader().setVisible(False)
+        self.assoc_channels_table.horizontalHeader().setSectionResizeMode(0,QHeaderView.ResizeMode.Stretch)
+        self.assoc_channels_table.horizontalHeader().setSectionResizeMode(1,QHeaderView.ResizeMode.ResizeToContents)
+        self.assoc_channels_table.horizontalHeader().setSectionResizeMode(2,QHeaderView.ResizeMode.Stretch)
+        self.assoc_channels_table.cellDoubleClicked.connect(lambda _row,_col:self._start_selected_association_channel())
+        self.assoc_channels_table.setToolTip("Vælg en fysisk betjening og dobbeltklik for at redigere dens lampesteder.")
+        al.addWidget(self.assoc_channels_table)
         ar = QHBoxLayout()
-        self.assoc_button = QPushButton("Tilknyt…")
-        self.assoc_button.clicked.connect(self.start_association_mode)
+        self.assoc_button = QPushButton("Redigér valgt betjening…")
+        self.assoc_button.clicked.connect(self._start_selected_association_channel)
         self.clear_assoc_button = _set_role(QPushButton("Ryd"), "dangerButton")
         self.clear_assoc_button.clicked.connect(self.clear_selected_associations)
         ar.addWidget(self.assoc_button, 1)
         ar.addWidget(self.clear_assoc_button)
         al.addLayout(ar)
-        self.assoc_note = QLabel("Tilhørsforhold gemmes straks. ‘Anvend ændringer’ gælder felterne ovenfor.")
+        self.assoc_note = QLabel("Klik flere lampesteder til/fra. Enter gemmer hele ændringen; Esc annullerer den.")
         self.assoc_note.setWordWrap(True)
         self.assoc_note.setObjectName("sectionHint")
         al.addWidget(self.assoc_note)
@@ -2097,20 +2112,26 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         was_cable_attach = bool(getattr(self,"_pending_cable_attach_symbol_uid","") or "")
         self._pending_cable_attach_symbol_uid = ""
         if was_assoc:
-            self._cleanup_orphan_associations()
-            for ann in self.annotation_items.values():ann.refresh()
-        self.association_source_uid = ""
-        self.association_active_letter = ""
-        self.association_force_new = False
-        self.association_pick_source = False
-        self.association_guided_setup = False
-        self.association_channel_index = 0
+            source_uid=str(self.association_source_uid or "")
+            self._finish_association_mode(source_uid,"Tilknytningen blev annulleret.",commit=False)
+        else:
+            self.association_source_uid = ""
+            self.association_active_letter = ""
+            self.association_force_new = False
+            self.association_pick_source = False
+            self.association_guided_setup = False
+            self.association_channel_index = 0
+            self._association_session_before=None
+            self._association_session_dirty_before=False
+            self.view.set_association_mode_active(False)
         self.spot_parent_pending = []
         self._clear_association_visuals()
         self._refresh_switch_association_badges()
         self._clear_spot_link_visuals()
         self.view.cancel_tool(emit_signal=False)
         self.view.unsetCursor()
+        if was_assoc:
+            return
         if was_cable_attach:
             self._set_status("Tilknytning til eksisterende kabel annulleret.")
             return
@@ -4758,7 +4779,11 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             value=state[p.uid]
             # Backwards compatibility with old undo snapshots that were bare lists.
             if isinstance(value,dict):
-                p.associations=core.normalize_associations(value.get("associations",[]))
+                p.associations=(
+                    core.normalize_light_associations(value.get("associations",[]))
+                    if core.association_role(p.symbol)=="light"
+                    else core.normalize_associations(value.get("associations",[]))
+                )
                 if core.association_role(p.symbol)=="switch":
                     p.association_channels=core.normalize_association_channels(
                         p.symbol,value.get("association_channels",[]),p.associations
@@ -4767,7 +4792,11 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
                 else:
                     p.association_channels=[]
             else:
-                p.associations=core.normalize_associations(value)
+                p.associations=(
+                    core.normalize_light_associations(value)
+                    if core.association_role(p.symbol)=="light"
+                    else core.normalize_associations(value)
+                )
                 if core.association_role(p.symbol)=="switch":
                     p.association_channels=core.normalize_association_channels(p.symbol,[],p.associations)
                     core.sync_association_channels(p,p.association_channels)
@@ -4841,7 +4870,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             if parent is None or parent.symbol != "light_connection":
                 p.parent_light_uid = ""
             else:
-                p.associations = core.normalize_associations(parent.associations)
+                p.associations = core.normalize_light_associations(parent.associations)
 
     def _cleanup_orphan_associations(self) -> None:
         switch_letters = set(); light_letters = set()
@@ -4856,7 +4885,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
                 channels=[a if a in valid else "" for a in core.association_channel_letters(p)]
                 core.sync_association_channels(p,channels)
             elif role=="light":
-                p.associations=[a for a in core.normalize_associations(p.associations) if a in valid]
+                p.associations=core.normalize_light_associations([a for a in core.normalize_associations(p.associations) if a in valid])
                 p.association_channels=[]
         self._sync_spot_parent_associations()
 
@@ -4942,6 +4971,57 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             if self._association_target_allowed(p) and letter in core.normalize_associations(p.associations)
         )
 
+    def _association_target_caption(self,letter:str)->str:
+        targets=[]
+        for p in self.project.placements:
+            if not self._association_target_allowed(p):continue
+            if str(letter or "") not in core.normalize_light_associations(getattr(p,"associations",[])):continue
+            ident=" · ".join(x for x in (str(getattr(p,"group","") or "").strip(),str(getattr(p,"label","") or "").strip()) if x)
+            targets.append(ident or core.symbol_display_name(p.symbol))
+        if not targets:return "Ingen"
+        shown=targets[:2]
+        return ", ".join(shown)+(f" +{len(targets)-2}" if len(targets)>2 else "")
+
+    def _refresh_association_channel_table(self,p:core.Placement|None) -> None:
+        table=self.assoc_channels_table
+        table.setRowCount(0)
+        if p is None or core.association_role(getattr(p,"symbol",""))!="switch":
+            table.hide(); return
+        records=core.association_channel_records(p)
+        table.setRowCount(len(records)); table.show()
+        preferred=self.association_channel_index if self.association_source_uid==p.uid else core.first_unassigned_association_channel(p)
+        if preferred is None:preferred=0
+        for row,rec in enumerate(records):
+            letter=str(rec.get("association","") or "")
+            values=[str(rec.get("channel_caption","") or f"Betjening {row+1}"),letter or "Ledig",self._association_target_caption(letter) if letter else "Ingen"]
+            for col,value in enumerate(values):
+                cell=QTableWidgetItem(value); cell.setData(Qt.ItemDataRole.UserRole,int(rec.get("channel_index",row)))
+                if col==1:cell.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                table.setItem(row,col,cell)
+        table.resizeRowsToContents()
+        table_height=min(190,34+max(1,len(records))*31)
+        table.setMinimumHeight(table_height); table.setMaximumHeight(table_height)
+        if records:
+            row=max(0,min(int(preferred),len(records)-1)); table.setCurrentCell(row,0)
+
+    def _selected_association_channel_index(self,p:core.Placement)->int:
+        row=self.assoc_channels_table.currentRow()
+        if row>=0:
+            item=self.assoc_channels_table.item(row,0)
+            if item is not None:
+                try:return max(0,min(int(item.data(Qt.ItemDataRole.UserRole)),core.association_capacity(p.symbol)-1))
+                except (TypeError,ValueError):pass
+        next_index=core.first_unassigned_association_channel(p)
+        return int(next_index if next_index is not None else 0)
+
+    def _start_selected_association_channel(self)->None:
+        item=self._selected_symbol_item()
+        if item is None or core.association_role(item.placement.symbol)!="switch":
+            self.start_association_mode(); return
+        if item.placement.locked:
+            self._set_status("Afbryderen er låst."); return
+        self._activate_association_source(item,self._selected_association_channel_index(item.placement))
+
     def _refresh_association_visuals(self) -> None:
         self._clear_association_visuals()
         source=self._placement_by_uid(self.association_source_uid)
@@ -4965,14 +5045,18 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
                 continue
             item=self.symbol_items.get(p.uid)
             if item is None or not item.isVisible():continue
-            linked=bool(active and active in core.normalize_associations(p.associations))
+            target_letters=core.normalize_light_associations(p.associations)
+            linked=bool(active and active in target_letters)
+            occupied=bool(target_letters and not linked)
             rect=item.sceneBoundingRect().adjusted(-margin,-margin,margin,margin)
             overlay=QGraphicsRectItem(rect)
-            pen=QPen(QColor("#126bc4" if linked else "#5797d1"))
+            color="#126bc4" if linked else ("#d97706" if occupied else "#0f9f91")
+            pen=QPen(QColor(color))
             pen.setCosmetic(True); pen.setWidthF(2.0 if linked else 1.3)
             pen.setStyle(Qt.PenStyle.SolidLine if linked else Qt.PenStyle.DashLine)
             overlay.setPen(pen)
-            overlay.setBrush(QBrush(QColor(36,126,214,55 if linked else 14)))
+            fill=QColor(color); fill.setAlpha(55 if linked else 18)
+            overlay.setBrush(QBrush(fill))
             overlay.setZValue(1450); overlay.setAcceptedMouseButtons(Qt.MouseButton.NoButton)
             self.scene.addItem(overlay); self.association_target_overlays.append(overlay)
 
@@ -4983,7 +5067,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
 
         if active:
             caption=core.association_channel_caption(source.symbol,self.association_channel_index)
-            label=f"{caption} · {active}: klik lys til/fra"
+            label=f"{caption} · {active}: blå=valgt · turkis=ledig · orange=flyttes"
         elif self.association_guided_setup:
             cap=core.association_capacity(source.symbol)
             step=self.association_channel_index+1
@@ -5084,29 +5168,49 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             if f"({letter})" in choice:return letter
         return existing[0] if prefer_existing else new_letter
 
-    def _finish_association_mode(self,source_uid:str,status:str)->None:
+    def _finish_association_mode(self,source_uid:str,status:str,*,commit:bool=True)->None:
+        before=self._association_session_before
+        dirty_before=bool(self._association_session_dirty_before)
+        after=None
+        if commit and before is not None:
+            self._cleanup_orphan_associations()
+            after=self._association_snapshot()
         self.association_source_uid=""
         self.association_active_letter=""
         self.association_force_new=False
         self.association_pick_source=False
         self.association_guided_setup=False
         self.association_channel_index=0
+        self._association_session_before=None
+        self._association_session_dirty_before=False
+        self.view.set_association_mode_active(False)
         self._clear_association_visuals()
         self._refresh_switch_association_badges()
         self.view.unsetCursor()
+        if not commit and before is not None:
+            self._apply_association_state(before)
+            self.project.dirty=dirty_before; self._update_title()
+        elif commit and before is not None and before!=after:
+            self.undo_stack.push(AssociationCommand(self,before,after,"Redigér lystilhørsforhold"))
+        elif before is not None:
+            self.project.dirty=dirty_before; self._update_title()
         self._set_status(status)
         if source_uid:
             QTimer.singleShot(0,lambda uid=source_uid:self._reselect_uid(uid))
 
-    def _activate_association_source(self,item:ElectricalSymbolItem)->None:
+    def _activate_association_source(self,item:ElectricalSymbolItem,channel_index:int|None=None)->None:
         p=item.placement
         if p.locked:
             self._set_status("Afbryderen er låst.");return
         channels=core.association_channel_letters(p)
         cap=core.association_capacity(p.symbol)
-        choice=self._choose_switch_association_channel(p)
+        if channel_index is None:
+            choice=self._choose_switch_association_channel(p)
+        else:
+            idx=max(0,min(int(channel_index),max(0,cap-1)))
+            choice=(channels[idx] if idx<len(channels) and channels[idx] else "__NEW__",idx)
         if choice is None:
-            self._finish_association_mode(p.uid,"Tilknytningsguiden blev annulleret.")
+            self._finish_association_mode(p.uid,"Tilknytningsguiden blev annulleret.",commit=False)
             return
         active,channel_index=choice
 
@@ -5117,15 +5221,19 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self.association_channel_index=channel_index
         self.association_active_letter="" if active in ("","__NEW__") else active
         self.association_force_new=False
+        self._association_session_before=self._association_snapshot()
+        self._association_session_dirty_before=bool(self.project.dirty)
 
         self.view.cancel_tool(emit_signal=False); self.view.setCursor(Qt.CursorShape.CrossCursor)
+        self.view.setFocus(Qt.FocusReason.OtherFocusReason)
+        self.view.set_association_mode_active(True)
         self._refresh_association_visuals()
         caption=core.association_channel_caption(p.symbol,self.association_channel_index)
         if self.association_active_letter:
             count=self._association_target_count(self.association_active_letter)
             self._set_status(
                 f"{caption} · tilhørsforhold {self.association_active_letter} · {count} lys. "
-                "Klik BLÅ lys for at tilføje/fjerne flere · Esc afslutter"
+                "Klik BLÅ lys til/fra · Enter gemmer · Esc annullerer"
             )
         elif self.association_guided_setup:
             completed=core.assigned_association_channel_count(p)
@@ -5135,24 +5243,38 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         else:
             self._set_status(
                 f"{caption}: klik første BLÅ lampested/lampe. "
-                "Tilknytningen gemmes med det samme."
+                "Enter gemmer hele ændringen · Esc annullerer."
             )
 
     def start_association_mode(self)->None:
         self._stop_cable_marking_for_other_tool(); item=self._selected_symbol_item()
         if item is not None and core.association_role(item.placement.symbol)=="switch" and not item.placement.locked:
-            self._activate_association_source(item);return
+            self._activate_association_source(item,self._selected_association_channel_index(item.placement));return
         self.association_source_uid=""
         self.association_active_letter=""
         self.association_force_new=False
         self.association_guided_setup=False
         self.association_channel_index=0
+        self._association_session_before=None
+        self._association_session_dirty_before=False
+        self.view.set_association_mode_active(False)
         self.association_pick_source=True
         self.view.cancel_tool(emit_signal=False); self.view.setCursor(Qt.CursorShape.CrossCursor)
         self._refresh_association_source_picker()
         self._set_status(
             "Tilknyt lys — trin 1: klik en ORANGE afbryder. "
             "Flerfunktionsafbrydere guides automatisk gennem alle tændinger."
+        )
+
+    def _finish_active_association(self)->None:
+        source=self._placement_by_uid(self.association_source_uid)
+        if source is None:return
+        assigned=core.assigned_association_channel_count(source)
+        targets=sum(self._association_target_count(letter) for letter in core.association_channel_letters(source) if letter)
+        self._finish_association_mode(
+            source.uid,
+            f"Tilknytning gemt · {assigned}/{core.association_capacity(source.symbol)} betjeninger · {targets} lampested(er).",
+            commit=True,
         )
 
     def _symbol_double_clicked(self,item:ElectricalSymbolItem)->None:
@@ -5180,7 +5302,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             for p in self.project.placements:
                 if p.uid in pending and p.symbol=="spot":
                     p.parent_light_uid=target.uid
-                    p.associations=core.normalize_associations(target.associations)
+                    p.associations=core.normalize_light_associations(target.associations)
                     linked+=1
             after=self._spot_parent_snapshot()
             self.undo_stack.push(SpotParentCommand(self,before,after,"Tilknyt spots til lampested"))
@@ -5209,7 +5331,6 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             return
 
         active=str(self.association_active_letter or "")
-        before=self._association_snapshot()
         new_channel_created=False
         channel_index=min(
             max(self.association_channel_index,0),
@@ -5230,25 +5351,24 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             self.association_active_letter=active
             self.association_force_new=False
 
-        target_vals=core.normalize_associations(target.associations)
+        target_vals=core.normalize_light_associations(target.associations)
         if new_channel_created:
             # Når et nyt afbrydertrin kobles på et allerede eksisterende
             # tilhørsforhold (typisk korrespondance/krydsning), skal lampestedets
             # bogstav BEVARES. Kanal->bogstav-mappingen på kombiafbryderen gemmes
             # separat og kan derfor ikke længere blive ødelagt af alfabetisk sortering.
             if active not in target_vals:
-                target.associations=core.normalize_associations(target_vals+[active])
+                target.associations=[active]
             action="Tilknyt"
         elif active in target_vals:
-            target.associations=[a for a in target_vals if a!=active]
+            target.associations=[]
             action="Fjern"
         else:
-            target.associations=core.normalize_associations(target_vals+[active])
-            action="Tilknyt"
+            target.associations=[active]
+            action="Flyt" if target_vals else "Tilknyt"
 
         self._sync_spot_parent_associations()
-        after=self._association_snapshot()
-        self.undo_stack.push(AssociationCommand(self,before,after,f"{action} {active}"))
+        self.project.dirty=True; self._update_title()
         for ann in self.annotation_items.values():ann.refresh()
         self._refresh_switch_association_badges()
 
@@ -5275,7 +5395,8 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             self._finish_association_mode(
                 source.uid,
                 f"Tilknytningsguide færdig: {cap}/{cap} betjeninger ({summary}). "
-                "Hvert kombimodul er gemt separat."
+                "Hvert kombimodul er gemt separat.",
+                commit=True,
             )
             return
 
@@ -5283,8 +5404,8 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         count=self._association_target_count(active)
         caption=core.association_channel_caption(source.symbol,channel_index)
         self._set_status(
-            f"{caption} · {active}: {count} lys tilknyttet og gemt automatisk. "
-            "Klik BLÅ lys for at tilføje/fjerne flere · Esc afslutter"
+            f"{caption} · {active}: {count} lys valgt. "
+            "Klik BLÅ lys til/fra · Enter gemmer · Esc annullerer"
         )
         QTimer.singleShot(0,lambda:self._reselect_uid(source.uid))
 
@@ -5533,12 +5654,12 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
                 value=state[p.uid]
                 if isinstance(value,dict):
                     p.parent_light_uid=str(value.get("parent_light_uid","") or "")
-                    p.associations=core.normalize_associations(value.get("associations",[]))
+                    p.associations=core.normalize_light_associations(value.get("associations",[]))
                     p.spot_group_id=str(value.get("spot_group_id","") or "")
                     p.spot_group_name=str(value.get("spot_group_name","") or "")
                 else:
                     # Backwards compatible with old undo snapshots: (parent, associations).
-                    parent,assoc=value; p.parent_light_uid=str(parent); p.associations=core.normalize_associations(assoc)
+                    parent,assoc=value; p.parent_light_uid=str(parent); p.associations=core.normalize_light_associations(assoc)
                 ann=self.annotation_items.get(p.uid)
                 if ann:ann.refresh()
         self.project.dirty=True; self._update_title()
@@ -5736,6 +5857,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self._clear_relation_overview()
         self.spot_parent_group.hide()
         self.bom_group.hide()
+        self.assoc_channels_table.hide()
         if hasattr(self,"symbol_cables_group"):self.symbol_cables_group.hide()
         if hasattr(self,"pl_box_group"):self.pl_box_group.hide()
         self._apply_visual_emphasis()
@@ -5850,12 +5972,13 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             base=f"{assoc_text or 'Ingen'}   ({len(assigned)}/{cap} betjeninger)"
             self.prop_assoc.setText(base + (f" · {detail}" if detail else ""))
         elif role=="light":
-            vals=core.normalize_associations(p.associations)
+            vals=core.normalize_light_associations(p.associations)
             self.prop_assoc.setText(
                 f"Lys: {assoc_text or 'ingen tilknytning'}"
-                + (f" · {len(vals)} tilhørsforhold" if vals else "")
+                + (" · ét lampested = én tænding" if vals else "")
             )
         else:self.prop_assoc.setText("—")
+        self._refresh_association_channel_table(p)
 
         if core.bom_supported_symbol(p.symbol):
             self.bom_group.show()
@@ -6254,6 +6377,12 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self._create_current_project_in_storage(migrate=True)
 
     def save_project(self, save_as: bool = False) -> bool:
+        if self.association_source_uid:
+            # A save is an explicit commit point. Never write a half-finished
+            # relation session without first turning it into one undoable edit.
+            self._finish_active_association()
+        elif self.association_pick_source:
+            self._finish_association_mode("","Tilknytningsværktøjet blev afsluttet.",commit=False)
         target = self.project.path
         if not save_as and target is not None and not self._can_write_current_project():
             return False
