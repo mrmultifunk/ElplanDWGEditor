@@ -32,7 +32,7 @@ from ezdxf import bbox, disassemble, path as ezpath
 from ezdxf.addons import odafc
 
 APP_NAME = "Elplan DWG Editor"
-APP_VERSION = "0.59.76"
+APP_VERSION = "0.59.77"
 ODA_DOWNLOAD_URL = "https://www.opendesign.com/guestfiles/oda_file_converter"
 # Programmet bruger separate lag til forskellige typer el-installationer.
 # EL-SYMBOLER beholdes kun som navn af hensyn til ældre eksporter, men nye
@@ -1067,6 +1067,83 @@ def detect_oda_exec_path() -> str | None:
     return None
 
 
+MOUNTING_ZONE_OPTIONS = (
+    ("", "Ikke angivet"),
+    ("floor", "Gulv"),
+    ("switch", "Afbryderhøjde"),
+    ("ceiling", "Loft"),
+    ("custom", "Anden højde"),
+)
+MOUNTING_ZONE_LABELS = dict(MOUNTING_ZONE_OPTIONS)
+MATERIAL_COLOR_PRESETS = ("", "Hvid", "Koksgrå", "Lysegrå", "Sort")
+
+
+def normalize_mounting_zone(value) -> str:
+    raw=str(value or "").strip().casefold()
+    aliases={
+        "":"", "none":"", "unspecified":"", "ikke angivet":"",
+        "floor":"floor", "gulv":"floor", "gulvhøjde":"floor",
+        "switch":"switch", "afbryder":"switch", "afbryderhøjde":"switch",
+        "ceiling":"ceiling", "loft":"ceiling", "lofthøjde":"ceiling",
+        "custom":"custom", "anden":"custom", "anden højde":"custom",
+    }
+    return aliases.get(raw,raw if raw in MOUNTING_ZONE_LABELS else "custom")
+
+
+def mounting_zone_label(value) -> str:
+    return MOUNTING_ZONE_LABELS.get(normalize_mounting_zone(value),"Anden højde")
+
+
+def normalize_mounting_height_mm(value):
+    if value is None or str(value).strip()=="":return None
+    try:number=float(value)
+    except (TypeError,ValueError):return None
+    if not math.isfinite(number) or number<=0:return None
+    return round(min(number,10000.0),1)
+
+
+def normalize_material_color(value) -> str:
+    return " ".join(str(value or "").strip().split())[:80]
+
+
+def normalize_already_purchased(value) -> bool:
+    if isinstance(value,str):return value.strip().casefold() in {"1","true","yes","ja","købt","koebt"}
+    return bool(value)
+
+
+def placement_procurement_context(placement) -> dict:
+    zone=normalize_mounting_zone(getattr(placement,"mounting_zone","") if placement is not None else "")
+    height=normalize_mounting_height_mm(getattr(placement,"mounting_height_mm",None) if placement is not None else None)
+    color=normalize_material_color(getattr(placement,"material_color","") if placement is not None else "")
+    purchased=normalize_already_purchased(getattr(placement,"already_purchased",False) if placement is not None else False)
+    height_text=(f"{height:g} mm" if height is not None else "Ikke angivet")
+    parts=[mounting_zone_label(zone)]
+    if height is not None:parts.append(height_text)
+    if color:parts.append(color)
+    return {
+        "mounting_zone":zone,
+        "mounting_zone_label":mounting_zone_label(zone),
+        "mounting_height_mm":height,
+        "mounting_height_display":height_text,
+        "material_color":color,
+        "already_purchased":purchased,
+        "purchase_status":"Allerede købt" if purchased else "Mangler at købe",
+        "mounting_summary":" · ".join(parts),
+    }
+
+
+def bom_purchase_segment_key(article_no, context=None) -> str:
+    row=dict(context or {})
+    height=normalize_mounting_height_mm(row.get("mounting_height_mm"))
+    return "\x1f".join((
+        str(article_no or "").strip(),
+        normalize_mounting_zone(row.get("mounting_zone")),
+        "" if height is None else f"{height:.1f}",
+        normalize_material_color(row.get("material_color")).casefold(),
+        "1" if normalize_already_purchased(row.get("already_purchased",False)) else "0",
+    ))
+
+
 @dataclass
 class Placement:
     symbol: str
@@ -1097,6 +1174,13 @@ class Placement:
     # Låste symboler kan stadig vælges/kopieres, men kan ikke flyttes, roteres,
     # slettes eller redigeres før de låses op igen.
     locked: bool = False
+    # Montage- og indkøbskontekst gemmes pr. fysisk symbolforekomst. Profilen
+    # bruges til robust gruppering, mens den præcise højde og materialefarven
+    # gør Excel/BOM egnet som indkøbsgrundlag uden at ændre symboltypen.
+    mounting_zone: str = ""
+    mounting_height_mm: float | None = None
+    material_color: str = ""
+    already_purchased: bool = False
     # Spots kan samles i en vedvarende logisk gruppe. Gruppen er uafhængig af
     # gruppe/kreds-feltet og bruges til samlet valg, redigering og kobling til
     # et lampested. Et tomt id betyder, at spottet ikke er grupperet.
@@ -5021,6 +5105,7 @@ def bom_source_breakdown(placements, article_catalog, bindings, rooms=None, cabl
         symbol_name=symbol_display_name(symbol)
         identity=" · ".join(x for x in (str(getattr(placement,"group","") or "").strip(),str(getattr(placement,"label","") or "").strip()) if x)
         rooms_text=" | ".join(placement_rooms(placement))
+        procurement=placement_procurement_context(placement)
         ib=bindings.get(uid,{}) if uid else {}
         ab=assembly_bindings.get(uid,{}) if uid else {}
         for part in bom_symbol_parts(symbol):
@@ -5036,6 +5121,7 @@ def bom_source_breakdown(placements, article_catalog, bindings, rooms=None, cabl
                 art=lookup.get(ano,{})
                 out.append({
                     "article_no":ano,"description":str(art.get("description","") or ""),
+                    "purchase_segment_key":bom_purchase_segment_key(ano,procurement),**procurement,
                     "source_type":source_type,"source_label":source_label,
                     "component_role":str(bound.get("role","") or ""),
                     "assembly_id":str(aid or ""),"assembly_name":str(assembly.get("name","") or "") if assembly else "",
@@ -5051,6 +5137,7 @@ def bom_source_breakdown(placements, article_catalog, bindings, rooms=None, cabl
             members=len(pl_splice_member_keys(splice))
             out.append({
                 "article_no":ano,"description":str(art.get("description","") or ""),
+                "purchase_segment_key":bom_purchase_segment_key(ano,procurement),**procurement,
                 "source_type":"wago","source_label":"Wago-samling i PL-dåse","assembly_id":"","assembly_name":"",
                 "placement_uid":uid,"cable_uid":"","symbol":symbol,"symbol_name":symbol_name,
                 "object_label":identity or symbol_name,"group_circuit":str(getattr(placement,"group","") or "").strip(),"part_id":str(splice.get("id","") or "wago"),"part_label":"Wago-samling",
@@ -5088,6 +5175,7 @@ def bom_source_breakdown(placements, article_catalog, bindings, rooms=None, cabl
         if length is not None:detail+=f" · {float(length):.2f} m inkl. reserve"
         out.append({
             "article_no":ano,"description":str(art.get("description","") or ""),
+            "purchase_segment_key":bom_purchase_segment_key(ano,placement_procurement_context(None)),**placement_procurement_context(None),
             "source_type":"cable","source_label":"Kabelstræk","assembly_id":"","assembly_name":"",
             "placement_uid":"","cable_uid":uid,"symbol":"__cable__","symbol_name":"Kabel",
             "object_label":cid,"group_circuit":str(getattr(cable,"circuit_id","") or "").strip(),"part_id":"cable","part_label":spec or "Kabel",
@@ -5280,6 +5368,7 @@ def build_bom(placements, article_catalog, bindings, cables=None, cable_bindings
             continue
         symbol=str(getattr(placement,"symbol","") or "")
         placement_uid=str(getattr(placement,"uid","") or "").strip()
+        procurement=placement_procurement_context(placement)
         parts=bom_symbol_parts(symbol)
         if parts:
             instance_bindings=bindings.get(placement_uid,{}) if placement_uid else {}
@@ -5302,13 +5391,17 @@ def build_bom(placements, article_catalog, bindings, cables=None, cable_bindings
                 for bound in bound_rows:
                     article_no=bound["article_no"]
                     qty=float(bound.get("qty",1.0) or 1.0)
-                    totals[article_no]=totals.get(article_no,0.0)+qty
+                    segment_key=bom_purchase_segment_key(article_no,procurement)
+                    entry=totals.setdefault(segment_key,{"article_no":article_no,"qty":0.0,**procurement})
+                    entry["qty"]+=qty
 
         for splice in normalize_pl_box_splices(getattr(placement,"pl_box_splices",[]) or []):
             article_no=str(splice.get("article_no","") or "").strip()
             members=len(pl_splice_member_keys(splice))
             if article_no:
-                totals[article_no]=totals.get(article_no,0.0)+1.0
+                segment_key=bom_purchase_segment_key(article_no,procurement)
+                entry=totals.setdefault(segment_key,{"article_no":article_no,"qty":0.0,**procurement})
+                entry["qty"]+=1.0
             else:
                 wago_missing.append({
                     "symbol":"__pl_wago__",
@@ -5321,6 +5414,7 @@ def build_bom(placements, article_catalog, bindings, cables=None, cable_bindings
 
     # Kabler. Hvert stræk skal eksplicit have valgt en artikel via kabel-UID.
     cable_required_by_article={}
+    cable_procurement=placement_procurement_context(None)
     cable_missing={}
     cable_scale_ok=metres_per_unit is not None and float(metres_per_unit or 0) > 0
     for cable in cables or []:
@@ -5362,7 +5456,8 @@ def build_bom(placements, article_catalog, bindings, cables=None, cable_bindings
             else:
                 entry["qty"] += float(length)
             continue
-        entry=cable_required_by_article.setdefault(article_no,{"metres":0.0,"known":True,"count":0})
+        segment_key=bom_purchase_segment_key(article_no,cable_procurement)
+        entry=cable_required_by_article.setdefault(segment_key,{"article_no":article_no,"metres":0.0,"known":True,"count":0,**cable_procurement})
         entry["count"] += 1
         if length is None:
             entry["known"]=False
@@ -5370,11 +5465,14 @@ def build_bom(placements, article_catalog, bindings, cables=None, cable_bindings
             entry["metres"] += float(length)
 
     out=[]
-    all_article_nos=set(totals)|set(cable_required_by_article)
-    for article_no in sorted(all_article_nos,key=str.lower):
+    all_segment_keys=set(totals)|set(cable_required_by_article)
+    for segment_key in sorted(all_segment_keys,key=str.lower):
+        segment=totals.get(segment_key) or cable_required_by_article.get(segment_key) or {}
+        article_no=str(segment.get("article_no","") or "")
         article=lookup.get(article_no,{})
-        symbol_qty=float(totals.get(article_no,0.0))
-        cable_info=cable_required_by_article.get(article_no)
+        symbol_qty=float((totals.get(segment_key) or {}).get("qty",0.0))
+        cable_info=cable_required_by_article.get(segment_key)
+        procurement={key:segment.get(key,value) for key,value in placement_procurement_context(None).items()}
         qty=symbol_qty
         detail=""
         if cable_info is not None:
@@ -5417,10 +5515,13 @@ def build_bom(placements, article_catalog, bindings, cables=None, cable_bindings
         elif normalized_price_unit==packaging["sales_unit"]:
             price_basis_qty=purchase["purchase_quantity"]
         line_total=(price_basis_qty*unit_price if unit_price is not None else None)
+        already_purchased=bool(procurement.get("already_purchased",False))
         if not detail and (packaging["sales_package_quantity"] > 1.0000001 or packaging["minimum_order_quantity"] > 1.0000001):
             detail=purchase["summary"]
         out.append({
             "article_no":article_no,
+            "purchase_segment_key":segment_key,
+            **procurement,
             "description":str(article.get("description","") or ""),
             "manufacturer":str(article.get("manufacturer","") or ""),
             "bom_category":bom_article_category(article),
@@ -5449,6 +5550,9 @@ def build_bom(placements, article_catalog, bindings, cables=None, cable_bindings
             "minimum_order_quantity":packaging["minimum_order_quantity"],
             "package_label":packaging["package_label"],
             "purchase_quantity":purchase["purchase_quantity"],
+            "quantity_to_buy":0.0 if already_purchased else qty,
+            "purchase_quantity_to_buy":0.0 if already_purchased else purchase["purchase_quantity"],
+            "line_total_to_buy":0.0 if already_purchased and line_total is not None else line_total,
             "purchased_consumption_quantity":purchase["purchased_consumption_quantity"],
             "surplus_quantity":purchase["surplus_quantity"],
             "purchase_summary":purchase["summary"],

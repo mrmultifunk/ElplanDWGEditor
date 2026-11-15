@@ -46,7 +46,7 @@ def test_project_save_is_atomic_and_leaves_no_tmp(tmp_path: Path):
     target = tmp_path / "p.elplan.json"
     project.save(target)
     raw = json.loads(target.read_text(encoding="utf-8"))
-    assert raw["version"] == "0.59.76"
+    assert raw["version"] == "0.59.77"
     assert not list(tmp_path.glob(".p.elplan.json.*.tmp"))
 
 

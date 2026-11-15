@@ -5,7 +5,7 @@ from project_model import APP_VERSION
 
 
 def test_version_is_0527():
-    assert APP_VERSION == core.APP_VERSION == "0.59.76"
+    assert APP_VERSION == core.APP_VERSION == "0.59.77"
 
 
 def test_pl_wiring_diagram_geometry_uses_actual_available_height():

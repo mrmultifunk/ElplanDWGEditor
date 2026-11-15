@@ -2940,11 +2940,11 @@ class BomManagerDialog(QDialog):
     def _update_bom_price_headers(self):
         caption=price_display.vat_caption(getattr(self,"price_vat_mode","excl"))
         if hasattr(self,"bom_table"):
-            self.bom_table.horizontalHeaderItem(9).setText(f"Enhedspris {caption}")
-            self.bom_table.horizontalHeaderItem(12).setText(f"Sum {caption}")
+            self.bom_table.horizontalHeaderItem(12).setText(f"Enhedspris {caption}")
+            self.bom_table.horizontalHeaderItem(15).setText(f"Sum {caption}")
         if hasattr(self,"bom_group_tree"):
-            self.bom_group_tree.headerItem().setText(9,f"Enhedspris {caption}")
-            self.bom_group_tree.headerItem().setText(12,f"Sum {caption}")
+            self.bom_group_tree.headerItem().setText(12,f"Enhedspris {caption}")
+            self.bom_group_tree.headerItem().setText(15,f"Sum {caption}")
         if hasattr(self,"bom_assembly_tree"):
             self.bom_assembly_tree.headerItem().setText(7,f"Enhedspris {caption}")
             self.bom_assembly_tree.headerItem().setText(8,f"Sum {caption}")
@@ -3042,6 +3042,10 @@ class BomManagerDialog(QDialog):
         self.bom_group_by.addItem("Ingen gruppering","")
         self.bom_group_by.addItem("Rum","room_display")
         self.bom_group_by.addItem("Artikeltype","bom_category")
+        self.bom_group_by.addItem("Monteringsprofil","mounting_zone_label")
+        self.bom_group_by.addItem("Monteringshøjde","mounting_height_display")
+        self.bom_group_by.addItem("Materialefarve","material_color")
+        self.bom_group_by.addItem("Indkøbsstatus","purchase_status")
         self.bom_group_by.addItem("Hovedkategori","category")
         self.bom_group_by.addItem("Gruppe/kreds","circuit_display")
         self.bom_group_by.addItem("Stykliste / kilde","source_summary")
@@ -3074,9 +3078,19 @@ class BomManagerDialog(QDialog):
         self.bom_status=QLabel(""); self.bom_status.setObjectName("accentText"); hdr.addWidget(self.bom_status,1)
         root.addLayout(hdr)
         view.addWidget(QLabel("Sortér efter"))
-        self.bom_sort=QComboBox(); self.bom_sort.addItem("Artikelnummer","article_no"); self.bom_sort.addItem("Artikeltype","bom_category"); self.bom_sort.addItem("Rum","room_display"); self.bom_sort.addItem("Beskrivelse","description"); self.bom_sort.addItem("Fabrikat","manufacturer")
+        self.bom_sort=QComboBox(); self.bom_sort.addItem("Artikelnummer","article_no"); self.bom_sort.addItem("Artikeltype","bom_category"); self.bom_sort.addItem("Rum","room_display"); self.bom_sort.addItem("Monteringsprofil","mounting_zone_label"); self.bom_sort.addItem("Monteringshøjde","mounting_height_mm"); self.bom_sort.addItem("Materialefarve","material_color"); self.bom_sort.addItem("Indkøbsstatus","purchase_status"); self.bom_sort.addItem("Beskrivelse","description"); self.bom_sort.addItem("Fabrikat","manufacturer")
         self.bom_sort.setToolTip("Vælg hvilket felt den viste artikel-BOM skal sorteres efter.")
-        self.bom_sort.currentIndexChanged.connect(self._refresh_bom); view.addWidget(self.bom_sort); view.addStretch(1)
+        self.bom_sort.currentIndexChanged.connect(self._refresh_bom); view.addWidget(self.bom_sort)
+        view.addWidget(QLabel("Montage"))
+        self.bom_mounting_filter=QComboBox(); self.bom_mounting_filter.setMinimumWidth(135); self.bom_mounting_filter.addItem("Alle profiler","")
+        self.bom_mounting_filter.currentIndexChanged.connect(self._refresh_bom); view.addWidget(self.bom_mounting_filter)
+        view.addWidget(QLabel("Farve"))
+        self.bom_material_color_filter=QComboBox(); self.bom_material_color_filter.setMinimumWidth(120); self.bom_material_color_filter.addItem("Alle farver","")
+        self.bom_material_color_filter.currentIndexChanged.connect(self._refresh_bom); view.addWidget(self.bom_material_color_filter)
+        view.addWidget(QLabel("Indkøb"))
+        self.bom_purchase_filter=QComboBox(); self.bom_purchase_filter.setMinimumWidth(145)
+        self.bom_purchase_filter.addItem("Alle",""); self.bom_purchase_filter.addItem("Mangler at købe","not_purchased"); self.bom_purchase_filter.addItem("Allerede købt","purchased")
+        self.bom_purchase_filter.currentIndexChanged.connect(self._refresh_bom); view.addWidget(self.bom_purchase_filter); view.addStretch(1)
         root.addLayout(view)
 
         actions=QHBoxLayout()
@@ -3096,10 +3110,10 @@ class BomManagerDialog(QDialog):
         # grupperingsvalg skifter til et kollapsbart træ uden at ændre data.
         article_page=QWidget(); article_layout=QVBoxLayout(article_page); article_layout.setContentsMargins(0,0,0,0)
         self.bom_article_stack=QStackedWidget()
-        self.bom_table=QTableWidget(0,15)
-        self.bom_table.setHorizontalHeaderLabels(["Artikelnummer","Rum","Beskrivelse","Fabrikat","Type/kategori","Kilde / stykliste","EAN","EL-/LM-nr.","Enhed","Antal","Enhedspris","Prisstatus","Pris pr.","Sum","Grundlag"])
+        self.bom_table=QTableWidget(0,17)
+        self.bom_table.setHorizontalHeaderLabels(["Artikelnummer","Rum","Beskrivelse","Fabrikat","Type/kategori","Montage / farve","Indkøbsstatus","Kilde / stykliste","EAN","EL-/LM-nr.","Enhed","Antal","Enhedspris","Prisstatus","Pris pr.","Sum","Grundlag"])
         # Legacy layout key reference: "bom_result_v05923"
-        _configure_resizable_table(self.bom_table,"bom_result_v05973",(125,175,340,145,175,255,140,120,70,70,115,95,70,110,300))
+        _configure_resizable_table(self.bom_table,"bom_result_v05977",(125,175,320,140,165,230,125,240,135,115,70,70,115,95,70,110,280))
         self.bom_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.bom_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.bom_table.setMouseTracking(True); self.bom_table.viewport().setMouseTracking(True); self.bom_table.viewport().installEventFilter(self)
@@ -3107,8 +3121,8 @@ class BomManagerDialog(QDialog):
         self.bom_table.itemDoubleClicked.connect(self._bom_row_activated)
         self.bom_article_stack.addWidget(self.bom_table)
 
-        self.bom_group_tree=QTreeWidget(); self.bom_group_tree.setColumnCount(15)
-        self.bom_group_tree.setHeaderLabels(["Artikelnummer / gruppe","Rum","Beskrivelse","Fabrikat","Type/kategori","Kilde / stykliste","EAN","EL-/LM-nr.","Enhed","Antal","Enhedspris","Prisstatus","Pris pr.","Sum","Grundlag"])
+        self.bom_group_tree=QTreeWidget(); self.bom_group_tree.setColumnCount(17)
+        self.bom_group_tree.setHeaderLabels(["Artikelnummer / gruppe","Rum","Beskrivelse","Fabrikat","Type/kategori","Montage / farve","Indkøbsstatus","Kilde / stykliste","EAN","EL-/LM-nr.","Enhed","Antal","Enhedspris","Prisstatus","Pris pr.","Sum","Grundlag"])
         self.bom_group_tree.setAlternatingRowColors(True); self.bom_group_tree.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.bom_group_tree.itemDoubleClicked.connect(self._bom_group_item_activated)
         self.bom_article_stack.addWidget(self.bom_group_tree)
@@ -3130,9 +3144,9 @@ class BomManagerDialog(QDialog):
         source_page=QWidget(); source_layout=QVBoxLayout(source_page); source_layout.setContentsMargins(0,0,0,0)
         source_hint=QLabel("Én række pr. konkret BOM-kilde. Dobbeltklik for at gå direkte til det symbol eller kabel, som skabte bidraget.")
         source_hint.setWordWrap(True); source_hint.setObjectName("sectionHint"); source_layout.addWidget(source_hint)
-        self.bom_source_table=QTableWidget(0,8)
-        self.bom_source_table.setHorizontalHeaderLabels(["Artikelnummer","Rum","Kildetype","Stykliste / kilde","Symbol / kabel","Del","Bidrag","Detalje"])
-        _configure_resizable_table(self.bom_source_table,"bom_sources_v05928",(130,175,105,235,190,185,100,360))
+        self.bom_source_table=QTableWidget(0,10)
+        self.bom_source_table.setHorizontalHeaderLabels(["Artikelnummer","Rum","Montage / farve","Indkøbsstatus","Kildetype","Stykliste / kilde","Symbol / kabel","Del","Bidrag","Detalje"])
+        _configure_resizable_table(self.bom_source_table,"bom_sources_v05977",(130,175,220,120,105,225,180,170,95,320))
         self.bom_source_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.bom_source_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.bom_source_table.itemDoubleClicked.connect(self._bom_source_row_activated)
@@ -4451,6 +4465,15 @@ class BomManagerDialog(QDialog):
         return out
 
     @staticmethod
+    def _bom_sources_by_segment(sources):
+        out=defaultdict(list)
+        for row in sources or []:
+            ano=str(row.get("article_no","") or "").strip()
+            key=str(row.get("purchase_segment_key","") or core.bom_purchase_segment_key(ano,row))
+            if key:out[key].append(row)
+        return out
+
+    @staticmethod
     def _bom_source_summary(rows):
         rows=list(rows or []); assembly_names=[]; kinds=[]
         for row in rows:
@@ -4471,6 +4494,15 @@ class BomManagerDialog(QDialog):
     def _bom_row_matches_quick_filter(self,row,sources):
         wanted_category=str(self.bom_category_filter.currentData() or "") if hasattr(self,"bom_category_filter") else ""
         if wanted_category and str(row.get("bom_category","") or "")!=wanted_category:return False
+        wanted_mounting=str(self.bom_mounting_filter.currentData() or "") if hasattr(self,"bom_mounting_filter") else ""
+        row_mounting=core.normalize_mounting_zone(row.get("mounting_zone",""))
+        if wanted_mounting and row_mounting!=("" if wanted_mounting=="__none__" else wanted_mounting):return False
+        wanted_color=str(self.bom_material_color_filter.currentData() or "") if hasattr(self,"bom_material_color_filter") else ""
+        row_color=core.normalize_material_color(row.get("material_color",""))
+        if wanted_color and row_color!=("" if wanted_color=="__none__" else wanted_color):return False
+        purchase_filter=str(self.bom_purchase_filter.currentData() or "") if hasattr(self,"bom_purchase_filter") else ""
+        if purchase_filter=="purchased" and not bool(row.get("already_purchased",False)):return False
+        if purchase_filter=="not_purchased" and bool(row.get("already_purchased",False)):return False
         mode=str(self.bom_quick_filter.currentData() or "") if hasattr(self,"bom_quick_filter") else ""
         if not mode:return True
         kinds={str(x.get("source_type","") or "") for x in (sources or [])}
@@ -4493,12 +4525,32 @@ class BomManagerDialog(QDialog):
         for value in values:self.bom_category_filter.addItem(value,value)
         index=self.bom_category_filter.findData(current); self.bom_category_filter.setCurrentIndex(index if index>=0 else 0); del blocker
 
+    def _refresh_bom_procurement_filters(self,rows):
+        rows=list(rows or [])
+        if hasattr(self,"bom_mounting_filter"):
+            current=str(self.bom_mounting_filter.currentData() or "")
+            present={core.normalize_mounting_zone(row.get("mounting_zone","")) for row in rows}
+            blocker=QSignalBlocker(self.bom_mounting_filter); self.bom_mounting_filter.clear(); self.bom_mounting_filter.addItem("Alle profiler","")
+            for value,label in core.MOUNTING_ZONE_OPTIONS:
+                if value in present:self.bom_mounting_filter.addItem(label,value if value else "__none__")
+            index=self.bom_mounting_filter.findData(current); self.bom_mounting_filter.setCurrentIndex(index if index>=0 else 0); del blocker
+        if hasattr(self,"bom_material_color_filter"):
+            current=str(self.bom_material_color_filter.currentData() or "")
+            present={core.normalize_material_color(row.get("material_color","")) for row in rows}
+            blocker=QSignalBlocker(self.bom_material_color_filter); self.bom_material_color_filter.clear(); self.bom_material_color_filter.addItem("Alle farver","")
+            for value in sorted(present,key=lambda x:(not bool(x),x.casefold())):
+                self.bom_material_color_filter.addItem(value or "Ikke angivet",value if value else "__none__")
+            index=self.bom_material_color_filter.findData(current); self.bom_material_color_filter.setCurrentIndex(index if index>=0 else 0); del blocker
+
     def _bom_filter_caption(self):
         parts=[]
         if hasattr(self,"bom_category_filter") and str(self.bom_category_filter.currentData() or ""):
             parts.append(str(self.bom_category_filter.currentText() or ""))
         if hasattr(self,"bom_quick_filter") and str(self.bom_quick_filter.currentData() or ""):
             parts.append(str(self.bom_quick_filter.currentText() or ""))
+        for name in ("bom_mounting_filter","bom_material_color_filter","bom_purchase_filter"):
+            combo=getattr(self,name,None)
+            if combo is not None and str(combo.currentData() or ""):parts.append(str(combo.currentText() or ""))
         return " · ".join(x for x in parts if x) or "Alle"
 
     def _fit_active_bom_columns(self):
@@ -4627,12 +4679,12 @@ class BomManagerDialog(QDialog):
                 if row.get("line_total") is not None:
                     cur=str(row.get("price_currency","DKK") or "DKK").upper(); currencies[cur]+=float(row.get("line_total") or 0); priced+=1
             total=" · ".join(self._fmt_display_price(v,k) for k,v in sorted(currencies.items())) if currencies else "—"
-            parent=QTreeWidgetItem([f"{label}  ({len(members)} artikler)","","","","","","","","",self._fmt_qty(sum(float(x.get('qty',0) or 0) for x in members)),"","","",total,f"Pris på {priced}/{len(members)} linjer"])
+            parent=QTreeWidgetItem([f"{label}  ({len(members)} linjer)","","","","","","","","","","",self._fmt_qty(sum(float(x.get('qty',0) or 0) for x in members)),"","","",total,f"Pris på {priced}/{len(members)} linjer"])
             parent.setData(0,Qt.ItemDataRole.UserRole,{"kind":"group","label":label})
             font=parent.font(0); font.setBold(True); parent.setFont(0,font)
             self.bom_group_tree.addTopLevelItem(parent)
             for row in members:
-                vals=[row["article_no"],row.get("room_display","Uden rum"),row["description"],row["manufacturer"],row.get("bom_category","Ukategoriseret"),row.get("source_summary","—"),row.get("ean",""),row.get("el_no",""),row["unit"],self._fmt_qty(row["qty"]),self._fmt_display_price(row.get("unit_price"),row.get("price_currency","DKK")),row.get("price_status",row.get("price_kind","")),row.get("price_unit",row.get("unit","")),self._fmt_display_price(row.get("line_total"),row.get("price_currency","DKK")),str(row.get("detail","") or "")]
+                vals=[row["article_no"],row.get("room_display","Uden rum"),row["description"],row["manufacturer"],row.get("bom_category","Ukategoriseret"),row.get("mounting_summary","Ikke angivet"),row.get("purchase_status","Mangler at købe"),row.get("source_summary","—"),row.get("ean",""),row.get("el_no",""),row["unit"],self._fmt_qty(row["qty"]),self._fmt_display_price(row.get("unit_price"),row.get("price_currency","DKK")),row.get("price_status",row.get("price_kind","")),row.get("price_unit",row.get("unit","")),self._fmt_display_price(row.get("line_total"),row.get("price_currency","DKK")),str(row.get("detail","") or "")]
                 child=QTreeWidgetItem([str(x) for x in vals]); child.setData(0,Qt.ItemDataRole.UserRole,{"kind":"article","article_no":row["article_no"]}); parent.addChild(child)
         self.bom_group_tree.expandAll()
 
@@ -4661,11 +4713,12 @@ class BomManagerDialog(QDialog):
             parent.setExpanded(True)
         return rows
 
-    def _refresh_bom_source_table(self,sources,visible_article_nos):
+    def _refresh_bom_source_table(self,sources,visible_segment_keys):
         mode=str(self.bom_quick_filter.currentData() or "") if hasattr(self,"bom_quick_filter") else ""
         visible=[]
         for src in sources or []:
-            if str(src.get("article_no","") or "") not in visible_article_nos:continue
+            segment=str(src.get("purchase_segment_key","") or core.bom_purchase_segment_key(src.get("article_no",""),src))
+            if segment not in visible_segment_keys:continue
             kind=str(src.get("source_type","") or "")
             if mode=="assembly" and kind!="assembly":continue
             if mode=="manual" and kind not in {"manual","wago"}:continue
@@ -4675,30 +4728,35 @@ class BomManagerDialog(QDialog):
         self.bom_source_table.setRowCount(len(visible))
         labels={"assembly":"Stykliste","manual":"Direkte","wago":"Wago","cable":"Kabel"}
         for r,row in enumerate(visible):
-            vals=[row.get("article_no",""),row.get("room_display",""),labels.get(row.get("source_type"),row.get("source_type","")),row.get("source_label",""),row.get("object_label",row.get("symbol_name","")),row.get("part_label",""),f"{self._fmt_qty(row.get('qty',0))} {row.get('unit','')}",row.get("detail","")]
+            vals=[row.get("article_no",""),row.get("room_display",""),row.get("mounting_summary","Ikke angivet"),row.get("purchase_status","Mangler at købe"),labels.get(row.get("source_type"),row.get("source_type","")),row.get("source_label",""),row.get("object_label",row.get("symbol_name","")),row.get("part_label",""),f"{self._fmt_qty(row.get('qty',0))} {row.get('unit','')}",row.get("detail","")]
             for c,val in enumerate(vals):self.bom_source_table.setItem(r,c,_table_item(val,r if c==0 else None))
 
     def _prepare_bom_rows_for_export(self, rows, selected_room, sources=None):
         """Tilføj rum/kildekontekst og brug samme sortering som den synlige BOM."""
         rows=[dict(row or {}) for row in (rows or [])]
+        source_rows=list(self._bom_source_data(selected_room) if sources is None else (sources or []))
+        source_by_segment=self._bom_sources_by_segment(source_rows)
+        source_by_article=self._bom_sources_by_article(source_rows)
         if selected_room:
             caption=self._bom_room_caption(selected_room)
             for row in rows:row["room_display"]=caption
         else:
-            cables,cable_bindings=self._bom_cable_inputs()
-            room_usage=core.bom_article_room_usage(
-                self.window.project.placements,self.bindings,self.window.project.rooms,
-                cables,cable_bindings,self.assemblies,self.assembly_bindings,
-                self.window.project.raw.get("placement_bom_room_additions",{}))
             for row in rows:
-                room_rows=list(room_usage.get(str(row.get("article_no","") or ""),[]) or [])
-                row["room_display"]=" | ".join(room_rows) if room_rows else "Uden rum"
-        source_rows=list(self._bom_source_data(selected_room) if sources is None else (sources or []))
-        source_by_article=self._bom_sources_by_article(source_rows)
+                ano=str(row.get("article_no","") or "")
+                segment_key=str(row.get("purchase_segment_key","") or core.bom_purchase_segment_key(ano,row))
+                own=source_by_segment.get(segment_key,source_by_article.get(ano,[]))
+                room_values=[]
+                for src in own:
+                    for value in str(src.get("room_display","") or "Uden rum").split("|"):
+                        value=value.strip()
+                        if value and value not in room_values:room_values.append(value)
+                row["room_display"]=" | ".join(room_values) if room_values else "Uden rum"
         lookup=self._catalog_lookup()
         for row in rows:
             ano=str(row.get("article_no","") or "")
-            own=source_by_article.get(ano,[])
+            segment_key=str(row.get("purchase_segment_key","") or core.bom_purchase_segment_key(ano,row))
+            row["purchase_segment_key"]=segment_key
+            own=source_by_segment.get(segment_key,source_by_article.get(ano,[]))
             row["source_summary"]=self._bom_source_summary(own)
             row["source_types"]=sorted({str(x.get("source_type","") or "") for x in own if str(x.get("source_type","") or "")})
             circuits=[]
@@ -4708,10 +4766,16 @@ class BomManagerDialog(QDialog):
             row["circuit_display"]=" | ".join(circuits) if circuits else "Uden gruppe/kreds"
             art=lookup.get(ano,{})
             row["category"]=str(art.get("category_normalized","") or art.get("product_type","") or art.get("category","") or "Ukategoriseret")
+            row["article_color"]=str(art.get("color","") or "")
             roles=[str(x.get("component_role","") or "") for x in own if str(x.get("component_role","") or "").strip()]
             row["bom_category"]=core.bom_article_category(art,roles,row["source_types"])
         sort_key=str(self.bom_sort.currentData() or "article_no") if hasattr(self,"bom_sort") else "article_no"
-        rows.sort(key=lambda row:(str(row.get(sort_key,"") or "").casefold(),str(row.get("article_no","") or "").casefold()))
+        def sort_value(row):
+            if sort_key=="mounting_height_mm":
+                value=core.normalize_mounting_height_mm(row.get(sort_key))
+                return (value is None,float(value or 0.0),str(row.get("article_no","") or "").casefold())
+            return (False,str(row.get(sort_key,"") or "").casefold(),str(row.get("article_no","") or "").casefold())
+        rows.sort(key=sort_value)
         return rows
 
     def _bom_rows_by_room_for_export(self):
@@ -4734,12 +4798,13 @@ class BomManagerDialog(QDialog):
         for uid in scopes:
             room_rows,_missing=self._bom_data(uid)
             if not room_rows:continue
-            source_rows=self._bom_source_data(uid); source_by_article=self._bom_sources_by_article(source_rows)
+            source_rows=self._bom_source_data(uid); source_by_article=self._bom_sources_by_article(source_rows); source_by_segment=self._bom_sources_by_segment(source_rows)
             prepared=self._prepare_bom_rows_for_export(room_rows,uid,source_rows)
             quality=bom_quality.audit_bom(prepared,_missing)
             for row in prepared:
                 row["_quality_codes"]=[x.get("code","") for x in quality.get("by_article",{}).get(str(row.get("article_no","") or ""),[])]
-            prepared=[row for row in prepared if self._bom_row_matches_quick_filter(row,source_by_article.get(str(row.get("article_no","") or ""),[]))]
+            prepared=[row for row in prepared if self._bom_row_matches_quick_filter(
+                row,source_by_segment.get(str(row.get("purchase_segment_key","") or core.bom_purchase_segment_key(row.get("article_no",""),row)),source_by_article.get(str(row.get("article_no","") or ""),[])))]
             out.extend(prepared)
         sort_key=str(self.bom_sort.currentData() or "article_no") if hasattr(self,"bom_sort") else "article_no"
         out.sort(key=lambda row:(
@@ -4767,6 +4832,7 @@ class BomManagerDialog(QDialog):
         sources=self._bom_source_data(selected_room)
         rows=self._prepare_bom_rows_for_export(rows,selected_room,sources)
         self._refresh_bom_category_filter(rows)
+        self._refresh_bom_procurement_filters(rows)
         quality_result=bom_quality.audit_bom(rows,missing)
         for row in rows:
             findings=quality_result.get("by_article",{}).get(str(row.get("article_no","") or ""),[])
@@ -4776,11 +4842,13 @@ class BomManagerDialog(QDialog):
         self._refresh_bom_quality(quality_result)
         total_unfiltered=len(rows)
         sources_by_article=self._bom_sources_by_article(sources)
+        sources_by_segment=self._bom_sources_by_segment(sources)
         self._bom_current_sources_by_article=sources_by_article
         enriched=[]
         for raw in rows:
             row=dict(raw or {}); ano=str(row.get("article_no","") or "")
-            if self._bom_row_matches_quick_filter(row,sources_by_article.get(ano,[])):enriched.append(row)
+            segment=str(row.get("purchase_segment_key","") or core.bom_purchase_segment_key(ano,row))
+            if self._bom_row_matches_quick_filter(row,sources_by_segment.get(segment,sources_by_article.get(ano,[]))):enriched.append(row)
         rows=enriched
         self._bom_current_rows=rows
 
@@ -4792,15 +4860,16 @@ class BomManagerDialog(QDialog):
             line_total=self._fmt_display_price(row.get("line_total"),row.get("price_currency","DKK"))
             if row.get("line_total") is not None:
                 totals_by_currency[str(row.get("price_currency","DKK") or "DKK").upper()]+=float(row.get("line_total") or 0); priced_lines+=1
-            values=[row["article_no"],row.get("room_display","Uden rum"),row["description"],row["manufacturer"],row.get("bom_category","Ukategoriseret"),row.get("source_summary","—"),row.get("ean",""),row.get("el_no",""),row["unit"],self._fmt_qty(row["qty"]),unit_price,row.get("price_status",row.get("price_kind","")),row.get("price_unit",row.get("unit","")),line_total,str(row.get("detail","") or "")]
+            values=[row["article_no"],row.get("room_display","Uden rum"),row["description"],row["manufacturer"],row.get("bom_category","Ukategoriseret"),row.get("mounting_summary","Ikke angivet"),row.get("purchase_status","Mangler at købe"),row.get("source_summary","—"),row.get("ean",""),row.get("el_no",""),row["unit"],self._fmt_qty(row["qty"]),unit_price,row.get("price_status",row.get("price_kind","")),row.get("price_unit",row.get("unit","")),line_total,str(row.get("detail","") or "")]
             for c,value in enumerate(values):
                 user_data=row["article_no"] if c==0 else None
                 self.bom_table.setItem(r,c,_table_item(value,user_data))
 
         self._refresh_bom_group_tree(rows)
         visible_article_nos={str(x.get("article_no","") or "") for x in rows}
+        visible_segment_keys={str(x.get("purchase_segment_key","") or core.bom_purchase_segment_key(x.get("article_no",""),x)) for x in rows}
         assembly_rows=self._refresh_bom_assembly_tree(selected_room,visible_article_nos)
-        self._refresh_bom_source_table(sources,visible_article_nos)
+        self._refresh_bom_source_table(sources,visible_segment_keys)
 
         self.missing_table.setRowCount(len(missing))
         for r,row in enumerate(missing):
@@ -4827,18 +4896,20 @@ class BomManagerDialog(QDialog):
         cable_filter=" · kabler skjult" if hasattr(self,"bom_show_cables") and not self.bom_show_cables.isChecked() else ""
         checks=quality_result.get("summary",{}).get("total",0)
         quality_text=f" · {checks} kontrolpunkt(er)" if checks else " · BOM-kontrol OK"
-        self.bom_status.setText(f"{scope} · {len(rows)} artikelnumre · {len(assembly_rows)} anvendte styklister{filtered}{cable_filter}{warning}{quality_text} · pris på {priced_lines}/{len(rows)} linjer · total {price_text}")
+        unique_articles=len({str(row.get("article_no","") or "") for row in rows})
+        self.bom_status.setText(f"{scope} · {len(rows)} BOM-linjer / {unique_articles} artikelnumre · {len(assembly_rows)} anvendte styklister{filtered}{cable_filter}{warning}{quality_text} · pris på {priced_lines}/{len(rows)} linjer · total {price_text}")
 
     def _current_bom_export_data(self):
         """Den aktuelle, filtrerede BOM som fælles grundlag for alle eksportformer."""
         selected_room=self._selected_bom_room_uid()
         rows,missing=self._bom_data(selected_room)
-        source_rows=self._bom_source_data(selected_room); source_by_article=self._bom_sources_by_article(source_rows)
+        source_rows=self._bom_source_data(selected_room); source_by_article=self._bom_sources_by_article(source_rows); source_by_segment=self._bom_sources_by_segment(source_rows)
         rows=self._prepare_bom_rows_for_export(rows,selected_room,source_rows)
         quality=bom_quality.audit_bom(rows,missing)
         for row in rows:
             row["_quality_codes"]=[x.get("code","") for x in quality.get("by_article",{}).get(str(row.get("article_no","") or ""),[])]
-        rows=[row for row in rows if self._bom_row_matches_quick_filter(row,source_by_article.get(str(row.get("article_no","") or ""),[]))]
+        rows=[row for row in rows if self._bom_row_matches_quick_filter(
+            row,source_by_segment.get(str(row.get("purchase_segment_key","") or core.bom_purchase_segment_key(row.get("article_no",""),row)),source_by_article.get(str(row.get("article_no","") or ""),[])))]
         return {
             "rows":rows,"missing":missing,"selected_room":selected_room,
             "room_scope":self._selected_bom_room_caption(),
@@ -4896,7 +4967,7 @@ class BomManagerDialog(QDialog):
             self,"BOM",
             f"BOM eksporteret som formateret Excel-tabel:\n{final_path}\n\n"
             + f"Prisfelter er eksporteret {price_display.vat_caption(self.price_vat_mode)}.\n\n"
-            + "Kolonnen ‘Type/kategori’ kan filtreres og sorteres direkte i Excel.\n\n"
+            + "Type, monteringsprofil, højde, materialefarve og indkøbsstatus kan filtreres og sorteres direkte i Excel.\n\n"
             + ("Fanen ‘BOM pr. rum’ kan filtreres direkte på ét konkret rum.\n\n" if not selected_room else "")
             + "CSV-eksport er stadig tilgængelig ved siden af Excel-knappen.")
 
@@ -4912,10 +4983,10 @@ class BomManagerDialog(QDialog):
             vat_caption=price_display.vat_caption(self.price_vat_mode)
             with open(path,"w",encoding="utf-8-sig",newline="") as f:
                 w=csv.writer(f,delimiter=";")
-                w.writerow(["Artikelnummer","Rum","Beskrivelse","Fabrikat","Type/kategori","Kilde / stykliste","EAN","EL-/LM-nr.","Enhed","Antal",f"Estimeret pris {vat_caption}",f"Manuel pris {vat_caption}",f"Anvendt enhedspris {vat_caption}","Pris pr.","Valuta","Prisstatus",f"Linjesum {vat_caption}","Priskilde","Pris opdateret","Grundlag","Produktlink","Leverandørlink"])
+                w.writerow(["Artikelnummer","Rum","Beskrivelse","Fabrikat","Type/kategori","Monteringsprofil","Monteringshøjde [mm]","Materialefarve","Artikelfarve","Indkøbsstatus","Kilde / stykliste","EAN","EL-/LM-nr.","Enhed","Antal","Antal tilbage at købe","Indkøbsantal","Indkøbsantal tilbage",f"Estimeret pris {vat_caption}",f"Manuel pris {vat_caption}",f"Anvendt enhedspris {vat_caption}","Pris pr.","Valuta","Prisstatus",f"Linjesum {vat_caption}",f"Beløb tilbage {vat_caption}","Priskilde","Pris opdateret","Grundlag","Produktlink","Leverandørlink"])
                 for row in export_rows:
                     price_cell=lambda key: "" if row.get(key) is None else f"{float(row[key]):.2f}".replace(".",",")
-                    w.writerow([row["article_no"],row.get("room_display","Uden rum"),row["description"],row["manufacturer"],row.get("bom_category","Ukategoriseret"),row.get("source_summary",""),row.get("ean",""),row.get("el_no",""),row["unit"],self._fmt_qty(row["qty"]),price_cell("estimated_price"),price_cell("manual_price"),price_cell("unit_price"),row.get("price_unit",row.get("unit","")),row.get("price_currency","DKK"),row.get("price_status",row.get("price_kind","")),price_cell("line_total"),row.get("price_source",""),row.get("price_checked",""),row.get("detail",""),row.get("product_page",""),row.get("supplier_page","")])
+                    w.writerow([row["article_no"],row.get("room_display","Uden rum"),row["description"],row["manufacturer"],row.get("bom_category","Ukategoriseret"),row.get("mounting_zone_label","Ikke angivet"),row.get("mounting_height_mm","") or "",row.get("material_color",""),row.get("article_color",""),row.get("purchase_status","Mangler at købe"),row.get("source_summary",""),row.get("ean",""),row.get("el_no",""),row["unit"],self._fmt_qty(row["qty"]),self._fmt_qty(row.get("quantity_to_buy",row["qty"])),self._fmt_qty(row.get("purchase_quantity",0)),self._fmt_qty(row.get("purchase_quantity_to_buy",row.get("purchase_quantity",0))),price_cell("estimated_price"),price_cell("manual_price"),price_cell("unit_price"),row.get("price_unit",row.get("unit","")),row.get("price_currency","DKK"),row.get("price_status",row.get("price_kind","")),price_cell("line_total"),price_cell("line_total_to_buy"),row.get("price_source",""),row.get("price_checked",""),row.get("detail",""),row.get("product_page",""),row.get("supplier_page","")])
                 if missing:
                     w.writerow([]); w.writerow(["IKKE TILKNYTTET","Type","Del/specifikation","Behov","Enhed","Bemærkning"])
                     for row in missing:w.writerow(["",row["symbol_name"],row["part_label"],self._fmt_qty(row["qty"]),row.get("unit","stk"),row.get("detail","")])

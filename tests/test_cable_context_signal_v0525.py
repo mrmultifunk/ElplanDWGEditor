@@ -13,7 +13,7 @@ def _class_block(source: str, class_name: str, next_class: str) -> str:
 
 
 def test_version_v0525():
-    assert APP_VERSION == core.APP_VERSION == "0.59.76"
+    assert APP_VERSION == core.APP_VERSION == "0.59.77"
 
 
 def test_cable_context_signal_is_declared_on_cable_signals_only():

@@ -1814,6 +1814,27 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self.prop_appearance_disclosure = DisclosureSection("Udseende og placering", appearance_group, expanded=False)
         outer.addWidget(self.prop_appearance_disclosure)
 
+        procurement_group=QGroupBox("Montage og indkøb")
+        procurement_form=tune_form_layout(QFormLayout(procurement_group))
+        self.prop_mounting_zone=QComboBox()
+        for value,label in core.MOUNTING_ZONE_OPTIONS:self.prop_mounting_zone.addItem(label,value)
+        self.prop_mounting_zone.currentIndexChanged.connect(self._mounting_zone_changed)
+        self.prop_mounting_height=QDoubleSpinBox(); self.prop_mounting_height.setRange(0,10000)
+        self.prop_mounting_height.setDecimals(0); self.prop_mounting_height.setSingleStep(50); self.prop_mounting_height.setSuffix(" mm")
+        self.prop_mounting_height.setSpecialValueText("Ikke angivet")
+        self.prop_material_color=QComboBox(); self.prop_material_color.setEditable(True)
+        for value in core.MATERIAL_COLOR_PRESETS:self.prop_material_color.addItem(value or "Ikke angivet",value)
+        self.prop_material_color.setToolTip("Ønsket farve på ramme/afdækning. Feltet bruges til segmentering og indkøb; artikelvalget ændres ikke automatisk.")
+        self.prop_already_purchased=QCheckBox("Allerede købt / på lager")
+        self.prop_already_purchased.setToolTip("Markerer alle artikler og styklistekomponenter fra dette symbol som allerede købt i BOM og eksport.")
+        procurement_form.addRow("Monteringsprofil",self.prop_mounting_zone)
+        procurement_form.addRow("Præcis højde",self.prop_mounting_height)
+        procurement_form.addRow("Materialefarve",self.prop_material_color)
+        procurement_form.addRow("",self.prop_already_purchased)
+        procurement_note=QLabel("Profil, højde, farve og indkøbsstatus følger den konkrete symbolforekomst og bliver separate, filterbare felter i Excel.")
+        procurement_note.setWordWrap(True); procurement_note.setObjectName("sectionHint"); procurement_form.addRow(procurement_note)
+        outer.addWidget(procurement_group)
+
         self.combo_group = QGroupBox("Kombi-mærkning")
         cg = QFormLayout(self.combo_group)
         cg.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
@@ -1963,9 +1984,17 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
     def _enable_properties(self, enabled: bool) -> None:
         for w in (self.prop_label, self.prop_group, self.prop_size, self.prop_rotation, self.prop_line_width,
                   self.prop_color, self.prop_locked, self.apply_button, self.delete_symbol_button, self.prop_combo_mode,
+                  self.prop_mounting_zone, self.prop_mounting_height, self.prop_material_color, self.prop_already_purchased,
                   self.prop_switch_label, self.prop_switch_group, self.prop_socket_label, self.prop_socket_group,
                   self.assoc_button, self.clear_assoc_button):
             w.setEnabled(enabled)
+
+    def _mounting_zone_changed(self,*_args) -> None:
+        if getattr(self,"_loading_properties",False):return
+        if not hasattr(self,"prop_mounting_height") or float(self.prop_mounting_height.value())>0:return
+        defaults={"floor":300.0,"switch":1100.0}
+        value=defaults.get(str(self.prop_mounting_zone.currentData() or ""))
+        if value is not None:self.prop_mounting_height.setValue(value)
 
     def _cached_article_catalog(self, *, refresh: bool = False) -> list[dict]:
         """Return the materialized article catalog used by the inspector.
@@ -2487,6 +2516,9 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         if free:details+=f"<br><span style='color:#94a3b8'>Ledige: {', '.join(free)}</span>"
         unplaced=core.pl_box_unplaced_legs(entries,legs)
         if unplaced:details+=f"<br><span style='color:#b45309'><b>⚠ {len(unplaced)} kabelben mangler placering</b></span>"
+        procurement=core.placement_procurement_context(placement)
+        details+=f"<br><b>Montage:</b> {html.escape(procurement['mounting_summary'])}"
+        details+=f"<br><b>Indkøb:</b> {html.escape(procurement['purchase_status'])}"
         room=self.room_for_placement(placement)
         room_suffix=f" · Rum: {core.room_display_text(room)}" if room is not None else ""
         return {
@@ -2513,6 +2545,9 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         details=[]
         if group:details.append(f"<b>Gruppe:</b> {html.escape(group)}")
         if label and label!=group:details.append(f"<b>Mærkning:</b> {html.escape(label)}")
+        procurement=core.placement_procurement_context(placement)
+        details.append(f"<b>Montage:</b> {html.escape(procurement['mounting_summary'])}")
+        details.append(f"<b>Indkøb:</b> {html.escape(procurement['purchase_status'])}")
         if symbol=="spot":
             spot_group_name=str(getattr(placement,"spot_group_name","") or "").strip()
             if spot_group_name:
@@ -5760,6 +5795,14 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self.prop_line_width.setValue(float(p.line_width))
         _set_color_button(self.prop_color, core.normalize_hex_color(p.color))
         self.prop_locked.setChecked(p.locked)
+        zone=core.normalize_mounting_zone(getattr(p,"mounting_zone",""))
+        zone_index=self.prop_mounting_zone.findData(zone); self.prop_mounting_zone.setCurrentIndex(max(0,zone_index))
+        self.prop_mounting_height.setValue(float(core.normalize_mounting_height_mm(getattr(p,"mounting_height_mm",None)) or 0.0))
+        material_color=core.normalize_material_color(getattr(p,"material_color",""))
+        color_index=self.prop_material_color.findData(material_color)
+        if color_index>=0:self.prop_material_color.setCurrentIndex(color_index)
+        else:self.prop_material_color.setCurrentText(material_color)
+        self.prop_already_purchased.setChecked(core.normalize_already_purchased(getattr(p,"already_purchased",False)))
         role=core.association_role(p.symbol)
         assoc_text=core.association_display(p)
         if role=="switch":
@@ -5863,6 +5906,10 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         return {
             "label": p.label, "group": p.group, "size": float(p.size), "rotation": float(p.rotation),
             "line_width": float(p.line_width), "color": core.normalize_hex_color(p.color),
+            "mounting_zone": core.normalize_mounting_zone(getattr(p,"mounting_zone","")),
+            "mounting_height_mm": core.normalize_mounting_height_mm(getattr(p,"mounting_height_mm",None)),
+            "material_color": core.normalize_material_color(getattr(p,"material_color","")),
+            "already_purchased": core.normalize_already_purchased(getattr(p,"already_purchased",False)),
             "locked": bool(p.locked), "label_mode": core.normalize_combo_label_mode(getattr(p, "label_mode", "Fælles")),
             "switch_label": getattr(p, "switch_label", "") or "", "switch_group": getattr(p, "switch_group", "") or "",
             "socket_label": getattr(p, "socket_label", "") or "", "socket_group": getattr(p, "socket_group", "") or "",
@@ -5884,6 +5931,11 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
                 setattr(p, key, deepcopy(value))
         p.rotation = float(p.rotation) % 360.0
         p.color = core.normalize_hex_color(p.color)
+        p.mounting_zone=core.normalize_mounting_zone(getattr(p,"mounting_zone",""))
+        p.mounting_height_mm=core.normalize_mounting_height_mm(getattr(p,"mounting_height_mm",None))
+        p.material_color=core.normalize_material_color(getattr(p,"material_color",""))
+        p.already_purchased=core.normalize_already_purchased(getattr(p,"already_purchased",False))
+        self._hover_bom_cache.pop(str(getattr(p,"uid","") or ""),None)
         item.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, not p.locked)
         item.set_pose_silent(p.x, p.y, p.rotation)
         item.refresh_geometry()
@@ -5903,6 +5955,11 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         p = item.placement
         before = self._symbol_state(p)
         after = dict(before)
+        material_color_text=self.prop_material_color.currentText()
+        material_color_value=(self.prop_material_color.currentData()
+                              if self.prop_material_color.currentIndex()>=0
+                              and self.prop_material_color.itemText(self.prop_material_color.currentIndex())==material_color_text
+                              else material_color_text)
         after.update({
             "label": self.prop_label.text().strip(),
             "group": self.prop_group.text().strip(),
@@ -5911,6 +5968,10 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             "line_width": float(self.prop_line_width.value()),
             "color": core.normalize_hex_color(self.prop_color.text()),
             "locked": self.prop_locked.isChecked(),
+            "mounting_zone": core.normalize_mounting_zone(self.prop_mounting_zone.currentData()),
+            "mounting_height_mm": core.normalize_mounting_height_mm(self.prop_mounting_height.value()),
+            "material_color": core.normalize_material_color(material_color_value),
+            "already_purchased": self.prop_already_purchased.isChecked(),
         })
         if core.is_combo_symbol(p.symbol):
             after.update({

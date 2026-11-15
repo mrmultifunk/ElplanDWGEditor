@@ -1,3 +1,11 @@
+## 0.59.76 → 0.59.77
+
+- Symbolplaceringer kan nu indeholde de valgfrie felter `mounting_zone`, `mounting_height_mm`, `material_color` og `already_purchased`.
+- Eksisterende projekter åbnes uden manuel migrering. Manglende felter fortolkes som `Ikke angivet` og `Mangler at købe`, så tidligere BOM-resultater forbliver uændrede.
+- Samme artikel kan efter opgraderingen optræde på flere BOM-linjer, hvis de konkrete symbolforekomster har forskellig montage-, farve- eller indkøbskontekst. Det er en tilsigtet segmentering; den samlede mængde er uændret.
+- Materialefarven er et ønske på den konkrete symbolforekomst. Programmet udskifter ikke automatisk artikelnummeret, fordi farvevariantens varenummer skal være entydigt i artikelbasen. Excel viser derfor både ønsket materialefarve og den valgte artikels farve.
+- Artikelbase, prisbog, globale styklister, kabelmodel og OneDrive-placering er uændrede.
+
 ## 0.59.75 → 0.59.76
 
 - Projektformat, symbolplaceringer, kabler, artikelbase, prisbog og styklister er uændrede. Eksisterende projekter åbnes direkte uden migrering.

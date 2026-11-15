@@ -14,7 +14,7 @@ from copy import deepcopy
 VAT_MODE_EXCL = "excl"
 VAT_MODE_INCL = "incl"
 DEFAULT_VAT_RATE = 0.25
-PRICE_FIELDS = ("estimated_price", "manual_price", "unit_price", "line_total")
+PRICE_FIELDS = ("estimated_price", "manual_price", "unit_price", "line_total", "line_total_to_buy")
 
 
 def normalize_vat_mode(value) -> str:

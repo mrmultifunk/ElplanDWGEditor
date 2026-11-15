@@ -11,7 +11,7 @@ def _cable(uid, lamp_uid, cable_id, spec="5G1,5"):
 
 
 def test_version_05012():
-    assert APP_VERSION == core.APP_VERSION == "0.59.76"
+    assert APP_VERSION == core.APP_VERSION == "0.59.77"
 
 
 def test_report_wiring_rows_show_direct_wago_and_loose_destinations():

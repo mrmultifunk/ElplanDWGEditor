@@ -7,7 +7,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_visual_workspace_module_and_version():
-    assert APP_VERSION == core.APP_VERSION == "0.59.76"
+    assert APP_VERSION == core.APP_VERSION == "0.59.77"
     app = (ROOT / "qt_app.py").read_text(encoding="utf-8")
     visual = (ROOT / "qt_visual_workspace.py").read_text(encoding="utf-8")
     assert "from qt_visual_workspace import VisualWorkspaceMixin" in app

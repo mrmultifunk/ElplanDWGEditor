@@ -53,9 +53,15 @@ def prepare_bom_print_data(rows,price_vat_mode="excl"):
         line_total=row.get("line_total")
         if line_total is not None and str(line_total).strip()!="":
             totals[currency]+=float(line_total); priced+=1
+        context=" · ".join(x for x in (
+            str(row.get("mounting_summary","") or "").strip(),
+            str(row.get("purchase_status","") or "").strip(),
+        ) if x)
+        description=str(row.get("description","") or "Ukendt artikel")
+        if context:description+=f" · {context}"
         printable.append({
             "article_no":str(row.get("article_no","") or ""),
-            "description":str(row.get("description","") or "Ukendt artikel"),
+            "description":description,
             "quantity":f"{_fmt_qty(row.get('qty',0))} {unit}",
             "unit_price":f"{_fmt_money(unit_price,currency)} / {price_unit}" if unit_price is not None else "-",
             "line_total":_fmt_money(line_total,currency),

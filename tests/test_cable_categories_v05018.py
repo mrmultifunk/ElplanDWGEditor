@@ -7,7 +7,7 @@ from project_model import ProjectDocument, APP_VERSION
 
 
 def test_version_05020():
-    assert APP_VERSION == core.APP_VERSION == "0.59.76"
+    assert APP_VERSION == core.APP_VERSION == "0.59.77"
 
 
 def test_default_categories_cover_requested_installation_groups():

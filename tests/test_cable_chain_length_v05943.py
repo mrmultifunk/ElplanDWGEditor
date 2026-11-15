@@ -9,7 +9,7 @@ def _cable(uid, chain, length):
 
 
 def test_version_v05945():
-    assert APP_VERSION == core.APP_VERSION == "0.59.76"
+    assert APP_VERSION == core.APP_VERSION == "0.59.77"
 
 
 def test_route_chain_length_sums_only_same_drawn_pull():

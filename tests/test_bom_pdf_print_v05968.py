@@ -9,7 +9,7 @@ ROOT=Path(__file__).resolve().parents[1]
 
 
 def test_version_v05968():
-    assert APP_VERSION == core.APP_VERSION == "0.59.76"
+    assert APP_VERSION == core.APP_VERSION == "0.59.77"
 
 
 def test_bom_print_is_intentionally_limited_to_five_essential_columns():

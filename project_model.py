@@ -11,7 +11,7 @@ from typing import Any
 import core_logic as core
 from storage_utils import atomic_write_text
 
-APP_VERSION = "0.59.76"
+APP_VERSION = "0.59.77"
 
 
 def _finite_float(value: Any, field_name: str) -> float:
@@ -48,6 +48,10 @@ def placement_from_raw(raw: dict[str, Any]) -> core.Placement:
             "associations": [],
             "association_channels": [],
             "locked": False,
+            "mounting_zone": "",
+            "mounting_height_mm": None,
+            "material_color": "",
+            "already_purchased": False,
             "spot_group_id": "",
             "spot_group_name": "",
             "parent_light_uid": "",
@@ -75,6 +79,10 @@ def placement_from_raw(raw: dict[str, Any]) -> core.Placement:
     if item["line_width"] <= 0:
         raise ValueError("Symbollinjetykkelse skal være større end 0.")
     item["color"] = core.normalize_hex_color(item.get("color", core.DEFAULT_SYMBOL_COLOR))
+    item["mounting_zone"] = core.normalize_mounting_zone(item.get("mounting_zone", ""))
+    item["mounting_height_mm"] = core.normalize_mounting_height_mm(item.get("mounting_height_mm"))
+    item["material_color"] = core.normalize_material_color(item.get("material_color", ""))
+    item["already_purchased"] = core.normalize_already_purchased(item.get("already_purchased", False))
     item["associations"] = core.normalize_associations(item.get("associations", []))
     if core.association_role(str(item.get("symbol", ""))) == "switch":
         item["association_channels"] = core.normalize_association_channels(

@@ -1,3 +1,14 @@
+## 0.59.77 - Monteringsprofiler og indkøbsstatus
+
+- Hver symbolforekomst kan nu registreres med monteringsprofil (`Gulv`, `Afbryderhøjde`, `Loft` eller `Anden højde`), præcis monteringshøjde i millimeter og ønsket materialefarve.
+- `Gulv` og `Afbryderhøjde` foreslår henholdsvis 300 mm og 1100 mm, når der endnu ikke er angivet en præcis højde; værdien kan altid overskrives.
+- En symbolforekomst kan markeres `Allerede købt / på lager`. BOM'en bevarer det samlede behov, men viser og eksporterer samtidig antal, indkøbsantal og beløb, der mangler at blive købt.
+- Samme artikelnummer opdeles nu i separate BOM-linjer, når montageprofil, højde, materialefarve eller indkøbsstatus er forskellig. Dermed blandes eksempelvis en koksgrå gulvramme ikke sammen med en hvid ramme i afbryderhøjde.
+- BOM-fanen kan filtrere og gruppere efter monteringsprofil, monteringshøjde, materialefarve og indkøbsstatus.
+- Excel-eksporten har fået filterbare kolonner for montageprofil, højde, ønsket materialefarve, faktisk artikelfarve, indkøbsstatus og resterende indkøb. Excel-tabellens normale autofilter og sortering kan bruges direkte som indkøbsgrundlag.
+- CSV, PDF-preview, direkte udskrift og symbol-hover viser den samme montage- og indkøbskontekst. PDF'en beholder sit enkle femkolonners layout.
+- Ønsket materialefarve skifter ikke automatisk artikelnummer. Eksporten viser både den ønskede farve og artiklens registrerede farve, så en forkert variant ikke bestilles skjult.
+
 ## 0.59.76 - Hurtigere symbolredigering og sikker sletning
 
 - Symboltræk opdaterer nu kun de kabler, der faktisk er forbundet til de flyttede symboler, i stedet for at gennemgå hele kabelmodellen ved hvert musepunkt.

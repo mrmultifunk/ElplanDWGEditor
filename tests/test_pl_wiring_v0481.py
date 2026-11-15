@@ -122,7 +122,7 @@ def test_project_roundtrip_keeps_wiring_and_strips_dead_reference(tmp_path: Path
     doc.placements=[lamp]; doc.cables=[cable]
     path=tmp_path/"p.elplan.json"; doc.save(path)
     raw=json.loads(path.read_text(encoding="utf-8"))
-    assert raw["version"]==APP_VERSION=="0.59.76"
+    assert raw["version"]==APP_VERSION=="0.59.77"
     saved=raw["placements"][0]["pl_box_wiring"]
     assert len(saved)==3
     assert next(x for x in saved if x["core_id"]=="brown")["function"]=="switch:a"
