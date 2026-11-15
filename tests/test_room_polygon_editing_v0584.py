@@ -5,7 +5,7 @@ from project_model import APP_VERSION
 
 
 def test_v0584_room_polygon_editing_is_directly_exposed():
-    assert APP_VERSION == core.APP_VERSION == "0.59.80"
+    assert APP_VERSION == core.APP_VERSION == "0.59.81"
     src = Path("qt_rooms.py").read_text(encoding="utf-8")
     assert "def edit_room_boundary(self,room,zoom=False):" in src
     assert "boundary_edit=menu.addAction('Redigér afgrænsning')" in src

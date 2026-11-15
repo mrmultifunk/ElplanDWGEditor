@@ -5,7 +5,7 @@ from project_model import APP_VERSION
 
 
 def test_version_0520():
-    assert APP_VERSION == core.APP_VERSION == "0.59.80"
+    assert APP_VERSION == core.APP_VERSION == "0.59.81"
 
 
 def test_existing_orthogonal_route_converts_to_direct_free_geometry():

@@ -1,3 +1,11 @@
+## 0.59.80 → 0.59.81
+
+- Projektformatet får ingen nye obligatoriske felter. `Samme tænding` genbruger de eksisterende afbryderkanaler og tilhørsbogstaver som den autoritative elektriske gruppering.
+- Flere fysiske lampesteder med samme bogstav forbliver selvstændige placeringer. Kabler, PL-dåser, artikelbindinger og BOM-mængder flettes ikke.
+- Det nye symbol `wall_light_outlet` indlæses som et almindeligt enkeltudgangs-lyspunkt på laget `EL-LYSUDTAG`.
+- Eventuelle PL-felter på `wall_light_outlet` ignoreres og ryddes ved indlæsning, fordi symbolet repræsenterer en almindelig vægdåse og ikke en PL-loftdåse.
+- Eksisterende projekter, lampesteder, afbryderkanaler, flerudgangsdata og spotgrupper kræver ingen konvertering.
+
 ## 0.59.79 → 0.59.80
 
 - `light_connection` kan nu have det valgfrie felt `light_outputs`. Hver række indeholder et stabilt `id`, et brugerrettet `name` og højst ét `association`-bogstav.

@@ -7,7 +7,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_version_0521():
-    assert APP_VERSION == core.APP_VERSION == "0.59.80"
+    assert APP_VERSION == core.APP_VERSION == "0.59.81"
 
 
 def test_attach_light_to_existing_cable_endpoint_is_one_physical_leg():

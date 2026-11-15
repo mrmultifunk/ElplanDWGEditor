@@ -23,11 +23,14 @@ class CableAttachMixin:
         self.scene.clearSelection(); item.setSelected(True); self._selection_changed()
         menu=QMenu(self)
         attach=configure=None
-        if str(getattr(placement,"symbol","") or "")=="light_connection":
+        symbol=str(getattr(placement,"symbol","") or "")
+        if symbol in {"light_connection","wall_light_outlet"}:
             attach=menu.addAction("Tilknyt til eksisterende kabel…")
             attach.setEnabled(not bool(getattr(placement,"locked",False)))
+        if symbol=="light_connection":
             configure=menu.addAction("Konfigurer PL-dåse…")
             configure.setEnabled(not bool(getattr(placement,"locked",False)))
+        if attach is not None or configure is not None:
             menu.addSeparator()
         group=self._selected_focus_group() if hasattr(self,"_selected_focus_group") else ""
         trace=menu.addAction(f"Spor gruppe · {group}" if group else "Spor gruppe")
@@ -56,13 +59,13 @@ class CableAttachMixin:
 
     def start_cable_attach_for_selection(self) -> None:
         item=self._selected_symbol_item()
-        if item is None or str(getattr(item.placement,"symbol","") or "") != "light_connection":
+        if item is None or str(getattr(item.placement,"symbol","") or "") not in {"light_connection","wall_light_outlet"}:
             self._set_status("Vælg et lampested først.")
             return
         self._start_cable_attach_mode(item.placement)
 
     def _start_cable_attach_mode(self, placement) -> None:
-        if placement is None or str(getattr(placement,"symbol","") or "") != "light_connection":
+        if placement is None or str(getattr(placement,"symbol","") or "") not in {"light_connection","wall_light_outlet"}:
             return
         if bool(getattr(placement,"locked",False)):
             QMessageBox.information(self,"Tilknyt kabel","Lampestedet er låst. Lås symbolet op før kabeltilknytningen ændres.")

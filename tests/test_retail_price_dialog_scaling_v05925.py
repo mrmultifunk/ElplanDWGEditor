@@ -5,7 +5,7 @@ from project_model import APP_VERSION
 
 
 def test_version_05925():
-    assert APP_VERSION == core.APP_VERSION == "0.59.80"
+    assert APP_VERSION == core.APP_VERSION == "0.59.81"
 
 
 def test_price_scope_dialog_uses_responsive_grid_instead_of_messagebox_button_row():

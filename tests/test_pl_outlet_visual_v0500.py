@@ -43,7 +43,7 @@ def test_project_roundtrip_preserves_lamp_outlet_type(tmp_path):
     project.path = path
     project.save()
     loaded = ProjectDocument.load(path)
-    assert loaded.raw["version"] == APP_VERSION == "0.59.80"
+    assert loaded.raw["version"] == APP_VERSION == "0.59.81"
     assert loaded.placements[0].lamp_outlet_type == "wiser_dimmer"
 
 

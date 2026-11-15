@@ -9,7 +9,7 @@ def ref(uid, core_id="blue", function="n"):
 
 
 def test_version_0507():
-    assert APP_VERSION == core.APP_VERSION == "0.59.80"
+    assert APP_VERSION == core.APP_VERSION == "0.59.81"
 
 
 def test_planned_empty_wago_is_preserved():

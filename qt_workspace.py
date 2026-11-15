@@ -147,6 +147,9 @@ class WorkspaceUiMixin:
         self.act_ctx_rotate.triggered.connect(self.rotate_selected_90)
         self.act_ctx_associate = QAction("Tilknyt lys", self)
         self.act_ctx_associate.triggered.connect(self.start_association_mode)
+        self.act_ctx_same_switch = QAction("Samme tænding…", self)
+        self.act_ctx_same_switch.setToolTip("Saml de valgte fysiske lampesteder på én afbryderkanal uden at lægge symbolerne oven i hinanden.")
+        self.act_ctx_same_switch.triggered.connect(self.group_selected_lights_same_switch)
         self.act_ctx_pl = QAction("PL-dåse…", self)
         self.act_ctx_pl.setToolTip("Åbn PL-dåsekonfiguratoren for det valgte lampested.")
         self.act_ctx_pl.triggered.connect(self.open_pl_box_for_selection)
@@ -158,6 +161,7 @@ class WorkspaceUiMixin:
         self.ctx_symbol_actions = [
             self.act_ctx_rotate,
             self.act_ctx_associate,
+            self.act_ctx_same_switch,
             self.act_ctx_pl,
             self.act_ctx_bom,
         ]
@@ -268,7 +272,10 @@ class WorkspaceUiMixin:
             )
             self.act_ctx_zoom_selection.setVisible(True); self.act_ctx_trace_group.setVisible(bool(self._selected_focus_group()))
         elif total > 1:
-            self.context_caption.setText(f"{total} objekter valgt")
+            light_items=[item for item in symbols if core.light_can_share_switch_group(item.placement)]
+            same_switch_ready=bool(not cables and len(symbols)>=2 and len(light_items)==len(symbols))
+            self.context_caption.setText(f"{len(symbols)} lampesteder valgt" if same_switch_ready else f"{total} objekter valgt")
+            self.act_ctx_same_switch.setVisible(same_switch_ready)
             self.act_ctx_delete.setEnabled(True); self.act_ctx_delete.setToolTip("Slet alle ulåste valgte objekter.")
             self.act_ctx_delete.setVisible(True); self.act_ctx_zoom_selection.setVisible(True)
         elif self._cable_tool_is_open():

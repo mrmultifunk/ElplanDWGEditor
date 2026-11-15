@@ -4541,7 +4541,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             return
         rows=[]
         uid=str(getattr(placement,"uid","") or "") if placement is not None else ""
-        is_light=bool(placement is not None and str(getattr(placement,"symbol","") or "")=="light_connection")
+        is_light=bool(placement is not None and str(getattr(placement,"symbol","") or "") in {"light_connection","wall_light_outlet"})
         for cable in self.project.cables:
             connections=core.cable_symbol_connections(cable)
             for rec in connections:
@@ -4622,7 +4622,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         normalized_wiring=core.reconcile_pl_box_wiring(getattr(placement,"pl_box_wiring",[]),legs)
         splices=core.reconcile_pl_box_splices(getattr(placement,"pl_box_splices",[]),normalized_wiring,legs)
         if splices:text += f" · Wago {len(splices)}"
-        capacity_issues=core.pl_outlet_capacity_issues(getattr(placement,"lamp_outlet_type","generic"),getattr(placement,"associations",[]),normalized_wiring,splices)
+        capacity_issues=core.pl_outlet_capacity_issues(getattr(placement,"lamp_outlet_type","generic"),core.light_output_associations(placement),normalized_wiring,splices)
         if capacity_issues:
             text += " · ⛔ terminalkapacitet overskredet"
             if not status["overflow"]: self.pl_box_summary.setObjectName("dangerText")
@@ -5590,6 +5590,61 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self._cleanup_orphan_associations()
         after = self._association_snapshot()
         self.undo_stack.push(AssociationCommand(self, before, after, "Ryd tilhørsforhold"))
+
+    def group_selected_lights_same_switch(self) -> None:
+        """Saml flere fysiske lyspunkter på én konkret afbryderkanal."""
+        items=[x for x in self.scene.selectedItems() if isinstance(x,ElectricalSymbolItem)]
+        lights=[x.placement for x in items]
+        if len(lights)<2 or any(not core.light_can_share_switch_group(p) for p in lights):
+            QMessageBox.information(
+                self,"Samme tænding",
+                "Vælg mindst to entydige lampesteder. Et lampested med flere uafhængige udgange skal tilknyttes via den normale tilknytningsguide."
+            ); return
+        if any(bool(getattr(p,"locked",False)) for p in lights):
+            QMessageBox.information(self,"Samme tænding","Mindst ét valgt lampested er låst. Lås det op før tilhørsforholdet ændres."); return
+
+        channels=[]
+        for switch in self.project.placements:
+            if core.association_role(getattr(switch,"symbol",""))!="switch" or bool(getattr(switch,"locked",False)):
+                continue
+            ident=" · ".join(x for x in (str(getattr(switch,"group","") or "").strip(),str(getattr(switch,"label","") or "").strip()) if x)
+            ident=ident or core.symbol_display_name(switch.symbol)
+            for rec in core.association_channel_records(switch):
+                letter=str(rec.get("association","") or "")
+                target_count=self._association_target_count(letter) if letter else 0
+                state=f"{letter} · {target_count} lys" if letter else "ledig"
+                caption=f"{ident} · {rec.get('channel_caption') or 'Betjening'} · {state}"
+                channels.append((caption,switch,int(rec.get("channel_index",0)),letter))
+        if not channels:
+            QMessageBox.information(self,"Samme tænding","Projektet har ingen ulåste afbryderkanaler. Placér eller lås en afbryder op først."); return
+
+        current={a for p in lights for a in core.light_output_associations(p)}
+        preferred=next((i for i,row in enumerate(channels) if row[3] and row[3] in current),0)
+        options=[row[0] for row in channels]
+        choice,ok=QInputDialog.getItem(
+            self,"Samme tænding",
+            f"Vælg den afbryderbetjening, som de {len(lights)} fysiske lampesteder skal følge:",
+            options,preferred,False
+        )
+        if not ok:return
+        try:_caption,switch,channel_index,letter=channels[options.index(choice)]
+        except (ValueError,IndexError):return
+
+        before=self._association_snapshot()
+        if not letter:
+            letter=core.next_association_letter(self.project.placements)
+            core.set_association_channel(switch,channel_index,letter)
+        changed=core.set_lights_shared_association(lights,letter)
+        self._cleanup_orphan_associations()
+        after=self._association_snapshot()
+        if before!=after:
+            self.undo_stack.push(AssociationCommand(self,before,after,"Saml lampesteder på samme tænding"))
+        caption=core.association_channel_caption(switch.symbol,channel_index)
+        ident=" · ".join(x for x in (str(getattr(switch,"group","") or "").strip(),str(getattr(switch,"label","") or "").strip()) if x) or core.symbol_display_name(switch.symbol)
+        self._notify(
+            f"{len(lights)} lampesteder følger nu {ident} · {caption} ({letter})." if changed or before!=after else f"Lampestederne fulgte allerede {ident} · {caption} ({letter}).",
+            kind="success"
+        )
 
     # ---------- Free text / direct label editing ----------
     def start_text_dialog(self) -> None:

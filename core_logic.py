@@ -32,7 +32,7 @@ from ezdxf import bbox, disassemble, path as ezpath
 from ezdxf.addons import odafc
 
 APP_NAME = "Elplan DWG Editor"
-APP_VERSION = "0.59.80"
+APP_VERSION = "0.59.81"
 ODA_DOWNLOAD_URL = "https://www.opendesign.com/guestfiles/oda_file_converter"
 # Programmet bruger separate lag til forskellige typer el-installationer.
 # EL-SYMBOLER beholdes kun som navn af hensyn til ældre eksporter, men nye
@@ -461,6 +461,7 @@ SYMBOL_GROUPS = {
     },
     "Belysning": {
         "Tilslutningssted for belysning": "light_connection",
+        "Lampeudtag på væg (alm. dåse)": "wall_light_outlet",
         "Belysningsarmatur": "light_fixture",
         "Armatur for lysstofrør": "fluorescent",
         "Lysstofarmatur med fast tilslutning": "fluorescent_fixed",
@@ -502,7 +503,7 @@ def symbol_display_name(code: str) -> str:
 
 SWITCH_ASSOCIATION_SYMBOLS = {code for code in SYMBOL_GROUPS["Afbrydere"].values()} | {code for code in SYMBOL_GROUPS["Kombi"].values()}
 LIGHT_ASSOCIATION_SYMBOLS = {
-    "light_connection", "light_fixture", "fluorescent",
+    "light_connection", "wall_light_outlet", "light_fixture", "fluorescent",
     "fluorescent_fixed", "emergency_light", "spot",
 }
 
@@ -750,7 +751,7 @@ def normalize_light_associations(values) -> list[str]:
 def normalize_light_outputs(values, legacy_associations=None, *, ensure_one: bool=True) -> list[dict]:
     """Normalisér de logiske tændte udgange i ét fysisk lampested.
 
-    ``associations`` var før 0.59.80 en flad liste. Hvis der ikke findes nye
+    ``associations`` var før 0.59.81 en flad liste. Hvis der ikke findes nye
     udgangsdata, migreres hvert gammelt bogstav til sin egen udgang. Dermed
     bliver et fysisk lampeudtag stadig kun talt én gang i BOM og PL-dåsen.
     """
@@ -823,6 +824,33 @@ def light_output_by_id(placement: "Placement", output_id: str) -> dict:
     rows=light_output_records(placement)
     target=str(output_id or "")
     return next((dict(row) for row in rows if str(row.get("id","") or "")==target),dict(rows[0]))
+
+
+def light_can_share_switch_group(placement: "Placement") -> bool:
+    """Om lyspunktet entydigt kan indgå i handlingen »Samme tænding«."""
+    if association_role(str(getattr(placement,"symbol","") or ""))!="light":
+        return False
+    if str(getattr(placement,"symbol","") or "")=="spot" and str(getattr(placement,"parent_light_uid","") or ""):
+        return False
+    # Flerudgangs-lampesteder kræver valg af den konkrete udgang.
+    return len(light_output_records(placement))==1
+
+
+def set_lights_shared_association(placements, letter: str) -> int:
+    """Giv flere fysiske lyspunkter samme elektriske tændingsfunktion."""
+    value=normalize_light_associations([letter])
+    if not value:return 0
+    association=value[0]; changed=0
+    for placement in placements or []:
+        if not light_can_share_switch_group(placement):continue
+        before=light_output_associations(placement)
+        if str(getattr(placement,"symbol","") or "")=="light_connection":
+            output=light_output_records(placement)[0]
+            set_light_output_association(placement,str(output.get("id","") or ""),association)
+        else:
+            placement.associations=[association]
+        if before!=light_output_associations(placement):changed+=1
+    return changed
 
 
 def normalize_association_channels(symbol: str, channels, associations=None) -> list[str]:
@@ -5071,10 +5099,11 @@ def bom_symbol_parts(symbol: str):
         return [{"id":"symbol","label":symbol_display_name(symbol),"kind":"socket","base":symbol,"required":True}]
     if symbol in data_codes:
         return [{"id":"symbol","label":symbol_display_name(symbol),"kind":"data","base":symbol,"required":True}]
-    if symbol=="light_connection":
+    if symbol in {"light_connection","wall_light_outlet"}:
         # Lampeudtag er valgfrit i BOM: brugeren kan eksplicit tilknytte fx
         # Nordtronic 98425033, men der gættes aldrig automatisk en artikel.
-        return [{"id":"outlet","label":"Lampeudtag / lysstyring","kind":"outlet","base":symbol,"required":False}]
+        label="Lampeudtag i vægdåse" if symbol=="wall_light_outlet" else "Lampeudtag / lysstyring"
+        return [{"id":"outlet","label":label,"kind":"outlet","base":symbol,"required":False}]
     return []
 
 
@@ -5802,7 +5831,7 @@ def symbol_layer(symbol: str) -> str:
         return DATA_LAYER
     if symbol == "socket" or symbol.startswith("socket_"):
         return SOCKET_LAYER
-    if symbol == "light_connection":
+    if symbol in {"light_connection","wall_light_outlet"}:
         return LIGHT_OUTLET_LAYER
     if symbol in {"light_fixture", "fluorescent", "fluorescent_fixed", "emergency_light", "spot"}:
         return LIGHTING_LAYER
@@ -6708,6 +6737,12 @@ def symbol_primitives(symbol: str, size: float):
     # --- BELYSNING -----------------------------------------------------
     elif symbol == "light_connection":
         line(-s*.48, -s*.48, s*.48, s*.48); line(-s*.48, s*.48, s*.48, -s*.48)
+    elif symbol == "wall_light_outlet":
+        # Lampeudtag i almindelig vægdåse: lampestedskryds, stamme og en lille
+        # vægstreg ved det fysiske montagepunkt.
+        q=s*.34
+        line(-q,-q,q,q); line(-q,q,q,-q)
+        line(0,q,0,s*.92); line(-s*.18,s*.92,s*.18,s*.92)
     elif symbol == "light_fixture":
         circle(0, 0, s*.47); line(-s*.35, -s*.35, s*.35, s*.35); line(-s*.35, s*.35, s*.35, -s*.35)
     elif symbol == "fluorescent":
@@ -6819,6 +6854,9 @@ def symbol_connection_points(symbol: str, size: float) -> list[tuple[float, floa
         return [(x,y) for y in (s*.14,-s*.14) for x in xs]
     if symbol == "socket_tele":
         return [(0.0, s), (0.0,0.0)]
+    if symbol == "wall_light_outlet":
+        # Port 0 er dåsen i væggen; port 1 er det synlige lampestedskryds.
+        return [(0.0,s*.92),(0.0,0.0)]
     if symbol == "meter_board":
         return [(0.0,s*.34),(0.0,-s*.34),(0.0,0.0)]
     if symbol == "main_earthing_connection":
@@ -6854,6 +6892,8 @@ def symbol_mount_points(symbol: str, size: float) -> list[tuple[float, float]]:
         return [(0.0,s*.82)]
     if symbol in {"socket_tele"}:
         return [(0.0,s)]
+    if symbol == "wall_light_outlet":
+        return [(0.0,s*.92)]
     if symbol == "patch_panel":
         return [(0.0,0.0)]
     if symbol.startswith("switch_") or symbol.startswith("pushbutton"):
@@ -6918,7 +6958,7 @@ def placement_mating_sites(placement: Placement) -> dict[str,tuple[float,float]]
 
 def _is_wall_device(symbol: str) -> bool:
     """Stikkontakter og betjeningskontakter, som ofte monteres i samme ramme."""
-    return is_combo_symbol(symbol) or symbol.startswith("socket") or symbol.startswith("switch_") or symbol.startswith("pushbutton")
+    return symbol=="wall_light_outlet" or is_combo_symbol(symbol) or symbol.startswith("socket") or symbol.startswith("switch_") or symbol.startswith("pushbutton")
 
 
 def wall_device_snap_origins(moving_symbol: str, moving_size: float, fixed: Placement, moving_rotation: float = 0.0) -> list[tuple[float,float,str]]:

@@ -4,7 +4,7 @@ from pathlib import Path
 def test_version_0491():
     import core_logic as core
     from project_model import APP_VERSION
-    assert core.APP_VERSION == APP_VERSION == "0.59.80"
+    assert core.APP_VERSION == APP_VERSION == "0.59.81"
 
 
 def test_qt_source_makes_pl_wiring_canvas_primary_and_draggable():

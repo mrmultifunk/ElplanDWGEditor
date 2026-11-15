@@ -4,7 +4,7 @@ import core_logic as core
 
 
 def test_version_v05945():
-    assert APP_VERSION == core.APP_VERSION == "0.59.80"
+    assert APP_VERSION == core.APP_VERSION == "0.59.81"
 
 
 def test_spot_row_soft_horizontal_and_vertical_snap():

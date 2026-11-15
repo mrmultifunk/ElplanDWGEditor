@@ -9,7 +9,7 @@ def _member(uid, core_id="blue"):
 
 
 def test_version_0505():
-    assert APP_VERSION == core.APP_VERSION == "0.59.80"
+    assert APP_VERSION == core.APP_VERSION == "0.59.81"
 
 
 def test_wago_articles_are_bundled_with_ean():

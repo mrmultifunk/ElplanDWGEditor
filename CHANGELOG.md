@@ -1,3 +1,15 @@
+## 0.59.81 - Lysgrupper og lampeudtag på væg
+
+- Flere fysiske lampesteder kan nu vælges samlet og kobles til én konkret afbryderkanal via `Samme tænding…` i den kontekstuelle værktøjslinje.
+- Handlingen viser afbryderens gruppe/mærkning, fysiske betjening, eksisterende bogstav og antal tilknyttede lys. En ledig kanal får automatisk næste frie bogstav.
+- Lampestederne forbliver separate fysiske punkter med egne kabler, positioner og BOM, men fungerer som én elektrisk lysgruppe ved at dele samme tilhørsbogstav.
+- Omgruppering er én samlet fortrydelseshandling. Forældreløse gamle bogstaver ryddes automatisk.
+- Lampesteder med flere uafhængige udgange kan ikke grupperes tvetydigt; her bruges den normale tilknytningsguide, hvor den konkrete udgang vælges.
+- Nyt symbol `Lampeudtag på væg (alm. dåse)` i kategorien Belysning. Symbolet har vægsnap, korrekt rotation og separate kabelpunkter ved dåsen og symbolkrydset.
+- Væg-lampeudtaget er et almindeligt enkeltudgangs-lampested og kan dele tænding med loftslampesteder, armaturer og andre lys.
+- Væg-lampeudtaget åbner ikke PL-loftdåsekonfiguratoren og kan ikke gemme PL-indføringer eller PL-lederplan.
+- En konkret artikel eller stykliste kan tilknyttes væg-lampeudtaget, og det kan kobles direkte på en eksisterende kabelrute.
+
 ## 0.59.80 - Flere tændinger i ét fysisk lampested
 
 - Et fysisk lampested kan nu indeholde flere logiske, uafhængige tændinger uden at oprette overlappende symboler.

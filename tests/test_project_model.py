@@ -20,7 +20,7 @@ def test_load_and_roundtrip(tmp_path: Path):
     out = tmp_path / "out.elplan.json"
     project.save(out)
     raw = json.loads(out.read_text(encoding="utf-8"))
-    assert raw["version"] == "0.59.80"
+    assert raw["version"] == "0.59.81"
     assert raw["placements"][0]["group"] == "G01"
 
 

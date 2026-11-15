@@ -33,7 +33,7 @@ def test_patch_cable_layer_roundtrip(tmp_path: Path):
     doc.path = path
     doc.save()
     raw = json.loads(path.read_text(encoding="utf-8"))
-    assert raw["version"] == "0.59.80"
+    assert raw["version"] == "0.59.81"
     assert raw["cables"][0]["layer"] == "EL-PATCHKABLER"
 
     loaded = ProjectDocument.load(path)
