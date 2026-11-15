@@ -1,3 +1,12 @@
+## 0.59.79 → 0.59.80
+
+- `light_connection` kan nu have det valgfrie felt `light_outputs`. Hver række indeholder et stabilt `id`, et brugerrettet `name` og højst ét `association`-bogstav.
+- Mangler feltet, oprettes én standardudgang automatisk. Hvis et ældre projekt stadig indeholder flere bogstaver i den historiske `associations`-liste, migreres hvert bogstav til sin egen udgang.
+- Det historiske `associations`-felt bevares med første udgangs bogstav af kompatibilitetshensyn. Nye funktioner bruger `light_outputs` som autoritativ kilde.
+- Spots kan få `parent_light_output_id`, så en spotgruppe følger en bestemt tænding. Ældre spots uden feltet følger automatisk lampestedets første udgang.
+- Lampestedet er fortsat én fysisk placering. PL-dåse, kabler, artikel-/styklistebinding og BOM-mængde duplikeres ikke ved flere udgange.
+- Andre lyssymboler end `light_connection` har fortsat højst ét tilhørsbogstav. Afbrydernes stabile kanal-id'er og kanalrækkefølge er uændrede.
+
 ## 0.59.78 → 0.59.79
 
 - Afbrydernes `association_channels` og stabile kanalrækkefølge er uændret. Flere korrespondance-/krydsningsafbrydere må fortsat pege på samme bogstav.

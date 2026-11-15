@@ -688,7 +688,8 @@ class ElectricalSymbolItem(QGraphicsItem):
 
     def _make_bbox(self) -> QRectF:
         x1, y1, x2, y2 = core.symbol_local_bbox(self.placement.symbol, self.placement.size)
-        return QRectF(x1, -y2, max(x2 - x1, 1.0), max(y2 - y1, 1.0)).adjusted(-8, -8, 8, 8)
+        extra=self.placement.size*.13 if self.placement.symbol=="light_connection" and len(core.light_output_records(self.placement))>1 else 0.0
+        return QRectF(x1, -y2, max(x2 - x1, 1.0), max(y2 - y1, 1.0)).adjusted(-8, -8-extra, 8+extra, 8)
 
     def refresh_geometry(self) -> None:
         self.prepareGeometryChange()
@@ -748,6 +749,18 @@ class ElectricalSymbolItem(QGraphicsItem):
             painter, self._primitives, _dark_canvas_contrast(color),
             self.isSelected(), self.placement.rotation,
         )
+        outputs=core.light_output_records(self.placement) if self.placement.symbol=="light_connection" else []
+        if len(outputs)>1:
+            x1,y1,x2,y2=core.symbol_local_bbox(self.placement.symbol,self.placement.size)
+            radius=max(self.placement.size*.105,8.0)
+            cx=x2+radius*.45; cy=-y2-radius*.45
+            painter.save(); painter.translate(cx,cy); painter.rotate(self.placement.rotation)
+            pen=QPen(QColor("#42b8e8") if _canvas_is_dark() else QColor("#176fa6")); pen.setCosmetic(True); pen.setWidthF(1.6)
+            painter.setPen(pen); painter.setBrush(QBrush(QColor(18,38,50,220) if _canvas_is_dark() else QColor(245,251,255,235)))
+            painter.drawEllipse(QRectF(-radius,-radius,2*radius,2*radius))
+            font=QFont("Segoe UI",max(7,int(round(radius*.72))),QFont.Weight.Bold); painter.setFont(font)
+            painter.drawText(QRectF(-radius,-radius,2*radius,2*radius),Qt.AlignmentFlag.AlignCenter,str(len(outputs)))
+            painter.restore()
 
     def hoverEnterEvent(self, event) -> None:
         self._animate_to(self._hover_anim,self._hover_progress,1.0)

@@ -87,6 +87,13 @@ class SpotUiMixin:
         if len(parent_ids)>1:
             QMessageBox.warning(self,"Spotgruppe","De valgte spots er koblet til forskellige lampesteder. Frakobl eller saml lampestedstilknytningen først.")
             return
+        parent_outputs={
+            (str(getattr(p,"parent_light_uid","") or ""),str(getattr(p,"parent_light_output_id","") or ""))
+            for p in expanded if str(getattr(p,"parent_light_uid","") or "")
+        }
+        if len(parent_outputs)>1:
+            QMessageBox.warning(self,"Spotgruppe","De valgte spots følger forskellige tændinger på lampestedet. Vælg spots fra samme tænding.")
+            return
         gids={str(getattr(p,"spot_group_id","") or "") for p in spots if str(getattr(p,"spot_group_id","") or "")}
         same_group=len(gids)==1 and all(str(getattr(p,"spot_group_id","") or "") in gids for p in spots)
         existing_gid=next(iter(gids)) if same_group else ""
@@ -114,11 +121,14 @@ class SpotUiMixin:
         before=self._spot_parent_snapshot()
         inherited_parent=next(iter(parent_ids)) if parent_ids else ""
         parent=self._placement_by_uid(inherited_parent) if inherited_parent else None
+        inherited_output=next((str(getattr(p,"parent_light_output_id","") or "") for p in expanded if str(getattr(p,"parent_light_uid","") or "")==inherited_parent),"")
         for spot in target_spots:
             if spot.locked:continue
             spot.spot_group_id=target_gid; spot.spot_group_name=name
             if parent is not None:
-                spot.parent_light_uid=parent.uid; spot.associations=core.normalize_light_associations(parent.associations)
+                output=core.light_output_by_id(parent,inherited_output)
+                spot.parent_light_uid=parent.uid; spot.parent_light_output_id=str(output.get("id","") or "")
+                spot.associations=core.normalize_light_associations([output.get("association","")])
         after=self._spot_parent_snapshot()
         if before!=after:self.undo_stack.push(SpotParentCommand(self,before,after,"Gruppér spots"))
         self._refresh_spot_group_controls(self._selected_spots())
@@ -160,7 +170,9 @@ class SpotUiMixin:
         if parent is None:
             return "↳ Lampested ?"
         ident=str(getattr(parent,"group","") or getattr(parent,"label","") or "Lampested").strip()
-        return f"↳ {ident}"
+        output=core.light_output_by_id(parent,getattr(spot,"parent_light_output_id","") or "")
+        suffix=f" / {output.get('name')}" if len(core.light_output_records(parent))>1 else ""
+        return f"↳ {ident}{suffix}"
 
     def _linked_spots(self, parent_uid: str) -> list[core.Placement]:
         return [
@@ -268,6 +280,7 @@ class SpotUiMixin:
         before=self._spot_parent_snapshot()
         for spot in spots:
             spot.parent_light_uid=""
+            spot.parent_light_output_id=""
             # A detached spot keeps no inherited light associations. It can still
             # be associated directly later if desired.
             spot.associations=[]

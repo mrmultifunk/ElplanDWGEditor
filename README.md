@@ -2,7 +2,7 @@
 
 Windows-program til planlægning og dokumentation af elektriske installationer direkte på DWG- og DXF-plantegninger.
 
-**Aktuel version:** `0.59.79`
+**Aktuel version:** `0.59.80`
 **Platform:** Windows 10/11 · Python 3.11 eller 3.12
 
 ## Hvad kan programmet?
@@ -11,6 +11,7 @@ Windows-program til planlægning og dokumentation af elektriske installationer d
 - Placering og redigering af el-symboler med vægsnap, hjælpelinjer og relationer.
 - Fysiske kabelruter med knækpunkter, kabeltyper, længdeberegning og rumfordeling.
 - Konfiguration af PL-loftdåser, lampeudtag, ledere, WAGO-samlinger og gennemsløjfninger.
+- Flere uafhængige tændinger i ét fysisk lampested med fælles PL-dåse og én BOM-forekomst.
 - Read-only import af fysiske kabelindføringer, noter og feltfotos fra `pl-daase`-PWA'en.
 - Rumtegning, rumnavne, rumfiltrering og BOM pr. rum.
 - Fælles artikeldatabase, genbrugelige styklister og eksplicit artikeltilknytning.
@@ -79,5 +80,6 @@ Nye funktioner bør som udgangspunkt reducere klik, gøre redigering mere foruds
 - [Projektlager](docs/reference/PROJECT_STORAGE_0.59.47.md) – placering og flytning af projekter
 - [Cloud-sikker redigering](docs/reference/CLOUD_SAFE_EDITING_0.59.48.md) – samarbejde og revisionsbackup
 - [Performance](docs/reference/PERFORMANCE_0.59.59.md) – aktuelle optimeringsprincipper
+- [Lampesteder med flere udgange](docs/reference/MULTI_OUTPUT_LIGHT_0.59.80.md) – datamodel og arbejdsgang
 
 Detaljer om hver udgave hører hjemme i [CHANGELOG.md](CHANGELOG.md), ikke på projektets forside.

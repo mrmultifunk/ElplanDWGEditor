@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_dark_mode_version_and_normalization():
-    assert APP_VERSION == core.APP_VERSION == "0.59.79"
+    assert APP_VERSION == core.APP_VERSION == "0.59.80"
     assert core.normalize_appearance_mode(None) == "light"
     assert core.normalize_appearance_mode("Lys") == "light"
     assert core.normalize_appearance_mode("Mørk") == "dark"

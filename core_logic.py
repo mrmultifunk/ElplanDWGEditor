@@ -32,7 +32,7 @@ from ezdxf import bbox, disassemble, path as ezpath
 from ezdxf.addons import odafc
 
 APP_NAME = "Elplan DWG Editor"
-APP_VERSION = "0.59.79"
+APP_VERSION = "0.59.80"
 ODA_DOWNLOAD_URL = "https://www.opendesign.com/guestfiles/oda_file_converter"
 # Programmet bruger separate lag til forskellige typer el-installationer.
 # EL-SYMBOLER beholdes kun som navn af hensyn til ældre eksporter, men nye
@@ -747,6 +747,84 @@ def normalize_light_associations(values) -> list[str]:
     return normalized[:1]
 
 
+def normalize_light_outputs(values, legacy_associations=None, *, ensure_one: bool=True) -> list[dict]:
+    """Normalisér de logiske tændte udgange i ét fysisk lampested.
+
+    ``associations`` var før 0.59.80 en flad liste. Hvis der ikke findes nye
+    udgangsdata, migreres hvert gammelt bogstav til sin egen udgang. Dermed
+    bliver et fysisk lampeudtag stadig kun talt én gang i BOM og PL-dåsen.
+    """
+    rows=[]; used_ids=set()
+    for index, raw in enumerate(values or []):
+        if not isinstance(raw,dict):
+            continue
+        output_id=str(raw.get("id","") or "").strip() or f"out{index+1}"
+        base=output_id; suffix=2
+        while output_id in used_ids:
+            output_id=f"{base}-{suffix}"; suffix+=1
+        used_ids.add(output_id)
+        name=str(raw.get("name","") or "").strip() or f"Tænding {len(rows)+1}"
+        assoc=normalize_light_associations([raw.get("association","")])
+        rows.append({"id":output_id,"name":name,"association":assoc[0] if assoc else ""})
+    if not rows:
+        for index, letter in enumerate(normalize_associations(legacy_associations or [])):
+            rows.append({"id":f"out{index+1}","name":f"Tænding {index+1}","association":letter})
+    if ensure_one and not rows:
+        rows=[{"id":"out1","name":"Tænding 1","association":""}]
+    return rows
+
+
+def light_output_records(placement: "Placement") -> list[dict]:
+    """Returnér logiske lysudgange; andre lyssymboler får én virtuel udgang."""
+    if str(getattr(placement,"symbol","") or "") == "light_connection":
+        return normalize_light_outputs(
+            getattr(placement,"light_outputs",[]),
+            getattr(placement,"associations",[]),
+        )
+    assoc=normalize_light_associations(getattr(placement,"associations",[]))
+    return [{"id":"","name":"Lys","association":assoc[0] if assoc else ""}]
+
+
+def light_output_associations(placement: "Placement") -> list[str]:
+    return normalize_associations([
+        row.get("association","") for row in light_output_records(placement)
+        if row.get("association","")
+    ])
+
+
+def sync_light_outputs(placement: "Placement", outputs=None) -> list[dict]:
+    """Gem udgange og synkronisér det gamle primære associationsfelt."""
+    if str(getattr(placement,"symbol","") or "") != "light_connection":
+        placement.light_outputs=[]
+        placement.associations=normalize_light_associations(getattr(placement,"associations",[]))
+        return []
+    normalized=normalize_light_outputs(
+        light_output_records(placement) if outputs is None else outputs,
+        getattr(placement,"associations",[]) if outputs is None else [],
+    )
+    placement.light_outputs=[dict(row) for row in normalized]
+    primary=normalized[0].get("association","") if normalized else ""
+    placement.associations=normalize_light_associations([primary])
+    return normalized
+
+
+def set_light_output_association(placement: "Placement", output_id: str, letter: str) -> list[dict]:
+    rows=light_output_records(placement)
+    target=str(output_id or "")
+    value=normalize_light_associations([letter])
+    for row in rows:
+        if str(row.get("id","") or "") == target:
+            row["association"]=value[0] if value else ""
+            break
+    return sync_light_outputs(placement,rows)
+
+
+def light_output_by_id(placement: "Placement", output_id: str) -> dict:
+    rows=light_output_records(placement)
+    target=str(output_id or "")
+    return next((dict(row) for row in rows if str(row.get("id","") or "")==target),dict(rows[0]))
+
+
 def normalize_association_channels(symbol: str, channels, associations=None) -> list[str]:
     """Normalisér fast kanal->bogstav mapping for et afbrydersymbol.
 
@@ -844,6 +922,14 @@ def _split_csv_parts(value: str | None, count: int) -> list[str]:
 def association_display(placement: Placement) -> str:
     symbol = getattr(placement, "symbol", "")
     vals = normalize_associations(getattr(placement, "associations", []))
+    if symbol == "light_connection":
+        outputs=light_output_records(placement)
+        assigned=[row for row in outputs if row.get("association","")]
+        if len(outputs)>1:
+            return " · ".join(
+                f"T{i+1}:{row.get('association') or '–'}" for i,row in enumerate(outputs)
+            )
+        return str(assigned[0].get("association","") or "") if assigned else ""
     if association_role(symbol) == "switch":
         channels = association_channel_letters(placement)
         channel_vals = [x for x in channels if x]
@@ -866,7 +952,12 @@ def association_display(placement: Placement) -> str:
 
 
 def next_association_letter(placements) -> str:
-    used = {a for p in placements for a in normalize_associations(getattr(p, "associations", []))}
+    used=set()
+    for p in placements:
+        if association_role(getattr(p,"symbol",""))=="light":
+            used.update(light_output_associations(p))
+        else:
+            used.update(normalize_associations(getattr(p,"associations",[])))
     i = 0
     while True:
         candidate = _association_index_to_text(i)
@@ -1183,6 +1274,10 @@ class Placement:
     # nødvendigvis følger modulrækkefølgen (fx 1P=b, 1P=c, korrespondance=a).
     # Tom streng betyder, at den pågældende betjening endnu ikke er tilknyttet.
     association_channels: list[str] = field(default_factory=list)
+    # Ét fysisk lampeudtag kan have flere uafhængige tændte udgange. Hver
+    # udgang har stabilt id, navn og højst ét tilhørsbogstav. PL-dåse, position
+    # og BOM tilhører fortsat det ene fysiske Placement-objekt.
+    light_outputs: list[dict] = field(default_factory=list)
     # Låste symboler kan stadig vælges/kopieres, men kan ikke flyttes, roteres,
     # slettes eller redigeres før de låses op igen.
     locked: bool = False
@@ -1201,6 +1296,8 @@ class Placement:
     # Spots kan knyttes logisk til et lampested. Når lampestedet senere får
     # tilhørsbogstav fra en afbryder, synkroniseres bogstavet til spottene.
     parent_light_uid: str = ""
+    # Et spot følger en bestemt logisk udgang på et flerudgangs-lampested.
+    parent_light_output_id: str = ""
     # PL-loftdåser ved lampesteder kan dokumenteres med seks fysiske
     # kabelindføringer. Nøglerne er "1".."6" og værdierne peger på et
     # bestemt kabelben (kabel-id + side ved lampestedet).
@@ -1902,7 +1999,11 @@ def pl_expected_switch_connections(light: Placement, placements, cables) -> list
     ikke-korrespondance kanaler bruges som hårde lederkrav. Øvrige relationer
     vises som information, så programmet ikke gætter på korrespondancetopologi.
     """
-    light_assoc=set(normalize_associations(getattr(light,"associations",[])))
+    output_by_letter={
+        str(row.get("association","") or ""):dict(row)
+        for row in light_output_records(light) if str(row.get("association","") or "")
+    }
+    light_assoc=set(output_by_letter)
     if not light_assoc:return []
     legs=cable_legs_at_symbol(cables,str(getattr(light,"uid","") or ""))
     direct_by_switch={}
@@ -1921,6 +2022,8 @@ def pl_expected_switch_connections(light: Placement, placements, cables) -> list
                     row=dict(channel)
                     row.update({
                         "function_id":f"switch:{letter}",
+                        "light_output_id":str(output_by_letter[letter].get("id","") or ""),
+                        "light_output_name":str(output_by_letter[letter].get("name","") or ""),
                         "direct":True,
                         "required":not bool(channel.get("manual_topology")),
                         "cable_uid":str(leg.get("cable_uid","") or ""),
@@ -1934,6 +2037,8 @@ def pl_expected_switch_connections(light: Placement, placements, cables) -> list
                 row=dict(channel)
                 row.update({
                     "function_id":f"switch:{letter}","direct":False,"required":False,
+                    "light_output_id":str(output_by_letter[letter].get("id","") or ""),
+                    "light_output_name":str(output_by_letter[letter].get("name","") or ""),
                     "cable_uid":"","point_index":0,"leg":"","leg_caption":"","cable_display":"",
                 })
                 out.append(row)
@@ -2140,7 +2245,7 @@ def cable_switch_conductor_usage(cable_uid: str, placements, cables, *, current_
             seen_usage.add(usage_key)
             usages_by_core[core_id].append({
                 "function":fid,"placement_uid":puid,"placement":ident,
-                "function_caption":pl_wiring_function_caption(fid,getattr(placement,"associations",[])),
+                "function_caption":pl_wiring_function_caption(fid,light_output_associations(placement)),
             })
 
     supply_captions={"pe":"PE / beskyttelsesleder","blue":"Typisk N","brown":"Typisk fast L"}
@@ -2862,7 +2967,7 @@ def pl_report_wiring_rows(placement, placements, cables) -> list[dict]:
     entries=reconcile_pl_box_entries(getattr(placement,"pl_box_entries",{}),legs)
     wiring=reconcile_pl_box_wiring(getattr(placement,"pl_box_wiring",[]),legs)
     splices=reconcile_pl_box_splices(getattr(placement,"pl_box_splices",[]),wiring,legs)
-    associations=getattr(placement,"associations",[])
+    associations=light_output_associations(placement)
     outlet_type=normalize_pl_outlet_type(getattr(placement,"lamp_outlet_type","generic"))
     profile=pl_outlet_profile(outlet_type,associations)
     terminal_by_fid={str(t.get("function_id","") or ""):str(t.get("label") or "") for t in profile.get("terminals",[]) if str(t.get("function_id","") or "")}
@@ -2961,7 +3066,7 @@ def _draw_pl_report_box(c, placement, placements, cables, x, y, w, h):
     orientation=normalize_pl_box_orientation(getattr(placement,"pl_box_orientation",0))
     outlet_type=normalize_pl_outlet_type(getattr(placement,"lamp_outlet_type","generic"))
     requirements=pl_expected_switch_connections(placement,placements,cables)
-    montage=pl_montage_status(outlet_type,getattr(placement,"associations",[]),wiring,splices,requirements,legs)
+    montage=pl_montage_status(outlet_type,light_output_associations(placement),wiring,splices,requirements,legs)
     box_status=pl_box_status(entries,legs)
     wiring_rows=pl_report_wiring_rows(placement,placements,cables)
     state=str(montage.get("state") or "ready")
@@ -3146,7 +3251,7 @@ def _draw_pl_report_box(c, placement, placements, cables, x, y, w, h):
     if splices:
         for splice in splices[:5]:
             fid=str(splice.get("function") or ""); art=str(splice.get("article_no") or "artikel ikke valgt"); mode="1 bro til udtag" if splice.get("connects_to_outlet",True) else "kun sløjfe"; members=len(pl_splice_member_keys(splice))
-            function_label=pl_wiring_function_caption(fid,getattr(placement,'associations',[])).replace("→","->").split(" -> ",1)[0]
+            function_label=pl_wiring_function_caption(fid,light_output_associations(placement)).replace("→","->").split(" -> ",1)[0]
             text=f"{function_label}: {art} | {members} leder(e) | {mode}"
             c.drawString(inner_x+8,wy,_pdf_fit_text(text,"Helvetica",6.0,split-inner_x-16)); wy-=10
         if len(splices)>5:
@@ -5008,20 +5113,21 @@ def project_control_issues(placements, cables, rooms=None, project_raw=None, ass
         elif role=="light":
             if str(getattr(placement,"symbol","") or "")=="spot" and str(getattr(placement,"parent_light_uid","") or ""):
                 continue
-            for letter in normalize_light_associations(getattr(placement,"associations",[])):
+            for letter in light_output_associations(placement):
                 light_targets_by_letter.setdefault(letter,[]).append(placement)
     for placement in placements:
         uid=str(getattr(placement,"uid","") or ""); symbol=str(getattr(placement,"symbol","") or ""); name=caption(placement)
         role=association_role(symbol)
         if role=="light" and symbol!="emergency_light" and not (symbol=="spot" and str(getattr(placement,"parent_light_uid","") or "")):
-            raw_letters=normalize_associations(getattr(placement,"associations",[]))
-            letters=normalize_light_associations(raw_letters)
-            if len(raw_letters)>1:
-                add("error","Tilknytning",f"{name} har flere tilhørsbogstaver","Et lampested kan kun repræsentere én tændt udgang. Opret et ekstra lampested for en uafhængig tænding.","placement",uid)
-            elif not letters:
-                add("warning","Tilknytning",f"{name} er ikke tilknyttet en afbryder","Vælg en afbryderkanal og tilknyt lampestedet på planen.","placement",uid)
-            elif letters[0] not in switch_channels_by_letter:
-                add("error","Tilknytning",f"{name} peger på et manglende tilhørsforhold",f"Bogstav {letters[0]} bruges ikke længere af en afbryderkanal.","placement",uid)
+            outputs=light_output_records(placement)
+            for output_index,output in enumerate(outputs,1):
+                letter=str(output.get("association","") or "")
+                output_name=str(output.get("name","") or f"Tænding {output_index}")
+                suffix=f" · {output_name}" if len(outputs)>1 else ""
+                if not letter:
+                    add("warning","Tilknytning",f"{name}{suffix} er ikke tilknyttet en afbryder","Vælg en afbryderkanal og tilknyt udgangen på planen.","placement",uid)
+                elif letter not in switch_channels_by_letter:
+                    add("error","Tilknytning",f"{name}{suffix} peger på et manglende tilhørsforhold",f"Bogstav {letter} bruges ikke længere af en afbryderkanal.","placement",uid)
         elif role=="switch":
             for rec in association_channel_records(placement):
                 letter=str(rec.get("association","") or "")
@@ -5773,8 +5879,10 @@ def symbol_clipboard_payload(placement: Placement) -> str:
     # Tilhørsforhold er logiske relationer og kopieres ikke automatisk til et nyt symbol.
     data["associations"] = []
     data["association_channels"] = []
+    data["light_outputs"]=[dict(row,association="") for row in normalize_light_outputs(data.get("light_outputs",[]),[],ensure_one=data.get("symbol")=="light_connection")] if data.get("symbol")=="light_connection" else []
     data["locked"] = False
     data["parent_light_uid"] = ""
+    data["parent_light_output_id"] = ""
     data["spot_group_id"] = ""
     data["spot_group_name"] = ""
     data["pl_box_entries"] = {}
@@ -5792,7 +5900,7 @@ def placement_from_clipboard_payload(text: str) -> Placement | None:
         if raw.get("type")!="elplan_symbol": return None
         item=dict(raw.get("placement") or {}); item.pop("uid",None)
         if item.get("symbol") not in SYMBOLS.values(): return None
-        item.setdefault("line_width",0.25); item.setdefault("color",DEFAULT_SYMBOL_COLOR); item.setdefault("associations",[]); item.setdefault("association_channels",[]); item.setdefault("locked",False); item.setdefault("parent_light_uid",""); item.setdefault("spot_group_id",""); item.setdefault("spot_group_name",""); item.setdefault("pl_box_entries",{}); item.setdefault("pl_box_wiring",[]); item.setdefault("pl_box_splices",[]); item.setdefault("pl_box_orientation",0); item.setdefault("lamp_outlet_type","generic"); item.setdefault("pl_field_record",{})
+        item.setdefault("line_width",0.25); item.setdefault("color",DEFAULT_SYMBOL_COLOR); item.setdefault("associations",[]); item.setdefault("association_channels",[]); item.setdefault("light_outputs",[]); item.setdefault("locked",False); item.setdefault("parent_light_uid",""); item.setdefault("parent_light_output_id",""); item.setdefault("spot_group_id",""); item.setdefault("spot_group_name",""); item.setdefault("pl_box_entries",{}); item.setdefault("pl_box_wiring",[]); item.setdefault("pl_box_splices",[]); item.setdefault("pl_box_orientation",0); item.setdefault("lamp_outlet_type","generic"); item.setdefault("pl_field_record",{})
         item["pl_field_record"]={}
         item.setdefault("label_mode","Fælles"); item.setdefault("switch_label",""); item.setdefault("switch_group",""); item.setdefault("socket_label",""); item.setdefault("socket_group","")
         item["label_mode"]=normalize_combo_label_mode(item.get("label_mode")); item["color"]=normalize_hex_color(item["color"]); item["associations"]=normalize_associations(item.get("associations",[])); item["pl_box_orientation"]=normalize_pl_box_orientation(item.get("pl_box_orientation",0)); item["lamp_outlet_type"]=normalize_pl_outlet_type(item.get("lamp_outlet_type","generic"))
@@ -5809,7 +5917,7 @@ def symbols_clipboard_payload(placements) -> str:
     """
     items=[]
     for placement in placements:
-        data=asdict(placement); data.pop("uid",None); data["associations"]=[]; data["association_channels"]=[]; data["locked"]=False; data["parent_light_uid"]=""; data["pl_box_entries"]={}; data["pl_box_wiring"]=[]; data["pl_box_splices"]=[]; data["pl_field_record"]={}; data["lamp_outlet_type"]=normalize_pl_outlet_type(data.get("lamp_outlet_type","generic"))
+        data=asdict(placement); data.pop("uid",None); data["associations"]=[]; data["association_channels"]=[]; data["light_outputs"]=[dict(row,association="") for row in normalize_light_outputs(data.get("light_outputs",[]),[],ensure_one=data.get("symbol")=="light_connection")] if data.get("symbol")=="light_connection" else []; data["locked"]=False; data["parent_light_uid"]=""; data["parent_light_output_id"]=""; data["pl_box_entries"]={}; data["pl_box_wiring"]=[]; data["pl_box_splices"]=[]; data["pl_field_record"]={}; data["lamp_outlet_type"]=normalize_pl_outlet_type(data.get("lamp_outlet_type","generic"))
         items.append(data)
     return SYMBOLS_CLIPBOARD_PREFIX + json.dumps({"type":"elplan_symbols","version":1,"placements":items},ensure_ascii=False)
 
@@ -5829,8 +5937,8 @@ def placements_from_clipboard_payload(text: str) -> list[Placement]:
         for source in sources:
             item=dict(source or {}); item.pop("uid",None)
             if item.get("symbol") not in SYMBOLS.values():continue
-            item.setdefault("line_width",0.25); item.setdefault("color",DEFAULT_SYMBOL_COLOR); item.setdefault("associations",[]); item.setdefault("association_channels",[]); item.setdefault("locked",False); item.setdefault("parent_light_uid",""); item.setdefault("spot_group_id",""); item.setdefault("spot_group_name",""); item.setdefault("pl_box_entries",{}); item.setdefault("pl_box_wiring",[]); item.setdefault("pl_box_splices",[]); item.setdefault("pl_box_orientation",0); item.setdefault("lamp_outlet_type","generic"); item.setdefault("pl_field_record",{})
-            item["pl_box_entries"]={}; item["pl_box_wiring"]=[]; item["pl_box_splices"]=[]; item["pl_field_record"]={}; item["pl_box_orientation"]=normalize_pl_box_orientation(item.get("pl_box_orientation",0)); item["lamp_outlet_type"]=normalize_pl_outlet_type(item.get("lamp_outlet_type","generic")); item["parent_light_uid"]=""; item["color"]=normalize_hex_color(item["color"]); item["associations"]=[]; item["association_channels"]=[]
+            item.setdefault("line_width",0.25); item.setdefault("color",DEFAULT_SYMBOL_COLOR); item.setdefault("associations",[]); item.setdefault("association_channels",[]); item.setdefault("light_outputs",[]); item.setdefault("locked",False); item.setdefault("parent_light_uid",""); item.setdefault("parent_light_output_id",""); item.setdefault("spot_group_id",""); item.setdefault("spot_group_name",""); item.setdefault("pl_box_entries",{}); item.setdefault("pl_box_wiring",[]); item.setdefault("pl_box_splices",[]); item.setdefault("pl_box_orientation",0); item.setdefault("lamp_outlet_type","generic"); item.setdefault("pl_field_record",{})
+            item["pl_box_entries"]={}; item["pl_box_wiring"]=[]; item["pl_box_splices"]=[]; item["pl_field_record"]={}; item["pl_box_orientation"]=normalize_pl_box_orientation(item.get("pl_box_orientation",0)); item["lamp_outlet_type"]=normalize_pl_outlet_type(item.get("lamp_outlet_type","generic")); item["parent_light_uid"]=""; item["parent_light_output_id"]=""; item["color"]=normalize_hex_color(item["color"]); item["associations"]=[]; item["association_channels"]=[]; item["light_outputs"]=[dict(row,association="") for row in normalize_light_outputs(item.get("light_outputs",[]),[],ensure_one=item.get("symbol")=="light_connection")] if item.get("symbol")=="light_connection" else []
             old_gid=str(item.get("spot_group_id","") or "")
             if old_gid and item.get("symbol")=="spot" and group_counts.get(old_gid,0)>=2:
                 item["spot_group_id"]=group_remap.setdefault(old_gid,uuid.uuid4().hex)
@@ -7749,7 +7857,9 @@ def export_vector_pdf(path: str | Path, cad_primitives, placements, cables=None,
         parent=placement_by_uid.get(uid)
         if parent is None: return "↳ Lampested ?"
         ident=str(getattr(parent,"group","") or getattr(parent,"label","") or "Lampested").strip()
-        return f"↳ {ident}"
+        output=light_output_by_id(parent,getattr(pl,"parent_light_output_id","") or "")
+        suffix=f" / {output.get('name')}" if len(light_output_records(parent))>1 else ""
+        return f"↳ {ident}{suffix}"
 
     def annotation_content(pl):
         if mode=="Skjult": return "","","",[],""

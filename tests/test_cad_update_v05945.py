@@ -7,7 +7,7 @@ def test_version_and_update_action_are_present():
     project=(ROOT/'project_model.py').read_text(encoding='utf-8')
     app=(ROOT/'qt_app.py').read_text(encoding='utf-8')
     workflow=(ROOT/'qt_project_open.py').read_text(encoding='utf-8')
-    assert 'APP_VERSION = "0.59.79"' in project
+    assert 'APP_VERSION = "0.59.80"' in project
     assert 'Opdatér plantegning…' in app
     assert 'self.act_update_cad.triggered.connect(self.update_cad)' in app
     assert 'def update_cad(self)' in workflow

@@ -113,7 +113,7 @@ def build_hover_bom_model(*, symbol, placement_uid, placement=None, article_look
             article_no=str(splice.get("article_no", "") or "").strip()
             if not article_no:
                 continue
-            function=core.pl_wiring_function_caption(str(splice.get("function", "") or ""), getattr(placement, "associations", []))
+            function=core.pl_wiring_function_caption(str(splice.get("function", "") or ""), core.light_output_associations(placement))
             sections.append({
                 "part_label":f"Wago i PL-dåse · {function}",
                 "kind":"articles",

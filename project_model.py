@@ -11,7 +11,7 @@ from typing import Any
 import core_logic as core
 from storage_utils import atomic_write_text
 
-APP_VERSION = "0.59.79"
+APP_VERSION = "0.59.80"
 
 
 def _finite_float(value: Any, field_name: str) -> float:
@@ -47,6 +47,7 @@ def placement_from_raw(raw: dict[str, Any]) -> core.Placement:
             "color": core.DEFAULT_SYMBOL_COLOR,
             "associations": [],
             "association_channels": [],
+            "light_outputs": [],
             "locked": False,
             "mounting_zone": "",
             "mounting_height_mm": None,
@@ -55,6 +56,7 @@ def placement_from_raw(raw: dict[str, Any]) -> core.Placement:
             "spot_group_id": "",
             "spot_group_name": "",
             "parent_light_uid": "",
+            "parent_light_output_id": "",
             "pl_box_entries": {},
             "pl_box_wiring": [],
             "pl_box_splices": [],
@@ -84,10 +86,20 @@ def placement_from_raw(raw: dict[str, Any]) -> core.Placement:
     item["material_color"] = core.normalize_material_color(item.get("material_color", ""))
     item["already_purchased"] = core.normalize_already_purchased(item.get("already_purchased", False))
     role=core.association_role(str(item.get("symbol", "")))
-    item["associations"] = (
-        core.normalize_light_associations(item.get("associations", []))
-        if role=="light" else core.normalize_associations(item.get("associations", []))
-    )
+    legacy_associations=core.normalize_associations(item.get("associations",[]))
+    if str(item.get("symbol", ""))=="light_connection":
+        item["light_outputs"]=core.normalize_light_outputs(
+            item.get("light_outputs",[]),legacy_associations
+        )
+        item["associations"]=core.normalize_light_associations([
+            item["light_outputs"][0].get("association","")
+        ])
+    else:
+        item["light_outputs"]=[]
+        item["associations"] = (
+            core.normalize_light_associations(legacy_associations)
+            if role=="light" else legacy_associations
+        )
     if role == "switch":
         item["association_channels"] = core.normalize_association_channels(
             str(item.get("symbol", "")),
@@ -414,6 +426,14 @@ class ProjectDocument:
         # all physical segments in the same logical circuit instead of guessing
         # potentially different values on neighbouring segments.
         placement_by_uid={str(p.uid):p for p in obj.placements}
+        for placement in obj.placements:
+            parent_uid=str(getattr(placement,"parent_light_uid","") or "")
+            if placement.symbol!="spot" or not parent_uid:continue
+            parent=placement_by_uid.get(parent_uid)
+            if parent is None or parent.symbol!="light_connection":continue
+            output=core.light_output_by_id(parent,getattr(placement,"parent_light_output_id","") or "")
+            placement.parent_light_output_id=str(output.get("id","") or "")
+            placement.associations=core.normalize_light_associations([output.get("association","")])
         chains:dict[str,list[core.CablePlacement]]={}
         for cable in obj.cables:
             key=str(getattr(cable,"route_chain_uid","") or getattr(cable,"uid","") or "")
@@ -523,13 +543,24 @@ class ProjectDocument:
         for placement in self.placements:
             row=asdict(placement)
             role=core.association_role(placement.symbol)
-            if role=="light":
+            if placement.symbol=="light_connection":
+                outputs=core.normalize_light_outputs(
+                    getattr(placement,"light_outputs",[]),getattr(placement,"associations",[])
+                )
+                row["light_outputs"]=outputs
+                row["associations"]=core.normalize_light_associations([outputs[0].get("association","")])
+                row["association_channels"]=[]
+            elif role=="light":
                 row["associations"]=core.normalize_light_associations(getattr(placement,"associations",[]))
                 row["association_channels"]=[]
+                row["light_outputs"]=[]
             elif role=="switch":
                 channels=core.association_channel_letters(placement)
                 row["association_channels"]=channels
                 row["associations"]=core.normalize_associations([x for x in channels if x])
+                row["light_outputs"]=[]
+            else:
+                row["light_outputs"]=[]
             if placement.symbol == "light_connection":
                 legs=core.cable_legs_at_symbol(self.cables,placement.uid)
                 row["pl_box_entries"]=core.reconcile_pl_box_entries(getattr(placement,"pl_box_entries",{}),legs)

@@ -16,7 +16,7 @@ def _key(core_id):
 
 
 def test_version_05966():
-    assert APP_VERSION == core.APP_VERSION == "0.59.79"
+    assert APP_VERSION == core.APP_VERSION == "0.59.80"
 
 
 def test_suggestions_are_preview_only_and_keep_brown_unchecked():

@@ -1,3 +1,15 @@
+## 0.59.80 - Flere tændinger i ét fysisk lampested
+
+- Et fysisk lampested kan nu indeholde flere logiske, uafhængige tændinger uden at oprette overlappende symboler.
+- Hver tænding har stabilt id, eget navn og højst ét tilhørsbogstav. Lampestedets position, PL-dåse, kabler og BOM deles fortsat af det ene fysiske objekt.
+- Egenskaber-panelet viser en kompakt udgangstabel. Her kan tændinger tilføjes, fjernes og navngives, eksempelvis `Pendel` og `Spots`.
+- Ved tilknytning fra en afbryder spørger programmet, hvilken udgang der skal betjenes, når lampestedet har flere. Den valgte udgang kan derefter til-/frakobles i den eksisterende Enter/Esc-session.
+- Lampestedet får et lille grafisk antal-badge, mens mærkning, PDF og CAD-eksport viser udgangene kompakt som `T1:a · T2:b`.
+- PL-dåsekonfiguratoren og lederkrav læser alle lampestedets tændinger, så både `a` og `b` kan få korrekt tændleder uden at fordoble dåsen.
+- Spotgrupper kan knyttes til en bestemt tænding på lampestedet og følger kun denne udgangs bogstav.
+- Projektkontrollen validerer hver udgang separat og nævner udgangens navn ved manglende eller forældede relationer.
+- Gamle projektdata med flere bogstaver på ét lampested migreres til tilsvarende separate udgange; normale en-udgangs-lampesteder fortsætter uændret.
+
 ## 0.59.79 - Entydige lystilhørsforhold
 
 - Et lampested eller en selvstændig lampe kan nu højst have ét tilhørsbogstav. Flere afbrydere kan fortsat dele samme bogstav ved korrespondance og krydsning.

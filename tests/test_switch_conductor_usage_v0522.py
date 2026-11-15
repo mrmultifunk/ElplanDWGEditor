@@ -27,7 +27,7 @@ def _sample_chain():
 
 
 def test_switch_conductor_usage_tracks_colors_across_whole_cable():
-    assert APP_VERSION == core.APP_VERSION == "0.59.79"
+    assert APP_VERSION == core.APP_VERSION == "0.59.80"
     cable, placements = _sample_chain()
     _wire(cable, placements[0], "black", "switch:a")
     _wire(cable, placements[1], "grey", "switch:b")

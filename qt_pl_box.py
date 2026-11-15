@@ -2041,7 +2041,7 @@ class PLBoxDialog(SwitchConductorUsageMixin, QDialog):
         wiring_hint.setWordWrap(False); wiring_hint.setObjectName("sectionHint"); wiring_root.addWidget(wiring_hint)
         status_row=QHBoxLayout(); status_row.setSpacing(10)
         self.wiring_status_label=QLabel(); self.wiring_status_label.setWordWrap(False); status_row.addWidget(self.wiring_status_label,1)
-        assoc=core.normalize_associations(getattr(placement,"associations",[]))
+        assoc=core.light_output_associations(placement)
         self.wiring_assoc_label=QLabel("Tændinger: "+(", ".join(assoc) if assoc else "ingen"))
         self.wiring_assoc_label.setObjectName("subtleText"); self.wiring_assoc_label.setAlignment(Qt.AlignmentFlag.AlignRight|Qt.AlignmentFlag.AlignVCenter); status_row.addWidget(self.wiring_assoc_label)
         wiring_root.addLayout(status_row)
@@ -2284,10 +2284,14 @@ class PLBoxDialog(SwitchConductorUsageMixin, QDialog):
             ident=core.placement_identification_caption(target)
             rank=0 if uid in direct else (1 if uid in chain_targets else 2)
             route_hint="Direkte kabelvej" if rank==0 else ("Samme kabelrute" if rank==1 else "Andet lampested")
-            for association in core.normalize_associations(getattr(target,"associations",[]) or []):
+            outputs=core.light_output_records(target)
+            for output in outputs:
+                association=str(output.get("association","") or "")
+                if not association:continue
+                output_suffix=f" · {output.get('name')}" if len(outputs)>1 else ""
                 rows.append({
                     "uid":uid,"association":association,"rank":rank,
-                    "caption":f"{route_hint} · {ident} · tænding {association}",
+                    "caption":f"{route_hint} · {ident}{output_suffix} · tænding {association}",
                 })
         rows.sort(key=lambda row:(int(row["rank"]),str(row["caption"]).casefold()))
         return rows
@@ -2481,7 +2485,7 @@ class PLBoxDialog(SwitchConductorUsageMixin, QDialog):
         current=str(self.wiring_issue_combo.currentData(Qt.ItemDataRole.UserRole) or "")
         issues=core.pl_wiring_workflow_issues(
             self.legs,self.wiring,self.requirements,self.splices,self.outlet_type,
-            getattr(self.placement,"associations",[]),external_allocations or {},
+            core.light_output_associations(self.placement),external_allocations or {},
         )
         self._wiring_issues=issues
         blocker=QSignalBlocker(self.wiring_issue_combo); self.wiring_issue_combo.clear()
@@ -2623,7 +2627,7 @@ class PLBoxDialog(SwitchConductorUsageMixin, QDialog):
             if req_summary["duplicate"]:txt+=f" · ⛔ {req_summary['duplicate']} dublettildeling(er)"
         if req_summary["manual"]:
             txt+=f" · {req_summary['manual']} korrespondance/krydsning kræver manuel terminalkontrol"
-        capacity_issues=core.pl_outlet_capacity_issues(self.outlet_type,getattr(self.placement,"associations",[]),self.wiring,self.splices)
+        capacity_issues=core.pl_outlet_capacity_issues(self.outlet_type,core.light_output_associations(self.placement),self.wiring,self.splices)
         if capacity_issues:
             txt+=" · ⛔ " + "; ".join(f"{x['label']} {x['terminal_count']}/{x['capacity']}" for x in capacity_issues) + " – tilføj/redigér Wago"
             self.wiring_status_label.setObjectName("accentText")
@@ -2644,7 +2648,9 @@ class PLBoxDialog(SwitchConductorUsageMixin, QDialog):
             letter=str(req.get("association","") or "")
             source=" · ".join(x for x in [str(req.get("source_mark","") or ""),str(req.get("channel_caption","") or "")] if x)
             cable=str(req.get("cable_display","") or ("Ingen direkte kabelvej" if not req.get("direct") else "Kabel"))
+            output_name=str(req.get("light_output_name","") or "")
             req_label=(f"P · tryk {letter}" if letter else "P · trykindgang") if core.normalize_pl_outlet_type(self.outlet_type)=="nordtronic_zigbee" else (f"Tænding {letter}" if letter else "Tænding")
+            if output_name:req_label+=f" · {output_name}"
             vals=[icon,req_label,source,cable]
             for cc,val in enumerate(vals):
                 item=QTableWidgetItem(val); item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
@@ -2661,7 +2667,7 @@ class PLBoxDialog(SwitchConductorUsageMixin, QDialog):
         wmap={core.pl_box_conductor_key(x):x for x in self.wiring}
         conductors.sort(key=lambda x:(self._port_for_conductor(x) or 99,str(x.get("cable_id","")),str(x.get("leg","")),str(x.get("core_id",""))))
         self.wiring_table.setRowCount(len(conductors))
-        known_options=core.pl_wiring_function_options(getattr(self.placement,"associations",[]),self.outlet_type)
+        known_options=core.pl_wiring_function_options(core.light_output_associations(self.placement),self.outlet_type)
         detailed_options=[]
         for fid,caption in known_options:
             req=[x for x in self.requirements if str(x.get("function_id","") or "")==fid and x.get("direct")]
@@ -2689,7 +2695,7 @@ class PLBoxDialog(SwitchConductorUsageMixin, QDialog):
             current=str(wr.get("function","") or "")
             idx=combo.findData(current)
             if idx<0 and current:
-                combo.addItem(core.pl_wiring_function_caption(current,getattr(self.placement,"associations",[]),self.outlet_type),current); idx=combo.count()-1
+                combo.addItem(core.pl_wiring_function_caption(current,core.light_output_associations(self.placement),self.outlet_type),current); idx=combo.count()-1
             combo.setCurrentIndex(max(0,idx))
             combo.setToolTip("Én fysisk leder kan kun have én funktion. Vælger du en anden tænding, erstatter den den tidligere funktion på denne leder.")
             combo.currentIndexChanged.connect(lambda _i,key=key,combo=combo:self._wiring_combo_changed(key,combo))
@@ -2704,7 +2710,7 @@ class PLBoxDialog(SwitchConductorUsageMixin, QDialog):
             self.wiring_unknown_label.show()
         else:
             self.wiring_unknown_label.hide()
-        profile=core.pl_outlet_profile(self.outlet_type,getattr(self.placement,"associations",[]))
+        profile=core.pl_outlet_profile(self.outlet_type,core.light_output_associations(self.placement))
         self.outlet_profile_hint.setText(str(profile.get("compact_hint") or profile.get("hint") or ""))
         self.outlet_profile_hint.setToolTip(str(profile.get("hint") or ""))
         unsupported=list(profile.get("unsupported_switches") or [])
@@ -2718,7 +2724,7 @@ class PLBoxDialog(SwitchConductorUsageMixin, QDialog):
         self._refresh_switch_conductor_usage(preserve_combo=True)
         self._refresh_workflow_issues(external_allocations)
         self.wiring_diagram.set_state(
-            self.entries,self.legs,self.wiring,getattr(self.placement,"associations",[]),
+            self.entries,self.legs,self.wiring,core.light_output_associations(self.placement),
             self.requirements,self.outlet_type,self.splices,self.cable_categories,
             external_allocations,self._destination_labels(),
         )
@@ -2740,7 +2746,7 @@ class PLBoxDialog(SwitchConductorUsageMixin, QDialog):
     def _refresh_montage_status(self):
         if not hasattr(self,"montage_status_label"):return
         status=core.pl_montage_status(
-            self.outlet_type,getattr(self.placement,"associations",[]),
+            self.outlet_type,core.light_output_associations(self.placement),
             self.wiring,self.splices,self.requirements,self.legs,
         )
         parts=[]
@@ -2760,7 +2766,7 @@ class PLBoxDialog(SwitchConductorUsageMixin, QDialog):
         wago_parts=[]
         for row in status.get("wago",[]):
             fid=str(row.get("function_id") or "")
-            label=core.pl_wiring_function_caption(fid,getattr(self.placement,"associations",[]),self.outlet_type).split(" → ",1)[0]
+            label=core.pl_wiring_function_caption(fid,core.light_output_associations(self.placement),self.outlet_type).split(" → ",1)[0]
             article=str(row.get("article_no") or "artikel?")
             needed=int(row.get("needed_ports",0) or 0); cap=int(row.get("article_capacity",0) or 0)
             icon="✓" if row.get("state")=="ok" else ("⛔" if row.get("state")=="error" else "⚠")
@@ -2816,7 +2822,7 @@ class PLBoxDialog(SwitchConductorUsageMixin, QDialog):
 
     def _loop_wago_function_choices(self):
         """Returnér de fysiske terminalfunktioner, der kan bruges som elektrisk identitet for en ren samlemuffe."""
-        profile=core.pl_outlet_profile(self.outlet_type,getattr(self.placement,"associations",[]))
+        profile=core.pl_outlet_profile(self.outlet_type,core.light_output_associations(self.placement))
         choices=[]; seen=set()
         for terminal in profile.get("terminals",[]):
             fid=str(terminal.get("function_id","") or "")
@@ -2871,13 +2877,13 @@ class PLBoxDialog(SwitchConductorUsageMixin, QDialog):
         loop_menu=menu.addMenu("+ Opret samlemuffe / sløjfe · ingen udtag")
         choose_loop=loop_menu.addAction("Vælg ledertype og tilhørende lampested…")
         choose_loop.triggered.connect(lambda:self._new_loop_wago())
-        profile=core.pl_outlet_profile(self.outlet_type,getattr(self.placement,"associations",[]))
+        profile=core.pl_outlet_profile(self.outlet_type,core.light_output_associations(self.placement))
         seen=set()
         for terminal in profile.get("terminals",[]):
             fid=str(terminal.get("function_id","") or "")
             if not fid or fid in seen:continue
             seen.add(fid)
-            caption=core.pl_wiring_function_caption(fid,getattr(self.placement,"associations",[]),self.outlet_type).split(" → ",1)[0]
+            caption=core.pl_wiring_function_caption(fid,core.light_output_associations(self.placement),self.outlet_type).split(" → ",1)[0]
             act=create_menu.addAction(caption)
             act.triggered.connect(lambda _checked=False,fid=fid:self._edit_wago_members(fid,None,default_connects=True))
         if not seen:
@@ -2890,7 +2896,7 @@ class PLBoxDialog(SwitchConductorUsageMixin, QDialog):
             for splice in self.splices:
                 sid=str(splice.get("id","") or ""); fid=str(splice.get("function","") or "")
                 counts[fid]=counts.get(fid,0)+1
-                function=core.pl_wiring_function_caption(fid,getattr(self.placement,"associations",[]),self.outlet_type).split(" → ",1)[0]
+                function=core.pl_wiring_function_caption(fid,core.light_output_associations(self.placement),self.outlet_type).split(" → ",1)[0]
                 members=len(core.pl_splice_member_keys(splice)); article=str(splice.get("article_no","") or "")
                 needed=core.pl_wago_required_ports(members,bool(splice.get("connects_to_outlet",True))); cap=core.pl_wago_article_capacity(article)
                 ordinal=f" {counts[fid]}/{totals[fid]}" if totals[fid]>1 else ""
@@ -2928,8 +2934,8 @@ class PLBoxDialog(SwitchConductorUsageMixin, QDialog):
                 counts[fid]=counts.get(fid,0)+1
                 members=core.pl_splice_member_keys(splice)
                 occ=core.pl_terminal_occupancy(fid,self.wiring,self.splices)
-                terminal_cap=core.pl_outlet_terminal_capacity(self.outlet_type,getattr(self.placement,"associations",[]),fid)
-                function=core.pl_wiring_function_caption(fid,getattr(self.placement,"associations",[]),self.outlet_type)
+                terminal_cap=core.pl_outlet_terminal_capacity(self.outlet_type,core.light_output_associations(self.placement),fid)
+                function=core.pl_wiring_function_caption(fid,core.light_output_associations(self.placement),self.outlet_type)
                 short_function=function.split(" → ",1)[0]
                 ordinal=f" · Wago {counts[fid]}/{totals[fid]}" if totals.get(fid,0)>1 else ""
                 suffix=f" · terminal {occ['terminal_count']}/{terminal_cap}" if terminal_cap else ""
@@ -2959,16 +2965,16 @@ class PLBoxDialog(SwitchConductorUsageMixin, QDialog):
         key,fid,splice=self._selected_wago_context()
         if hasattr(self,"wago_for_selected_btn"):
             if splice is not None:
-                function=core.pl_wiring_function_caption(str(splice.get("function","") or ""),getattr(self.placement,"associations",[]),self.outlet_type).split(" → ",1)[0]
+                function=core.pl_wiring_function_caption(str(splice.get("function","") or ""),core.light_output_associations(self.placement),self.outlet_type).split(" → ",1)[0]
                 self.wago_for_selected_btn.setText(f"Redigér Wago {function}"); self.wago_for_selected_btn.setEnabled(True)
             elif fid:
-                function=core.pl_wiring_function_caption(fid,getattr(self.placement,"associations",[]),self.outlet_type).split(" → ",1)[0]
+                function=core.pl_wiring_function_caption(fid,core.light_output_associations(self.placement),self.outlet_type).split(" → ",1)[0]
                 self.wago_for_selected_btn.setText(f"+ Wago {function} → udtag"); self.wago_for_selected_btn.setEnabled(True)
             else:
                 self.wago_for_selected_btn.setText("+ Wago → udtag"); self.wago_for_selected_btn.setEnabled(False)
         if hasattr(self,"wago_loop_btn"):
             if splice is not None and not bool(splice.get("connects_to_outlet",True)):
-                function=core.pl_wiring_function_caption(str(splice.get("function","") or ""),getattr(self.placement,"associations",[]),self.outlet_type).split(" → ",1)[0]
+                function=core.pl_wiring_function_caption(str(splice.get("function","") or ""),core.light_output_associations(self.placement),self.outlet_type).split(" → ",1)[0]
                 self.wago_loop_btn.setText(f"Redigér samlemuffe {function}"); self.wago_loop_btn.setEnabled(True)
             elif splice is not None:
                 self.wago_loop_btn.setText("+ Samlemuffe / sløjfe"); self.wago_loop_btn.setEnabled(False)
@@ -2978,7 +2984,7 @@ class PLBoxDialog(SwitchConductorUsageMixin, QDialog):
                 self.wago_loop_btn.setEnabled(True)
                 self.wago_loop_btn.setToolTip("Saml kabelledere i en Wago uden forbindelse til lampeudtaget. Intet forbindes automatisk til udtaget.")
 
-        profile=core.pl_outlet_profile(self.outlet_type,getattr(self.placement,"associations",[]))
+        profile=core.pl_outlet_profile(self.outlet_type,core.light_output_associations(self.placement))
         can_new=any(str(t.get("function_id","") or "") for t in profile.get("terminals",[]))
         self.wago_new_btn.setEnabled(can_new)
         if hasattr(self,"wago_manage_btn"):self.wago_manage_btn.setEnabled(can_new or bool(self.splices))
@@ -3035,14 +3041,14 @@ class PLBoxDialog(SwitchConductorUsageMixin, QDialog):
         automatiske hjælp også efter at flere Wago'er på samme funktion er
         blevet understøttet.
         """
-        cap=core.pl_outlet_terminal_capacity(self.outlet_type,getattr(self.placement,"associations",[]),fid)
+        cap=core.pl_outlet_terminal_capacity(self.outlet_type,core.light_output_associations(self.placement),fid)
         if not cap:return True
         splices_after=core.reconcile_pl_box_splices(self.splices,wiring_after,self.legs)
         occ=core.pl_terminal_occupancy(fid,wiring_after,splices_after)
         if occ["terminal_count"]<=cap:return True
-        profile=core.pl_outlet_profile(self.outlet_type,getattr(self.placement,"associations",[]))
+        profile=core.pl_outlet_profile(self.outlet_type,core.light_output_associations(self.placement))
         terminal=next((t for t in profile.get("terminals",[]) if str(t.get("function_id","") or "")==fid),{})
-        label=str(terminal.get("label") or core.pl_wiring_function_caption(fid,getattr(self.placement,"associations",[]),self.outlet_type))
+        label=str(terminal.get("label") or core.pl_wiring_function_caption(fid,core.light_output_associations(self.placement),self.outlet_type))
         direct=list(occ.get("direct",[]) or [])
         outlet_count=int(occ.get("splice_count",0) or 0)
         if not direct:
@@ -3103,7 +3109,7 @@ class PLBoxDialog(SwitchConductorUsageMixin, QDialog):
         selected_fid=""
         if self.selected_conductor_key:
             selected_fid=next((str(x.get("function","") or "") for x in self.wiring if core.pl_box_conductor_key(x)==tuple(self.selected_conductor_key)),"")
-        profile=core.pl_outlet_profile(self.outlet_type,getattr(self.placement,"associations",[]))
+        profile=core.pl_outlet_profile(self.outlet_type,core.light_output_associations(self.placement))
         available=[]; seen=set()
         for terminal in profile.get("terminals",[]):
             fid=str(terminal.get("function_id","") or "")
@@ -3116,7 +3122,7 @@ class PLBoxDialog(SwitchConductorUsageMixin, QDialog):
         counts={fid:len(self._splices_for_function(fid)) for fid in available}
         captions=[]
         for fid in available:
-            base=core.pl_wiring_function_caption(fid,getattr(self.placement,"associations",[]),self.outlet_type)
+            base=core.pl_wiring_function_caption(fid,core.light_output_associations(self.placement),self.outlet_type)
             suffix=f" · {counts[fid]} eksisterende" if counts[fid] else ""
             captions.append(base+suffix)
         caption,ok=QInputDialog.getItem(self,"Ny Wago-samling","Vælg terminal/funktion til den nye fysiske Wago:",captions,0,False)
@@ -3171,7 +3177,7 @@ class PLBoxDialog(SwitchConductorUsageMixin, QDialog):
             wago_articles.append({"article_no":article_no,"ports":int(ports),"description":description,"series":series,"article":art})
 
         while True:
-            function=core.pl_wiring_function_caption(fid,getattr(self.placement,"associations",[]),self.outlet_type)
+            function=core.pl_wiring_function_caption(fid,core.light_output_associations(self.placement),self.outlet_type)
             short_function=function.split(" → ",1)[0]
             dlg=QDialog(self); dlg.setWindowTitle(("Redigér" if existing else "Opret")+f" Wago · {short_function}"); dlg.resize(620,540)
             lay=QVBoxLayout(dlg)
@@ -3181,7 +3187,7 @@ class PLBoxDialog(SwitchConductorUsageMixin, QDialog):
             info.setWordWrap(True); lay.addWidget(info)
             connect_check=QCheckBox(f"Forbind samlingen videre til {short_function}-klemmen med én bro")
             connect_check.setChecked(bool(connects_initial)); lay.addWidget(connect_check)
-            local_terminal_ids={str(x.get("function_id","") or "") for x in core.pl_outlet_profile(self.outlet_type,getattr(self.placement,"associations",[])).get("terminals",[]) if str(x.get("function_id","") or "")}
+            local_terminal_ids={str(x.get("function_id","") or "") for x in core.pl_outlet_profile(self.outlet_type,core.light_output_associations(self.placement)).get("terminals",[]) if str(x.get("function_id","") or "")}
             if fid not in local_terminal_ids:
                 connect_check.setChecked(False); connect_check.setEnabled(False)
                 connect_check.setToolTip("Denne funktion tilhører et andet lampested og kan derfor ikke forbindes til det lokale lampeudtag.")
@@ -3409,7 +3415,7 @@ class PLBoxDialog(SwitchConductorUsageMixin, QDialog):
             for key in members:
                 new_wiring=core.assign_pl_conductor_function(new_wiring,self.legs,key,"")
             self.wiring=new_wiring; self.splices=core.reconcile_pl_box_splices(proposed,self.wiring,self.legs); self._refresh_wiring(); return
-        cap=core.pl_outlet_terminal_capacity(self.outlet_type,getattr(self.placement,"associations",[]),fid)
+        cap=core.pl_outlet_terminal_capacity(self.outlet_type,core.light_output_associations(self.placement),fid)
         occ=core.pl_terminal_occupancy(fid,self.wiring,proposed)
         text="Fjern den valgte Wago-samling? Lederne forbliver tildelt samme funktion og går derefter direkte til lampeudtaget."
         if cap and occ["terminal_count"]>cap:text+=f"\n\n⚠ Terminalen vil derefter være overfyldt: {occ['terminal_count']}/{cap}."
@@ -3452,7 +3458,7 @@ class PLBoxDialog(SwitchConductorUsageMixin, QDialog):
         side=str(meta.get("leg_caption") or "")
         color=str(meta.get("color_name") or meta.get("display") or meta.get("label") or meta.get("core_id") or "leder")
         fid=str(wr.get("function","") or "")
-        function=core.pl_wiring_function_caption(fid,getattr(self.placement,"associations",[]),self.outlet_type)
+        function=core.pl_wiring_function_caption(fid,core.light_output_associations(self.placement),self.outlet_type)
         if not fid:
             allocation=dict(getattr(self,"_current_external_allocations",{}).get(key,{}) or {})
             functions=list(allocation.get("functions",[]) or [])
@@ -3506,7 +3512,7 @@ class PLBoxDialog(SwitchConductorUsageMixin, QDialog):
             if target is None:return
             target_fid=str(target.get("function","") or "")
             if fid and fid!=target_fid:
-                answer=QMessageBox.question(self,"Flyt leder til Wago",f"Lederen er allerede tildelt {core.pl_wiring_function_caption(fid,getattr(self.placement,'associations',[]),self.outlet_type)}.\n\nSkift funktionen og flyt lederen til den valgte Wago?")
+                answer=QMessageBox.question(self,"Flyt leder til Wago",f"Lederen er allerede tildelt {core.pl_wiring_function_caption(fid,core.light_output_associations(self.placement),self.outlet_type)}.\n\nSkift funktionen og flyt lederen til den valgte Wago?")
                 if answer!=QMessageBox.StandardButton.Yes:return
             old_wiring=deepcopy(self.wiring); old_splices=deepcopy(self.splices)
             self._remove_key_from_splices(key)

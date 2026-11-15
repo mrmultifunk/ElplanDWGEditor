@@ -282,13 +282,13 @@ class SwitchConductorUsageMixin:
                     place=str(item.get("placement") or "Lampested")
                     if place not in places: places.append(place)
             where=(" ved "+", ".join(places[:4])) if places else ""
-            target=core.pl_wiring_function_caption(fid,getattr(self.placement,"associations",[])).split(" → ",1)[0]
+            target=core.pl_wiring_function_caption(fid,core.light_output_associations(self.placement)).split(" → ",1)[0]
             text=(f"{color} på dette kabel er allerede registreret som {', '.join(labels)}{where}.\n\n"
                   f"Vil du alligevel bruge samme lederfarve som {target} her?")
             return QMessageBox.question(self,"Tændleder er allerede i brug",text)==QMessageBox.StandardButton.Yes
         if advice.get("typical_supply") and not advice.get("same_switch_already_used"):
             supply=str(row.get("supply_caption") or "typisk forsyningsleder")
-            target=core.pl_wiring_function_caption(fid,getattr(self.placement,"associations",[])).split(" → ",1)[0]
+            target=core.pl_wiring_function_caption(fid,core.light_output_associations(self.placement)).split(" → ",1)[0]
             text=(f"{color} er markeret som {supply} og bliver derfor normalt ikke foreslået som ny tændleder.\n\n"
                   f"Vil du bevidst bruge den som {target}?")
             return QMessageBox.question(self,"Typisk forsyningsleder",text)==QMessageBox.StandardButton.Yes

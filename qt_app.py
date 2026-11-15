@@ -1863,8 +1863,8 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         outer.addWidget(self.combo_group)
         self.combo_group.hide()
 
-        assoc_group = QGroupBox("Lystilhørsforhold")
-        al = QVBoxLayout(assoc_group)
+        self.assoc_group = QGroupBox("Lystilhørsforhold")
+        al = QVBoxLayout(self.assoc_group)
         al.setSpacing(7)
         self.prop_assoc = QLabel("—")
         self.prop_assoc.setWordWrap(True)
@@ -1882,6 +1882,29 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self.assoc_channels_table.cellDoubleClicked.connect(lambda _row,_col:self._start_selected_association_channel())
         self.assoc_channels_table.setToolTip("Vælg en fysisk betjening og dobbeltklik for at redigere dens lampesteder.")
         al.addWidget(self.assoc_channels_table)
+        self.light_outputs_table=QTableWidget(0,3)
+        self.light_outputs_table.setHorizontalHeaderLabels(["Udgang","Bogstav","Navn"])
+        self.light_outputs_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.light_outputs_table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.light_outputs_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.light_outputs_table.verticalHeader().setVisible(False)
+        self.light_outputs_table.horizontalHeader().setSectionResizeMode(0,QHeaderView.ResizeMode.ResizeToContents)
+        self.light_outputs_table.horizontalHeader().setSectionResizeMode(1,QHeaderView.ResizeMode.ResizeToContents)
+        self.light_outputs_table.horizontalHeader().setSectionResizeMode(2,QHeaderView.ResizeMode.Stretch)
+        self.light_outputs_table.cellDoubleClicked.connect(lambda _row,_col:self._rename_selected_light_output())
+        self.light_outputs_table.setToolTip("Dobbeltklik på en udgang for at give den et tydeligt navn.")
+        al.addWidget(self.light_outputs_table)
+        self.light_outputs_actions=QWidget()
+        light_outputs_layout=QHBoxLayout(self.light_outputs_actions)
+        light_outputs_layout.setContentsMargins(0,0,0,0)
+        self.light_output_add_button=QPushButton("+ Tilføj tænding")
+        self.light_output_add_button.clicked.connect(self._add_light_output)
+        self.light_output_remove_button=_set_role(QPushButton("Fjern valgt"),"dangerButton")
+        self.light_output_remove_button.clicked.connect(self._remove_selected_light_output)
+        light_outputs_layout.addWidget(self.light_output_add_button,1)
+        light_outputs_layout.addWidget(self.light_output_remove_button)
+        al.addWidget(self.light_outputs_actions)
+        self.light_outputs_table.hide(); self.light_outputs_actions.hide()
         ar = QHBoxLayout()
         self.assoc_button = QPushButton("Redigér valgt betjening…")
         self.assoc_button.clicked.connect(self._start_selected_association_channel)
@@ -1894,7 +1917,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self.assoc_note.setWordWrap(True)
         self.assoc_note.setObjectName("sectionHint")
         al.addWidget(self.assoc_note)
-        outer.addWidget(assoc_group)
+        outer.addWidget(self.assoc_group)
 
         self.spot_parent_group = QGroupBox("Spotgruppe / lampested")
         spl = QVBoxLayout(self.spot_parent_group)
@@ -2959,6 +2982,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         for placement in self.project.placements:
             if str(getattr(placement, "parent_light_uid", "") or "") == uid:
                 placement.parent_light_uid = ""
+                placement.parent_light_output_id = ""
                 placement.associations = []
         self._cleanup_orphan_associations()
         self._rebuild_cable_visual_cache(refresh_items=True)
@@ -4768,6 +4792,8 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             p.uid: {
                 "associations": list(core.normalize_associations(getattr(p, "associations", []))),
                 "association_channels": list(core.association_channel_letters(p)) if core.association_role(p.symbol)=="switch" else [],
+                "light_outputs": [dict(row) for row in core.light_output_records(p)] if p.symbol=="light_connection" else [],
+                "parent_light_output_id": str(getattr(p,"parent_light_output_id","") or "") if p.symbol=="spot" else "",
             }
             for p in self.project.placements
         }
@@ -4779,11 +4805,17 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             value=state[p.uid]
             # Backwards compatibility with old undo snapshots that were bare lists.
             if isinstance(value,dict):
-                p.associations=(
-                    core.normalize_light_associations(value.get("associations",[]))
-                    if core.association_role(p.symbol)=="light"
-                    else core.normalize_associations(value.get("associations",[]))
-                )
+                if p.symbol=="light_connection":
+                    p.light_outputs=core.normalize_light_outputs(
+                        value.get("light_outputs",[]),value.get("associations",[])
+                    )
+                    core.sync_light_outputs(p,p.light_outputs)
+                else:
+                    p.associations=(
+                        core.normalize_light_associations(value.get("associations",[]))
+                        if core.association_role(p.symbol)=="light"
+                        else core.normalize_associations(value.get("associations",[]))
+                    )
                 if core.association_role(p.symbol)=="switch":
                     p.association_channels=core.normalize_association_channels(
                         p.symbol,value.get("association_channels",[]),p.associations
@@ -4791,15 +4823,23 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
                     core.sync_association_channels(p,p.association_channels)
                 else:
                     p.association_channels=[]
+                if p.symbol=="spot":p.parent_light_output_id=str(value.get("parent_light_output_id","") or "")
             else:
-                p.associations=(
-                    core.normalize_light_associations(value)
-                    if core.association_role(p.symbol)=="light"
-                    else core.normalize_associations(value)
-                )
+                if p.symbol=="light_connection":
+                    p.light_outputs=core.normalize_light_outputs([],value)
+                    core.sync_light_outputs(p,p.light_outputs)
+                else:
+                    p.associations=(
+                        core.normalize_light_associations(value)
+                        if core.association_role(p.symbol)=="light"
+                        else core.normalize_associations(value)
+                    )
                 if core.association_role(p.symbol)=="switch":
                     p.association_channels=core.normalize_association_channels(p.symbol,[],p.associations)
                     core.sync_association_channels(p,p.association_channels)
+            if p.symbol=="light_connection":
+                symbol_item=self.symbol_items.get(p.uid)
+                if symbol_item is not None:symbol_item.refresh_geometry()
         self._sync_spot_parent_associations()
         for ann in self.annotation_items.values():
             ann.refresh()
@@ -4826,7 +4866,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         role=core.association_role(selected.symbol)
         if role not in ("switch","light"):
             return
-        letters=set(core.normalize_associations(selected.associations))
+        letters=set(core.light_output_associations(selected) if role=="light" else core.normalize_associations(selected.associations))
         if not letters:
             return
         source_item=self.symbol_items.get(selected.uid)
@@ -4845,7 +4885,8 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             # Linked spots are represented through the lampested relation.
             if role=="switch" and p.symbol=="spot" and str(getattr(p,"parent_light_uid","") or ""):
                 continue
-            shared=letters.intersection(core.normalize_associations(p.associations))
+            other_letters=(core.light_output_associations(p) if other_role=="light" else core.normalize_associations(p.associations))
+            shared=letters.intersection(other_letters)
             if not shared:
                 continue
             item=self.symbol_items.get(p.uid)
@@ -4869,13 +4910,16 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             parent = by_uid.get(parent_uid)
             if parent is None or parent.symbol != "light_connection":
                 p.parent_light_uid = ""
+                p.parent_light_output_id = ""
             else:
-                p.associations = core.normalize_light_associations(parent.associations)
+                output=core.light_output_by_id(parent,getattr(p,"parent_light_output_id","") or "")
+                p.parent_light_output_id=str(output.get("id","") or "")
+                p.associations=core.normalize_light_associations([output.get("association","")])
 
     def _cleanup_orphan_associations(self) -> None:
         switch_letters = set(); light_letters = set()
         for p in self.project.placements:
-            vals = core.normalize_associations(getattr(p, "associations", []))
+            vals = (core.light_output_associations(p) if core.association_role(p.symbol)=="light" else core.normalize_associations(getattr(p,"associations",[])))
             if core.association_role(p.symbol) == "switch": switch_letters.update(vals)
             elif core.association_role(p.symbol) == "light": light_letters.update(vals)
         valid = switch_letters & light_letters
@@ -4885,7 +4929,13 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
                 channels=[a if a in valid else "" for a in core.association_channel_letters(p)]
                 core.sync_association_channels(p,channels)
             elif role=="light":
-                p.associations=core.normalize_light_associations([a for a in core.normalize_associations(p.associations) if a in valid])
+                if p.symbol=="light_connection":
+                    rows=core.light_output_records(p)
+                    for row in rows:
+                        if row.get("association","") not in valid:row["association"]=""
+                    core.sync_light_outputs(p,rows)
+                else:
+                    p.associations=core.normalize_light_associations([a for a in core.normalize_associations(p.associations) if a in valid])
                 p.association_channels=[]
         self._sync_spot_parent_associations()
 
@@ -4967,17 +5017,19 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
     def _association_target_count(self,letter:str)->int:
         if not letter:return 0
         return sum(
-            1 for p in self.project.placements
-            if self._association_target_allowed(p) and letter in core.normalize_associations(p.associations)
+            sum(1 for row in core.light_output_records(p) if str(row.get("association","") or "")==letter)
+            for p in self.project.placements if self._association_target_allowed(p)
         )
 
     def _association_target_caption(self,letter:str)->str:
         targets=[]
         for p in self.project.placements:
             if not self._association_target_allowed(p):continue
-            if str(letter or "") not in core.normalize_light_associations(getattr(p,"associations",[])):continue
             ident=" · ".join(x for x in (str(getattr(p,"group","") or "").strip(),str(getattr(p,"label","") or "").strip()) if x)
-            targets.append(ident or core.symbol_display_name(p.symbol))
+            outputs=[row for row in core.light_output_records(p) if str(row.get("association","") or "")==str(letter or "")]
+            for output in outputs:
+                suffix=f" / {output.get('name')}" if len(core.light_output_records(p))>1 else ""
+                targets.append((ident or core.symbol_display_name(p.symbol))+suffix)
         if not targets:return "Ingen"
         shown=targets[:2]
         return ", ".join(shown)+(f" +{len(targets)-2}" if len(targets)>2 else "")
@@ -5003,6 +5055,75 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         table.setMinimumHeight(table_height); table.setMaximumHeight(table_height)
         if records:
             row=max(0,min(int(preferred),len(records)-1)); table.setCurrentCell(row,0)
+
+    def _refresh_light_outputs_table(self,p:core.Placement|None) -> None:
+        table=self.light_outputs_table
+        table.setRowCount(0)
+        is_outlet=bool(p is not None and p.symbol=="light_connection")
+        table.setVisible(is_outlet); self.light_outputs_actions.setVisible(is_outlet)
+        if not is_outlet:return
+        outputs=core.light_output_records(p)
+        table.setRowCount(len(outputs))
+        for row,output in enumerate(outputs):
+            values=[f"T{row+1}",str(output.get("association","") or "Ledig"),str(output.get("name","") or f"Tænding {row+1}")]
+            for col,value in enumerate(values):
+                cell=QTableWidgetItem(value)
+                cell.setData(Qt.ItemDataRole.UserRole,str(output.get("id","") or ""))
+                if col in (0,1):cell.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                table.setItem(row,col,cell)
+        table.resizeRowsToContents()
+        height=min(190,34+max(1,len(outputs))*31)
+        table.setMinimumHeight(height); table.setMaximumHeight(height)
+        if outputs:table.setCurrentCell(0,0)
+        self.light_output_add_button.setEnabled(not p.locked)
+        self.light_output_remove_button.setEnabled(not p.locked and len(outputs)>1)
+
+    def _selected_light_output_id(self)->str:
+        row=self.light_outputs_table.currentRow()
+        item=self.light_outputs_table.item(row,0) if row>=0 else None
+        return str(item.data(Qt.ItemDataRole.UserRole) or "") if item is not None else ""
+
+    def _add_light_output(self)->None:
+        item=self._selected_symbol_item(); p=item.placement if item is not None else None
+        if p is None or p.symbol!="light_connection" or p.locked:return
+        before=self._association_snapshot(); rows=core.light_output_records(p)
+        used={str(row.get("id","") or "") for row in rows}; index=len(rows)+1
+        output_id=f"out{index}"
+        while output_id in used:index+=1; output_id=f"out{index}"
+        rows.append({"id":output_id,"name":f"Tænding {len(rows)+1}","association":""})
+        core.sync_light_outputs(p,rows); after=self._association_snapshot()
+        self.undo_stack.push(AssociationCommand(self,before,after,"Tilføj tænding til lampested"))
+        self._set_status(f"Lampestedet har nu {len(rows)} uafhængige tændinger, men tæller stadig som ét fysisk udtag.")
+
+    def _remove_selected_light_output(self)->None:
+        item=self._selected_symbol_item(); p=item.placement if item is not None else None
+        if p is None or p.symbol!="light_connection" or p.locked:return
+        rows=core.light_output_records(p)
+        if len(rows)<=1:return
+        output_id=self._selected_light_output_id() or str(rows[-1].get("id","") or "")
+        target=next((row for row in rows if str(row.get("id","") or "")==output_id),rows[-1])
+        if target.get("association",""):
+            answer=QMessageBox.question(self,"Fjern tænding",f"{target.get('name','Tændingen')} har tilhørsbogstav {target.get('association')}. Vil du fjerne udgangen?")
+            if answer!=QMessageBox.StandardButton.Yes:return
+        before=self._association_snapshot(); rows=[row for row in rows if str(row.get("id","") or "")!=output_id]
+        core.sync_light_outputs(p,rows)
+        for spot in self.project.placements:
+            if spot.symbol=="spot" and str(getattr(spot,"parent_light_uid","") or "")==p.uid and str(getattr(spot,"parent_light_output_id","") or "")==output_id:
+                replacement=rows[0]; spot.parent_light_output_id=str(replacement.get("id","") or ""); spot.associations=core.normalize_light_associations([replacement.get("association","")])
+        after=self._association_snapshot(); self.undo_stack.push(AssociationCommand(self,before,after,"Fjern tænding fra lampested"))
+
+    def _rename_selected_light_output(self)->None:
+        item=self._selected_symbol_item(); p=item.placement if item is not None else None
+        if p is None or p.symbol!="light_connection" or p.locked:return
+        output_id=self._selected_light_output_id(); rows=core.light_output_records(p)
+        output=next((row for row in rows if str(row.get("id","") or "")==output_id),None)
+        if output is None:return
+        name,ok=QInputDialog.getText(self,"Navngiv tænding","Navn, fx Pendel eller Spots:",text=str(output.get("name","") or ""))
+        if not ok:return
+        name=str(name or "").strip()
+        if not name:return
+        before=self._association_snapshot(); output["name"]=name; core.sync_light_outputs(p,rows); after=self._association_snapshot()
+        self.undo_stack.push(AssociationCommand(self,before,after,"Navngiv tænding"))
 
     def _selected_association_channel_index(self,p:core.Placement)->int:
         row=self.assoc_channels_table.currentRow()
@@ -5045,7 +5166,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
                 continue
             item=self.symbol_items.get(p.uid)
             if item is None or not item.isVisible():continue
-            target_letters=core.normalize_light_associations(p.associations)
+            target_letters=core.light_output_associations(p)
             linked=bool(active and active in target_letters)
             occupied=bool(target_letters and not linked)
             rect=item.sceneBoundingRect().adjusted(-margin,-margin,margin,margin)
@@ -5131,12 +5252,31 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         try:return mapping[options.index(choice)]
         except Exception:return mapping[0] if mapping else ("",0)
 
+    def _choose_light_output(self,target:core.Placement,active_letter:str="")->str|None:
+        outputs=core.light_output_records(target)
+        if len(outputs)<=1:return str(outputs[0].get("id","") or "")
+        if active_letter:
+            matches=[row for row in outputs if str(row.get("association","") or "")==active_letter]
+            if len(matches)==1:return str(matches[0].get("id","") or "")
+        options=[]; mapping=[]
+        for index,row in enumerate(outputs,1):
+            assoc=str(row.get("association","") or "ledig")
+            options.append(f"T{index} · {row.get('name') or f'Tænding {index}'} · {assoc}")
+            mapping.append(str(row.get("id","") or ""))
+        choice,ok=QInputDialog.getItem(
+            self,"Vælg tænding","Lampestedet har flere uafhængige udgange. Vælg den udgang, afbryderen skal betjene:",options,0,False
+        )
+        if not ok:return None
+        try:return mapping[options.index(choice)]
+        except Exception:return mapping[0] if mapping else None
+
     def _choose_first_target_letter(
-        self,target:core.Placement,*,source:core.Placement,channel_index:int
+        self,target:core.Placement,*,source:core.Placement,channel_index:int,output_id:str=""
     )->str|None:
         source_existing=set(core.normalize_associations(source.associations))
+        output=core.light_output_by_id(target,output_id) if target.symbol=="light_connection" else core.light_output_records(target)[0]
         existing=[
-            letter for letter in core.normalize_associations(target.associations)
+            letter for letter in core.normalize_associations([output.get("association","")])
             if letter not in source_existing
         ]
         new_letter=core.next_association_letter(self.project.placements)
@@ -5296,13 +5436,17 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             if target.symbol!="light_connection":
                 self._set_status("Spot → lampested: klik på et TURKIS fremhævet lampested · Esc afslutter")
                 return
+            output_id=self._choose_light_output(target)
+            if output_id is None:return
+            output=core.light_output_by_id(target,output_id)
             before=self._spot_parent_snapshot()
             pending=set(self.spot_parent_pending)
             linked=0
             for p in self.project.placements:
                 if p.uid in pending and p.symbol=="spot":
                     p.parent_light_uid=target.uid
-                    p.associations=core.normalize_light_associations(target.associations)
+                    p.parent_light_output_id=output_id
+                    p.associations=core.normalize_light_associations([output.get("association","")])
                     linked+=1
             after=self._spot_parent_snapshot()
             self.undo_stack.push(SpotParentCommand(self,before,after,"Tilknyt spots til lampested"))
@@ -5312,7 +5456,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             for ann in self.annotation_items.values():ann.refresh()
             self._refresh_spot_link_visuals(target)
             ident=str(target.group or target.label or "lampested")
-            extra=f" · tilhørsforhold {core.association_display(target)}" if target.associations else ""
+            extra=f" · {output.get('name')} · tilhørsforhold {output.get('association')}" if output.get("association","") else f" · {output.get('name')}"
             self._set_status(f"{linked} spot(s) tilknyttet {ident}{extra}.")
             QTimer.singleShot(0,lambda:self._reselect_uid(target.uid))
             return
@@ -5331,6 +5475,8 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             return
 
         active=str(self.association_active_letter or "")
+        output_id=self._choose_light_output(target,active)
+        if output_id is None:return
         new_channel_created=False
         channel_index=min(
             max(self.association_channel_index,0),
@@ -5342,7 +5488,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
                 self._set_status("Den valgte afbryderkanal findes ikke længere.")
                 return
             active=self._choose_first_target_letter(
-                target,source=source,channel_index=channel_index
+                target,source=source,channel_index=channel_index,output_id=output_id
             )
             if active is None:return
             new_channel_created=not bool(channels[channel_index])
@@ -5351,20 +5497,24 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             self.association_active_letter=active
             self.association_force_new=False
 
-        target_vals=core.normalize_light_associations(target.associations)
+        chosen_output=core.light_output_by_id(target,output_id)
+        target_vals=core.normalize_light_associations([chosen_output.get("association","")])
         if new_channel_created:
             # Når et nyt afbrydertrin kobles på et allerede eksisterende
             # tilhørsforhold (typisk korrespondance/krydsning), skal lampestedets
             # bogstav BEVARES. Kanal->bogstav-mappingen på kombiafbryderen gemmes
             # separat og kan derfor ikke længere blive ødelagt af alfabetisk sortering.
             if active not in target_vals:
-                target.associations=[active]
+                if target.symbol=="light_connection":core.set_light_output_association(target,output_id,active)
+                else:target.associations=[active]
             action="Tilknyt"
         elif active in target_vals:
-            target.associations=[]
+            if target.symbol=="light_connection":core.set_light_output_association(target,output_id,"")
+            else:target.associations=[]
             action="Fjern"
         else:
-            target.associations=[active]
+            if target.symbol=="light_connection":core.set_light_output_association(target,output_id,active)
+            else:target.associations=[active]
             action="Flyt" if target_vals else "Tilknyt"
 
         self._sync_spot_parent_associations()
@@ -5425,11 +5575,16 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             self._set_status("Vælg en afbryder eller et lys.")
             return
         p = item.placement
-        if not p.associations:
+        has_association=bool(core.light_output_associations(p) if core.association_role(p.symbol)=="light" else core.normalize_associations(p.associations))
+        if not has_association:
             self._set_status("Det valgte symbol har ingen tilhørsforhold.")
             return
         before = self._association_snapshot()
-        p.associations = []
+        if p.symbol=="light_connection":
+            rows=core.light_output_records(p)
+            for row in rows:row["association"]=""
+            core.sync_light_outputs(p,rows)
+        else:p.associations=[]
         if core.association_role(p.symbol)=="switch":
             p.association_channels=[""]*core.association_capacity(p.symbol)
         self._cleanup_orphan_associations()
@@ -5641,6 +5796,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         return {
             p.uid:{
                 "parent_light_uid":str(getattr(p,"parent_light_uid","") or ""),
+                "parent_light_output_id":str(getattr(p,"parent_light_output_id","") or ""),
                 "associations":list(core.normalize_associations(p.associations)),
                 "spot_group_id":str(getattr(p,"spot_group_id","") or ""),
                 "spot_group_name":str(getattr(p,"spot_group_name","") or ""),
@@ -5654,12 +5810,13 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
                 value=state[p.uid]
                 if isinstance(value,dict):
                     p.parent_light_uid=str(value.get("parent_light_uid","") or "")
+                    p.parent_light_output_id=str(value.get("parent_light_output_id","") or "")
                     p.associations=core.normalize_light_associations(value.get("associations",[]))
                     p.spot_group_id=str(value.get("spot_group_id","") or "")
                     p.spot_group_name=str(value.get("spot_group_name","") or "")
                 else:
                     # Backwards compatible with old undo snapshots: (parent, associations).
-                    parent,assoc=value; p.parent_light_uid=str(parent); p.associations=core.normalize_light_associations(assoc)
+                    parent,assoc=value; p.parent_light_uid=str(parent); p.parent_light_output_id=""; p.associations=core.normalize_light_associations(assoc)
                 ann=self.annotation_items.get(p.uid)
                 if ann:ann.refresh()
         self.project.dirty=True; self._update_title()
@@ -5704,7 +5861,9 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         try:
             for rec in sym:
                 rec=dict(rec); rec["uid"]=uuid.uuid4().hex; rec["x"]=float(rec.get("x",0))+dx; rec["y"]=float(rec.get("y",0))+dy
-                rec["associations"]=[]; rec["association_channels"]=[]; rec["parent_light_uid"]=""; rec["pl_box_entries"]={}; rec["pl_box_wiring"]=[]; rec["pl_box_splices"]=[]; rec["pl_field_record"]={}; rec["lamp_outlet_type"]=core.normalize_pl_outlet_type(rec.get("lamp_outlet_type","generic")); rec["locked"]=False
+                rec["associations"]=[]; rec["association_channels"]=[]
+                rec["light_outputs"]=[dict(row,association="") for row in core.normalize_light_outputs(rec.get("light_outputs",[]),[],ensure_one=rec.get("symbol")=="light_connection")] if rec.get("symbol")=="light_connection" else []
+                rec["parent_light_uid"]=""; rec["parent_light_output_id"]=""; rec["pl_box_entries"]={}; rec["pl_box_wiring"]=[]; rec["pl_box_splices"]=[]; rec["pl_field_record"]={}; rec["lamp_outlet_type"]=core.normalize_pl_outlet_type(rec.get("lamp_outlet_type","generic")); rec["locked"]=False
                 old_gid=str(rec.get("spot_group_id","") or "")
                 if rec.get("symbol")=="spot" and old_gid and copied_group_counts.get(old_gid,0)>=2:
                     rec["spot_group_id"]=copied_group_remap.setdefault(old_gid,uuid.uuid4().hex)
@@ -5858,6 +6017,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self.spot_parent_group.hide()
         self.bom_group.hide()
         self.assoc_channels_table.hide()
+        self.light_outputs_table.hide(); self.light_outputs_actions.hide()
         if hasattr(self,"symbol_cables_group"):self.symbol_cables_group.hide()
         if hasattr(self,"pl_box_group"):self.pl_box_group.hide()
         self._apply_visual_emphasis()
@@ -5972,13 +6132,16 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             base=f"{assoc_text or 'Ingen'}   ({len(assigned)}/{cap} betjeninger)"
             self.prop_assoc.setText(base + (f" · {detail}" if detail else ""))
         elif role=="light":
-            vals=core.normalize_light_associations(p.associations)
-            self.prop_assoc.setText(
-                f"Lys: {assoc_text or 'ingen tilknytning'}"
-                + (" · ét lampested = én tænding" if vals else "")
-            )
+            if p.symbol=="light_connection":
+                outputs=core.light_output_records(p)
+                assigned=sum(1 for row in outputs if row.get("association","") )
+                self.prop_assoc.setText(f"Fysisk lampested: {len(outputs)} tænding(er) · {assigned} tilknyttet · {assoc_text or 'ingen'}")
+            else:
+                vals=core.normalize_light_associations(p.associations)
+                self.prop_assoc.setText(f"Lys: {assoc_text or 'ingen tilknytning'}"+(" · ét lyssymbol = én tænding" if vals else ""))
         else:self.prop_assoc.setText("—")
         self._refresh_association_channel_table(p)
+        self._refresh_light_outputs_table(p)
 
         if core.bom_supported_symbol(p.symbol):
             self.bom_group.show()
@@ -6010,8 +6173,10 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
                 ident=str(parent.group or parent.label or "Lampested")
                 gid=str(getattr(p,"spot_group_id","") or "")
                 siblings=len(self._spot_group_members(gid)) if gid else len(self._linked_spots(parent.uid))
-                assoc=core.association_display(parent)
-                extra=f" · {assoc}" if assoc else ""
+                output=core.light_output_by_id(parent,getattr(p,"parent_light_output_id","") or "")
+                assoc=str(output.get("association","") or "")
+                extra=f" · {output.get('name')}" if len(core.light_output_records(parent))>1 else ""
+                if assoc:extra+=f" · {assoc}"
                 self.spot_parent_value.setText(f"Lampested: {ident} · {siblings} spot(s){extra}")
                 self.spot_parent_unlink_button.setEnabled(not p.locked)
             self.spot_parent_link_button.setEnabled(not p.locked)
@@ -6046,7 +6211,8 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             if p.locked else "Slet det valgte symbol. Handlingen kan fortrydes med Ctrl+Z."
         )
         self.assoc_button.setEnabled(role=="switch" and not p.locked)
-        self.clear_assoc_button.setEnabled(bool(p.associations) and not p.locked)
+        has_assoc=bool(core.light_output_associations(p) if role=="light" else core.normalize_associations(p.associations))
+        self.clear_assoc_button.setEnabled(has_assoc and not p.locked)
 
         self.selected_cable=None
         if hasattr(self,"_set_cable_panel_context"): self._set_cable_panel_context(None)

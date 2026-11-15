@@ -32,7 +32,7 @@ def _field_box():
 
 
 def test_version_05975():
-    assert APP_VERSION==core.APP_VERSION=="0.59.79"
+    assert APP_VERSION==core.APP_VERSION=="0.59.80"
 
 
 def test_field_payload_is_physical_documentation_only():
