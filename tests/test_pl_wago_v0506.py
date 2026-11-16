@@ -9,7 +9,7 @@ def _member(uid, core_id="blue"):
 
 
 def test_version_0506():
-    assert APP_VERSION == core.APP_VERSION == "0.59.81"
+    assert APP_VERSION == core.APP_VERSION == "0.59.82"
 
 
 def test_wago_position_is_normalized_and_preserved():

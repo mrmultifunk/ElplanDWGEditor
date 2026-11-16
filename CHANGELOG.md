@@ -1,3 +1,13 @@
+## 0.59.82 - Enklere lystilknytning og roligere Egenskaber
+
+- En placeringslåst afbryder kan nu stadig få redigeret sine tændinger og tilknyttede lampesteder. Låsen beskytter fortsat flytning, rotation, sletning og fysisk omkonfiguration.
+- Låste lampesteder, lamper og spots kan bruges i logiske lys- og spotrelationer uden først at skulle låses fysisk op.
+- `Lystilhørsforhold` står nu øverst i Egenskaber for afbrydere og lys og skjules helt for symboler, hvor sektionen ikke er relevant.
+- Afbryderknappen hedder nu `Tilføj / fjern lys…`; på et lyspunkt hedder den `Tilknyt til afbryder…`. Begge indgange starter den samme visuelle Enter/Esc-guide.
+- Den kontekstuelle værktøjslinje skelner mellem `Redigér tændinger…` på afbrydere og `Tilknyt afbryder…` på lyspunkter.
+- Montage/indkøb, kombimærkning og Artikler/BOM er nu sammenklappelige sektioner, så sekundære data ikke skubber den aktuelle arbejdsopgave ud af syne.
+- Rotér-handlingen forklarer nu placeringslåsen direkte, mens lystilknytningen forbliver aktiv.
+
 ## 0.59.81 - Lysgrupper og lampeudtag på væg
 
 - Flere fysiske lampesteder kan nu vælges samlet og kobles til én konkret afbryderkanal via `Samme tænding…` i den kontekstuelle værktøjslinje.

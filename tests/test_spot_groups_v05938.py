@@ -5,7 +5,7 @@ from project_model import APP_VERSION, placement_from_raw
 
 
 def test_version_and_spot_group_fields_are_persistent():
-    assert APP_VERSION == core.APP_VERSION == "0.59.81"
+    assert APP_VERSION == core.APP_VERSION == "0.59.82"
     p = placement_from_raw({
         "symbol": "spot", "x": 10, "y": 20,
         "spot_group_id": "group-a", "spot_group_name": "Spotgruppe 1",
@@ -57,6 +57,7 @@ def test_qt_spot_group_workflow_is_wired_into_existing_parent_relation():
     assert "def group_selected_spots(self)" in source
     assert "def select_spot_group(self)" in source
     assert "def dissolve_spot_group(self)" in source
-    assert "spots=self._selected_spots(unlocked_only=True)" in source
+    assert "spots=self._selected_spots()" in source
+    assert "spots=self._selected_spots(unlocked_only=True)" not in source
     assert "expanded=self._expand_spots_to_groups(spots)" in source
     assert "spot_group_id=spot_group_id,spot_group_name=spot_group_name" in source

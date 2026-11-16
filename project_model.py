@@ -11,7 +11,7 @@ from typing import Any
 import core_logic as core
 from storage_utils import atomic_write_text
 
-APP_VERSION = "0.59.81"
+APP_VERSION = "0.59.82"
 
 
 def _finite_float(value: Any, field_name: str) -> float:

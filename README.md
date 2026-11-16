@@ -2,7 +2,7 @@
 
 Windows-program til planlægning og dokumentation af elektriske installationer direkte på DWG- og DXF-plantegninger.
 
-**Aktuel version:** `0.59.81`
+**Aktuel version:** `0.59.82`
 **Platform:** Windows 10/11 · Python 3.11 eller 3.12
 
 ## Hvad kan programmet?
@@ -83,5 +83,6 @@ Nye funktioner bør som udgangspunkt reducere klik, gøre redigering mere foruds
 - [Performance](docs/reference/PERFORMANCE_0.59.59.md) – aktuelle optimeringsprincipper
 - [Lampesteder med flere udgange](docs/reference/MULTI_OUTPUT_LIGHT_0.59.80.md) – datamodel og arbejdsgang
 - [Lysgrupper og væg-lampeudtag](docs/reference/LIGHT_GROUPS_WALL_OUTLET_0.59.81.md) – samlet tænding og vægmontering
+- [Lystilknytning og Egenskaber](docs/reference/ASSOCIATION_INSPECTOR_0.59.82.md) – den primære arbejdsgang i højrepanelet
 
 Detaljer om hver udgave hører hjemme i [CHANGELOG.md](CHANGELOG.md), ikke på projektets forside.

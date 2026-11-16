@@ -1814,7 +1814,11 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self.prop_line_width.setSuffix(" mm")
         self.prop_color = QPushButton("#d00000"); _set_color_button(self.prop_color,"#d00000")
         self.prop_color.clicked.connect(self.choose_property_color)
-        self.prop_locked = QCheckBox("Lås position og redigering")
+        self.prop_locked = QCheckBox("Lås placering og fysisk redigering")
+        self.prop_locked.setToolTip(
+            "Forhindrer flytning, rotation, sletning og fysisk omkonfiguration. "
+            "Lystilhørsforhold, spotrelationer og artikler kan stadig redigeres."
+        )
         appearance_form.addRow("Størrelse", self.prop_size)
         appearance_form.addRow("Rotation", self.prop_rotation)
         appearance_form.addRow("Linjetykkelse", self.prop_line_width)
@@ -1823,7 +1827,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self.prop_appearance_disclosure = DisclosureSection("Udseende og placering", appearance_group, expanded=False)
         outer.addWidget(self.prop_appearance_disclosure)
 
-        procurement_group=QGroupBox("Montage og indkøb")
+        procurement_group=QGroupBox("")
         procurement_form=tune_form_layout(QFormLayout(procurement_group))
         self.prop_mounting_zone=QComboBox()
         for value,label in core.MOUNTING_ZONE_OPTIONS:self.prop_mounting_zone.addItem(label,value)
@@ -1842,9 +1846,10 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         procurement_form.addRow("",self.prop_already_purchased)
         procurement_note=QLabel("Profil, højde, farve og indkøbsstatus følger den konkrete symbolforekomst og bliver separate, filterbare felter i Excel.")
         procurement_note.setWordWrap(True); procurement_note.setObjectName("sectionHint"); procurement_form.addRow(procurement_note)
-        outer.addWidget(procurement_group)
+        self.procurement_disclosure=DisclosureSection("Montage og indkøb",procurement_group,expanded=False)
+        outer.addWidget(self.procurement_disclosure)
 
-        self.combo_group = QGroupBox("Kombi-mærkning")
+        self.combo_group = QGroupBox("")
         cg = QFormLayout(self.combo_group)
         cg.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
         self.prop_combo_mode = QComboBox()
@@ -1860,8 +1865,9 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         cg.addRow("Afbrydere · gruppe", self.prop_switch_group)
         cg.addRow("Stik · mærkning", self.prop_socket_label)
         cg.addRow("Stik · gruppe", self.prop_socket_group)
-        outer.addWidget(self.combo_group)
-        self.combo_group.hide()
+        self.combo_disclosure=DisclosureSection("Kombi-mærkning",self.combo_group,expanded=False)
+        outer.addWidget(self.combo_disclosure)
+        self.combo_disclosure.hide()
 
         self.assoc_group = QGroupBox("Lystilhørsforhold")
         al = QVBoxLayout(self.assoc_group)
@@ -1906,18 +1912,24 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         al.addWidget(self.light_outputs_actions)
         self.light_outputs_table.hide(); self.light_outputs_actions.hide()
         ar = QHBoxLayout()
-        self.assoc_button = QPushButton("Redigér valgt betjening…")
+        self.assoc_button = QPushButton("Tilføj / fjern lys…")
         self.assoc_button.clicked.connect(self._start_selected_association_channel)
         self.clear_assoc_button = _set_role(QPushButton("Ryd"), "dangerButton")
         self.clear_assoc_button.clicked.connect(self.clear_selected_associations)
         ar.addWidget(self.assoc_button, 1)
         ar.addWidget(self.clear_assoc_button)
         al.addLayout(ar)
-        self.assoc_note = QLabel("Klik flere lampesteder til/fra. Enter gemmer hele ændringen; Esc annullerer den.")
+        self.assoc_note = QLabel(
+            "Vælg en betjening i tabellen, vælg Tilføj / fjern lys, og klik derefter "
+            "lampesteder på tegningen. Enter gemmer; Esc annullerer."
+        )
         self.assoc_note.setWordWrap(True)
         self.assoc_note.setObjectName("sectionHint")
         al.addWidget(self.assoc_note)
-        outer.addWidget(self.assoc_group)
+        # Relationer er den primære opgave for afbrydere og lys. Vis dem før
+        # generelle metadata; skjul hele sektionen for symboler uden lysrolle.
+        outer.insertWidget(0,self.assoc_group)
+        self.assoc_group.hide()
 
         self.spot_parent_group = QGroupBox("Spotgruppe / lampested")
         spl = QVBoxLayout(self.spot_parent_group)
@@ -1956,7 +1968,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self.spot_parent_group.hide()
         outer.addWidget(self.spot_parent_group)
 
-        self.bom_group = QGroupBox("Artikler / BOM")
+        self.bom_group = QGroupBox("")
         bgl = QVBoxLayout(self.bom_group)
         bgl.setSpacing(7)
         self.bom_summary = QLabel("—")
@@ -1971,8 +1983,9 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         note=QLabel("Tilknytningen gælder kun dette konkrete symbol. Ekstra BOM-rum er additive og ændrer ikke symbolplacering, gruppe/kreds eller Alle rum-totalen.")
         note.setWordWrap(True); note.setObjectName("sectionHint")
         bgl.addWidget(note)
-        self.bom_group.hide()
-        outer.addWidget(self.bom_group)
+        self.bom_disclosure=DisclosureSection("Artikler / BOM",self.bom_group,expanded=False)
+        self.bom_disclosure.hide()
+        outer.addWidget(self.bom_disclosure)
 
         self.symbol_cables_group = QGroupBox("Kabler ved symbol")
         scgl = QVBoxLayout(self.symbol_cables_group); scgl.setSpacing(7)
@@ -3135,7 +3148,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
                 QMessageBox.information(
                     self,"Symbolet er låst",
                     "Det valgte symbol kan ikke slettes, mens det er låst.\n\n"
-                    "Fjern markeringen 'Lås position og redigering' i Egenskaber, "
+                    "Fjern markeringen 'Lås placering og fysisk redigering' i Egenskaber, "
                     "vælg 'Anvend ændringer', og slet derefter symbolet."
                 )
             return
@@ -4962,7 +4975,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             if core.association_role(p.symbol) != "switch":
                 continue
             item = self.symbol_items.get(p.uid)
-            if item is None or not item.isVisible() or p.locked:
+            if item is None or not item.isVisible():
                 continue
             rect = item.sceneBoundingRect().adjusted(-margin, -margin, margin, margin)
             overlay = QGraphicsRectItem(rect)
@@ -5075,8 +5088,8 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         height=min(190,34+max(1,len(outputs))*31)
         table.setMinimumHeight(height); table.setMaximumHeight(height)
         if outputs:table.setCurrentCell(0,0)
-        self.light_output_add_button.setEnabled(not p.locked)
-        self.light_output_remove_button.setEnabled(not p.locked and len(outputs)>1)
+        self.light_output_add_button.setEnabled(True)
+        self.light_output_remove_button.setEnabled(len(outputs)>1)
 
     def _selected_light_output_id(self)->str:
         row=self.light_outputs_table.currentRow()
@@ -5085,7 +5098,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
 
     def _add_light_output(self)->None:
         item=self._selected_symbol_item(); p=item.placement if item is not None else None
-        if p is None or p.symbol!="light_connection" or p.locked:return
+        if p is None or p.symbol!="light_connection":return
         before=self._association_snapshot(); rows=core.light_output_records(p)
         used={str(row.get("id","") or "") for row in rows}; index=len(rows)+1
         output_id=f"out{index}"
@@ -5097,7 +5110,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
 
     def _remove_selected_light_output(self)->None:
         item=self._selected_symbol_item(); p=item.placement if item is not None else None
-        if p is None or p.symbol!="light_connection" or p.locked:return
+        if p is None or p.symbol!="light_connection":return
         rows=core.light_output_records(p)
         if len(rows)<=1:return
         output_id=self._selected_light_output_id() or str(rows[-1].get("id","") or "")
@@ -5114,7 +5127,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
 
     def _rename_selected_light_output(self)->None:
         item=self._selected_symbol_item(); p=item.placement if item is not None else None
-        if p is None or p.symbol!="light_connection" or p.locked:return
+        if p is None or p.symbol!="light_connection":return
         output_id=self._selected_light_output_id(); rows=core.light_output_records(p)
         output=next((row for row in rows if str(row.get("id","") or "")==output_id),None)
         if output is None:return
@@ -5139,8 +5152,6 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         item=self._selected_symbol_item()
         if item is None or core.association_role(item.placement.symbol)!="switch":
             self.start_association_mode(); return
-        if item.placement.locked:
-            self._set_status("Afbryderen er låst."); return
         self._activate_association_source(item,self._selected_association_channel_index(item.placement))
 
     def _refresh_association_visuals(self) -> None:
@@ -5340,8 +5351,6 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
 
     def _activate_association_source(self,item:ElectricalSymbolItem,channel_index:int|None=None)->None:
         p=item.placement
-        if p.locked:
-            self._set_status("Afbryderen er låst.");return
         channels=core.association_channel_letters(p)
         cap=core.association_capacity(p.symbol)
         if channel_index is None:
@@ -5388,7 +5397,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
 
     def start_association_mode(self)->None:
         self._stop_cable_marking_for_other_tool(); item=self._selected_symbol_item()
-        if item is not None and core.association_role(item.placement.symbol)=="switch" and not item.placement.locked:
+        if item is not None and core.association_role(item.placement.symbol)=="switch":
             self._activate_association_source(item,self._selected_association_channel_index(item.placement));return
         self.association_source_uid=""
         self.association_active_letter=""
@@ -5426,8 +5435,8 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
 
     def _symbol_clicked(self,item:ElectricalSymbolItem)->None:
         if self.association_pick_source:
-            if core.association_role(item.placement.symbol)!="switch" or item.placement.locked:
-                self._set_status("Klik på en ORANGE fremhævet, ulåst afbryder · Esc afslutter")
+            if core.association_role(item.placement.symbol)!="switch":
+                self._set_status("Klik på en ORANGE fremhævet afbryder · Esc afslutter")
                 return
             self.scene.clearSelection(); item.setSelected(True); self._activate_association_source(item);return
 
@@ -5600,12 +5609,9 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
                 self,"Samme tænding",
                 "Vælg mindst to entydige lampesteder. Et lampested med flere uafhængige udgange skal tilknyttes via den normale tilknytningsguide."
             ); return
-        if any(bool(getattr(p,"locked",False)) for p in lights):
-            QMessageBox.information(self,"Samme tænding","Mindst ét valgt lampested er låst. Lås det op før tilhørsforholdet ændres."); return
-
         channels=[]
         for switch in self.project.placements:
-            if core.association_role(getattr(switch,"symbol",""))!="switch" or bool(getattr(switch,"locked",False)):
+            if core.association_role(getattr(switch,"symbol",""))!="switch":
                 continue
             ident=" · ".join(x for x in (str(getattr(switch,"group","") or "").strip(),str(getattr(switch,"label","") or "").strip()) if x)
             ident=ident or core.symbol_display_name(switch.symbol)
@@ -5616,7 +5622,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
                 caption=f"{ident} · {rec.get('channel_caption') or 'Betjening'} · {state}"
                 channels.append((caption,switch,int(rec.get("channel_index",0)),letter))
         if not channels:
-            QMessageBox.information(self,"Samme tænding","Projektet har ingen ulåste afbryderkanaler. Placér eller lås en afbryder op først."); return
+            QMessageBox.information(self,"Samme tænding","Projektet har ingen afbryderkanaler. Placér en afbryder først."); return
 
         current={a for p in lights for a in core.light_output_associations(p)}
         preferred=next((i for i,row in enumerate(channels) if row[3] and row[3] in current),0)
@@ -6070,7 +6076,8 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self._clear_spot_link_visuals()
         self._clear_relation_overview()
         self.spot_parent_group.hide()
-        self.bom_group.hide()
+        self.bom_disclosure.hide()
+        self.assoc_group.hide()
         self.assoc_channels_table.hide()
         self.light_outputs_table.hide(); self.light_outputs_actions.hide()
         if hasattr(self,"symbol_cables_group"):self.symbol_cables_group.hide()
@@ -6084,7 +6091,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             if hasattr(self, "prop_hint"):
                 self.prop_hint.setText("Kabelegenskaber redigeres i det fælles Egenskaber-panel.")
             self.prop_assoc.setText("—")
-            self.combo_group.hide()
+            self.combo_disclosure.hide()
             self._enable_properties(False)
             self._load_selected_cable_into_panel(cable)
             self._update_inspector_summary(cable=cable)
@@ -6102,7 +6109,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             count=len(spots)
             self.prop_title.setText(f"{count} spots valgt")
             if hasattr(self,"prop_hint"):self.prop_hint.setText("Gruppér spots eller tilknyt dem samlet til et lampested.")
-            self.prop_assoc.setText("—"); self.combo_group.hide(); self._enable_properties(False)
+            self.prop_assoc.setText("—"); self.combo_disclosure.hide(); self._enable_properties(False)
             self._show_inspector_page("properties",title=f"{count} spots valgt",hint="Spotgruppe og lampested kan håndteres samlet her.")
             self.spot_parent_group.show(); self._refresh_spot_group_controls(spots)
             expanded=self._expand_spots_to_groups(spots)
@@ -6115,9 +6122,8 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
                 self.spot_parent_value.setText("Lampested: Flere forskellige lampesteder")
             else:
                 self.spot_parent_value.setText("Lampested: Ikke tilknyttet")
-            unlocked=any(not p.locked for p in expanded)
-            self.spot_parent_link_button.setEnabled(unlocked)
-            self.spot_parent_unlink_button.setEnabled(bool(parents) and unlocked)
+            self.spot_parent_link_button.setEnabled(True)
+            self.spot_parent_unlink_button.setEnabled(bool(parents))
             self._update_inspector_summary(); self._refresh_context_toolbar(); return
         if len(selected) != 1:
             count=len(selected)+len(selected_cables)+len(selected_rooms)
@@ -6127,7 +6133,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             self.prop_assoc.setText("—")
             self.spot_parent_value.setText("Lampested: —")
             if hasattr(self,"spot_group_value"):self.spot_group_value.setText("Gruppe: —")
-            self.combo_group.hide()
+            self.combo_disclosure.hide()
             self._enable_properties(False)
             if not self._cable_tool_is_open():
                 self._show_inspector_page(
@@ -6175,6 +6181,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         else:self.prop_material_color.setCurrentText(material_color)
         self.prop_already_purchased.setChecked(core.normalize_already_purchased(getattr(p,"already_purchased",False)))
         role=core.association_role(p.symbol)
+        self.assoc_group.setVisible(role in ("switch","light"))
         assoc_text=core.association_display(p)
         if role=="switch":
             cap=core.association_capacity(p.symbol)
@@ -6199,7 +6206,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self._refresh_light_outputs_table(p)
 
         if core.bom_supported_symbol(p.symbol):
-            self.bom_group.show()
+            self.bom_disclosure.show()
             effective_assemblies={a["id"]:a for a in core.normalize_bom_assemblies(self.global_bom_assemblies)}
             for a in core.normalize_bom_assemblies(self.project.raw.get("bom_assemblies",[])):
                 effective_assemblies.setdefault(a["id"],a)
@@ -6210,12 +6217,12 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             self._refresh_selected_bom_room_summary(p)
             self.bom_assign_button.setEnabled(True)
         elif self.project.rooms:
-            self.bom_group.show()
+            self.bom_disclosure.show()
             self.bom_summary.setText("Denne symboltype har ingen direkte BOM-dele, men du kan stadig angive ekstra BOM-rum som projektkontekst.")
             self._refresh_selected_bom_room_summary(p)
             self.bom_assign_button.setEnabled(False)
         else:
-            self.bom_group.hide()
+            self.bom_disclosure.hide()
 
         if p.symbol=="spot":
             self.spot_parent_group.show(); self._refresh_spot_group_controls([p])
@@ -6233,8 +6240,8 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
                 extra=f" · {output.get('name')}" if len(core.light_output_records(parent))>1 else ""
                 if assoc:extra+=f" · {assoc}"
                 self.spot_parent_value.setText(f"Lampested: {ident} · {siblings} spot(s){extra}")
-                self.spot_parent_unlink_button.setEnabled(not p.locked)
-            self.spot_parent_link_button.setEnabled(not p.locked)
+                self.spot_parent_unlink_button.setEnabled(True)
+            self.spot_parent_link_button.setEnabled(True)
         elif p.symbol=="light_connection":
             self.spot_parent_group.show()
             linked=self._linked_spots(p.uid)
@@ -6251,7 +6258,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self._refresh_relation_overview(p)
 
         is_combo=core.is_combo_symbol(p.symbol)
-        self.combo_group.setVisible(is_combo)
+        self.combo_disclosure.setVisible(is_combo)
         if is_combo:
             self.prop_combo_mode.setCurrentText(core.normalize_combo_label_mode(getattr(p,"label_mode","Fælles")))
             self.prop_switch_label.setText(getattr(p,"switch_label","") or "")
@@ -6262,12 +6269,26 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self._enable_properties(True)
         self.delete_symbol_button.setEnabled(not p.locked)
         self.delete_symbol_button.setToolTip(
-            "Symbolet er låst. Fjern markeringen 'Lås position og redigering' og anvend ændringen før sletning."
+            "Symbolet er låst. Fjern markeringen 'Lås placering og fysisk redigering' og anvend ændringen før sletning."
             if p.locked else "Slet det valgte symbol. Handlingen kan fortrydes med Ctrl+Z."
         )
-        self.assoc_button.setEnabled(role=="switch" and not p.locked)
+        if role=="switch":
+            self.assoc_button.setText("Tilføj / fjern lys…")
+            self.assoc_button.setToolTip("Redigér lampestederne for den valgte fysiske betjening.")
+            self.assoc_note.setText(
+                "Vælg en betjening i tabellen, vælg Tilføj / fjern lys, og klik derefter "
+                "lampesteder på tegningen. Enter gemmer; Esc annullerer."
+            )
+        elif role=="light":
+            self.assoc_button.setText("Tilknyt til afbryder…")
+            self.assoc_button.setToolTip("Vælg den afbryder og betjening, der skal styre dette lys.")
+            self.assoc_note.setText(
+                "Vælg Tilknyt til afbryder, klik en orange afbryder og vælg dens betjening. "
+                "Klik derefter dette eller andre lys til/fra."
+            )
+        self.assoc_button.setEnabled(role in ("switch","light"))
         has_assoc=bool(core.light_output_associations(p) if role=="light" else core.normalize_associations(p.associations))
-        self.clear_assoc_button.setEnabled(has_assoc and not p.locked)
+        self.clear_assoc_button.setEnabled(has_assoc)
 
         self.selected_cable=None
         if hasattr(self,"_set_cable_panel_context"): self._set_cable_panel_context(None)

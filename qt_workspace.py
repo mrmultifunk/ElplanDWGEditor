@@ -259,12 +259,23 @@ class WorkspaceUiMixin:
                 core.symbol_display_name(symbol.symbol) + (f" · {ident}" if ident else "")
             )
             self.act_ctx_rotate.setVisible(True)
+            unlocked=not bool(getattr(symbol,"locked",False))
+            self.act_ctx_rotate.setEnabled(unlocked)
+            self.act_ctx_rotate.setToolTip(
+                "Fjern placeringslåsen i Egenskaber for at rotere symbolet."
+                if not unlocked else "Rotér det valgte symbol 90°."
+            )
             role = core.association_role(symbol.symbol)
             self.act_ctx_associate.setVisible(role in ("switch", "light"))
+            self.act_ctx_associate.setEnabled(role in ("switch","light"))
+            self.act_ctx_associate.setText("Redigér tændinger…" if role=="switch" else "Tilknyt afbryder…")
+            self.act_ctx_associate.setToolTip(
+                "Vælg en betjening og tilføj eller fjern lampesteder."
+                if role=="switch" else "Vælg den afbryderbetjening, som skal styre dette lys."
+            )
             self.act_ctx_pl.setVisible(symbol.symbol == "light_connection")
             self.act_ctx_bom.setVisible(core.bom_supported_symbol(symbol.symbol))
             self.act_ctx_delete.setVisible(True)
-            unlocked=not bool(getattr(symbol,"locked",False))
             self.act_ctx_delete.setEnabled(unlocked)
             self.act_ctx_delete.setToolTip(
                 "Lås symbolet op i Egenskaber før det slettes."

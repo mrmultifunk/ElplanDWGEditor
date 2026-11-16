@@ -19,7 +19,7 @@ def _row(article_no,description,qty,price,room=""):
 
 
 def test_version_v05969():
-    assert APP_VERSION == core.APP_VERSION == "0.59.81"
+    assert APP_VERSION == core.APP_VERSION == "0.59.82"
 
 
 def test_pdf_contains_separate_room_boms_and_subtotals(tmp_path):

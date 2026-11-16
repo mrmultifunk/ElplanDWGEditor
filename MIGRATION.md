@@ -1,3 +1,10 @@
+## 0.59.81 → 0.59.82
+
+- Projektformat, tilhørsbogstaver, afbryderkanaler, spotgrupper, artikelbase og BOM-data er uændrede.
+- Feltet `locked` beskytter fortsat symbolets fysiske placering, rotation, sletning og fysisk omkonfiguration. Version 0.59.82 lader logiske lys- og spotrelationer blive redigeret, mens feltet er aktivt.
+- De sammenklappelige sektioner er kun en visningsændring og gemmer ingen nye projektdata.
+- Eksisterende projekter kan åbnes direkte uden konvertering.
+
 ## 0.59.80 → 0.59.81
 
 - Projektformatet får ingen nye obligatoriske felter. `Samme tænding` genbruger de eksisterende afbryderkanaler og tilhørsbogstaver som den autoritative elektriske gruppering.

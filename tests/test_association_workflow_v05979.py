@@ -53,7 +53,7 @@ def test_gui_source_contains_channel_table_and_transactional_finish():
     source=(ROOT/"qt_app.py").read_text(encoding="utf-8")
     graphics=(ROOT/"qt_graphics.py").read_text(encoding="utf-8")
     ast.parse(source); ast.parse(graphics)
-    assert APP_VERSION==core.APP_VERSION=="0.59.81"
+    assert APP_VERSION==core.APP_VERSION=="0.59.82"
     assert "assoc_channels_table" in source
     assert "_association_session_before" in source
     assert "Enter gemmer hele ændringen" in source

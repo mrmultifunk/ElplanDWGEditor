@@ -70,19 +70,15 @@ class SpotUiMixin:
         if not hasattr(self,"spot_group_value"):return
         self.spot_group_value.setText(self._spot_group_summary(spots))
         gids={str(getattr(p,"spot_group_id","") or "") for p in spots if str(getattr(p,"spot_group_id","") or "")}
-        unlocked=any(not p.locked for p in spots)
-        self.spot_group_button.setEnabled(bool(spots) and unlocked)
+        self.spot_group_button.setEnabled(bool(spots))
         self.spot_group_select_button.setEnabled(len(gids)==1)
-        self.spot_group_clear_button.setEnabled(bool(gids) and unlocked)
+        self.spot_group_clear_button.setEnabled(bool(gids))
 
     def group_selected_spots(self) -> None:
-        spots=self._selected_spots(unlocked_only=True)
+        spots=self._selected_spots()
         if not spots:
-            self._set_status("Vælg ét eller flere ulåste spots først.");return
+            self._set_status("Vælg ét eller flere spots først.");return
         expanded=self._expand_spots_to_groups(spots)
-        if any(p.locked for p in expanded):
-            QMessageBox.information(self,"Spotgruppe","Mindst ét spot i den berørte spotgruppe er låst. Lås gruppens spots op før gruppen ændres.")
-            return
         parent_ids={str(getattr(p,"parent_light_uid","") or "") for p in expanded if str(getattr(p,"parent_light_uid","") or "")}
         if len(parent_ids)>1:
             QMessageBox.warning(self,"Spotgruppe","De valgte spots er koblet til forskellige lampesteder. Frakobl eller saml lampestedstilknytningen først.")
@@ -123,7 +119,6 @@ class SpotUiMixin:
         parent=self._placement_by_uid(inherited_parent) if inherited_parent else None
         inherited_output=next((str(getattr(p,"parent_light_output_id","") or "") for p in expanded if str(getattr(p,"parent_light_uid","") or "")==inherited_parent),"")
         for spot in target_spots:
-            if spot.locked:continue
             spot.spot_group_id=target_gid; spot.spot_group_name=name
             if parent is not None:
                 output=core.light_output_by_id(parent,inherited_output)
@@ -146,13 +141,10 @@ class SpotUiMixin:
         self._set_status(f"{len(members)} spot(s) i gruppen valgt.")
 
     def dissolve_spot_group(self) -> None:
-        spots=self._selected_spots(unlocked_only=True)
+        spots=self._selected_spots()
         gids={str(getattr(p,"spot_group_id","") or "") for p in spots if str(getattr(p,"spot_group_id","") or "")}
         if not gids:return
         all_members=[p for gid in gids for p in self._spot_group_members(gid)]
-        if any(p.locked for p in all_members):
-            QMessageBox.information(self,"Spotgruppe","En valgt spotgruppe indeholder låste spots. Lås dem op før gruppen opløses.")
-            return
         members=all_members
         before=self._spot_parent_snapshot()
         for spot in members:
@@ -246,14 +238,11 @@ class SpotUiMixin:
             self._spot_link_highlight(item)
 
     def start_spot_parent_for_selection(self) -> None:
-        spots=self._selected_spots(unlocked_only=True)
+        spots=self._selected_spots()
         expanded=self._expand_spots_to_groups(spots)
-        if any(p.locked for p in expanded):
-            QMessageBox.information(self,"Spot → lampested","En valgt spotgruppe indeholder låste spots. Lås dem op før hele gruppen tilknyttes.")
-            return
         spots=expanded
         if not spots:
-            self._set_status("Vælg først ét eller flere ulåste spots.")
+            self._set_status("Vælg først ét eller flere spots.")
             return
         self.spot_parent_pending=[p.uid for p in spots]
         self.association_source_uid=""
@@ -270,11 +259,8 @@ class SpotUiMixin:
         )
 
     def unlink_selected_spots(self) -> None:
-        spots=self._selected_spots(unlocked_only=True)
+        spots=self._selected_spots()
         expanded=self._expand_spots_to_groups(spots)
-        if any(p.locked for p in expanded):
-            QMessageBox.information(self,"Spot → lampested","En valgt spotgruppe indeholder låste spots. Lås dem op før hele gruppen frakobles.")
-            return
         spots=expanded
         if not spots:return
         before=self._spot_parent_snapshot()

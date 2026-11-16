@@ -5,7 +5,7 @@ import core_logic as core
 
 
 def test_version_v05945():
-    assert APP_VERSION == core.APP_VERSION == "0.59.81"
+    assert APP_VERSION == core.APP_VERSION == "0.59.82"
 
 
 def test_complete_pull_length_is_always_visible_in_inspector_source():
