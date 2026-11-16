@@ -14,7 +14,7 @@ def _cable(category="switch_cable"):
 
 
 def test_version_05021():
-    assert APP_VERSION == core.APP_VERSION == "0.59.82"
+    assert APP_VERSION == core.APP_VERSION == "0.59.83"
 
 
 def test_pl_cable_legs_keep_category_and_contour_metadata():

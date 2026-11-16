@@ -1,3 +1,11 @@
+## 0.59.82 → 0.59.83
+
+- Projektformatet får ingen nye obligatoriske felter. Opdelingen i `Forbind`, `Data` og `Indkøb` er en ren brugerfladeændring.
+- De tre nye symbolkoder er `solar_panel`, `solar_inverter` og `solar_battery`. Eksisterende projekter påvirkes ikke, før symbolerne placeres.
+- `EL-SOLCELLER` oprettes som et almindeligt genereret lag og er synligt som standard. Eksisterende lagvalg og CAD-lag ændres ikke.
+- Solcellekomponenternes artikelbindinger bruger den eksisterende placeringsbaserede BOM-model. Artikelbase, prisbog, styklister og OneDrive-placering er uændrede.
+- Eksisterende projekter kan åbnes direkte uden konvertering.
+
 ## 0.59.81 → 0.59.82
 
 - Projektformat, tilhørsbogstaver, afbryderkanaler, spotgrupper, artikelbase og BOM-data er uændrede.

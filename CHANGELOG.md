@@ -1,3 +1,15 @@
+## 0.59.83 - Opgavebaseret Egenskaber og solcellesymboler
+
+- Egenskaber er nu opdelt i tre tydelige arbejdsspor: `Forbind`, `Data` og `Indkøb`. Kun det valgte spor vises, så højrepanelet ikke længere er én lang formular.
+- `Forbind` samler lystilhørsforhold, spotrelationer, fysiske kabelforbindelser og PL-dåse. Ændringerne gemmes direkte gennem deres eksisterende guider.
+- `Data` samler gruppe/kreds, mærkning, udseende, placeringslås og kombimærkning. `Anvend ændringer` vises kun, hvor der faktisk er formularfelter at gemme.
+- `Indkøb` samler montageprofil, højde, materialefarve, lagerstatus og Artikler/BOM.
+- Afbrydere, lampesteder og spots åbner automatisk i `Forbind`; øvrige symboler åbner i `Data`. Et manuelt valgt spor bevares ved efterfølgende symbolvalg, så gentaget indkøbsarbejde ikke afbrydes.
+- Nye vektorsymboler `Solcellepanel(er)`, `Solcelleinverter` og `Solcellebatteri` findes i paletgruppen `Solceller / energi`.
+- Solcellesymbolerne bruger det nye grønne CAD-lag `EL-SOLCELLER`, har relevante kabel-snapporte og kan roteres, skaleres, eksporteres og udskrives som de øvrige symboler.
+- Inverter og batteri kan vægsnappes. Paneler forbliver frie symboler til tag-/fladeplacering.
+- Alle tre solcellekomponenter kan få en konkret artikel eller stykliste og indgå i BOM på den fysiske symbolforekomst.
+
 ## 0.59.82 - Enklere lystilknytning og roligere Egenskaber
 
 - En placeringslåst afbryder kan nu stadig få redigeret sine tændinger og tilknyttede lampesteder. Låsen beskytter fortsat flytning, rotation, sletning og fysisk omkonfiguration.

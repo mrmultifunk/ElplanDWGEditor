@@ -5,7 +5,7 @@ import core_logic as core
 
 
 def test_version_and_nordtronic_has_compact_terminal_hint():
-    assert APP_VERSION == core.APP_VERSION == "0.59.82"
+    assert APP_VERSION == core.APP_VERSION == "0.59.83"
     profile = core.pl_outlet_profile("nordtronic_zigbee", ["a"])
     assert profile["compact_hint"] == "P = tryk · COM = fælles · ~ = dæmpet udgang"
     assert "Ingen forbindelser" in profile["hint"]

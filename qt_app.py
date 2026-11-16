@@ -1789,13 +1789,39 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         # labels as internal compatibility targets without duplicating it visually.
         self.prop_title.hide(); self.prop_hint.hide()
 
-        basic_group = QGroupBox("Identifikation")
-        form = tune_form_layout(QFormLayout(basic_group))
+        # Egenskaber er opdelt efter den opgave brugeren er i gang med. Det
+        # reducerer den lange formular til tre stabile og let genkendelige spor.
+        self.properties_workflow_bar=QFrame()
+        self.properties_workflow_bar.setObjectName("propertyWorkflowTabs")
+        workflow_layout=QVBoxLayout(self.properties_workflow_bar)
+        workflow_layout.setContentsMargins(0,0,0,6); workflow_layout.setSpacing(5)
+        workflow_buttons=QHBoxLayout(); workflow_buttons.setSpacing(4)
+        self.properties_workflow_buttons={}
+        for key,label in (("connect","Forbind"),("data","Data"),("purchase","Indkøb")):
+            button=QPushButton(label)
+            button.setObjectName("propertyWorkflowTab")
+            button.setCheckable(True)
+            button.clicked.connect(lambda _checked=False,k=key:self._set_properties_workflow(k,user=True))
+            workflow_buttons.addWidget(button,1)
+            self.properties_workflow_buttons[key]=button
+        workflow_layout.addLayout(workflow_buttons)
+        self.properties_workflow_hint=QLabel("")
+        self.properties_workflow_hint.setObjectName("sectionHint")
+        self.properties_workflow_hint.setWordWrap(True)
+        workflow_layout.addWidget(self.properties_workflow_hint)
+        outer.addWidget(self.properties_workflow_bar)
+        self._properties_workflow="connect"
+        self._properties_workflow_user_choice=False
+        self._properties_current_placement=None
+        self._properties_multi_spots=False
+
+        self.basic_group = QGroupBox("Identifikation")
+        form = tune_form_layout(QFormLayout(self.basic_group))
         self.prop_label = QLineEdit()
         self.prop_group = QLineEdit()
         form.addRow("Gruppe/kreds", self.prop_group)
         form.addRow("Mærkning", self.prop_label)
-        outer.addWidget(basic_group)
+        outer.addWidget(self.basic_group)
 
         appearance_group = QGroupBox("")
         appearance_form = tune_form_layout(QFormLayout(appearance_group))
@@ -1928,7 +1954,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         al.addWidget(self.assoc_note)
         # Relationer er den primære opgave for afbrydere og lys. Vis dem før
         # generelle metadata; skjul hele sektionen for symboler uden lysrolle.
-        outer.insertWidget(0,self.assoc_group)
+        outer.addWidget(self.assoc_group)
         self.assoc_group.hide()
 
         self.spot_parent_group = QGroupBox("Spotgruppe / lampested")
@@ -2028,15 +2054,83 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self.delete_symbol_button = _set_role(QPushButton("Slet symbol"), "dangerButton")
         self.delete_symbol_button.setToolTip("Slet det valgte symbol. Handlingen kan fortrydes med Ctrl+Z.")
         self.delete_symbol_button.clicked.connect(self.delete_selected_symbols)
-        property_actions=QHBoxLayout(); property_actions.setSpacing(7)
+        self.property_actions_widget=QWidget()
+        property_actions=QHBoxLayout(self.property_actions_widget); property_actions.setContentsMargins(0,0,0,0); property_actions.setSpacing(7)
         property_actions.addWidget(self.apply_button,1); property_actions.addWidget(self.delete_symbol_button)
-        outer.addLayout(property_actions)
+        outer.addWidget(self.property_actions_widget)
         outer.addStretch(1)
 
         scroll.setWidget(widget)
         self.properties_page = scroll
         self.inspector_stack.addWidget(scroll)
         self._enable_properties(False)
+        self._apply_properties_workflow_visibility()
+
+    def _property_workflow_has_content(self,key:str,placement=None,*,multi_spots:bool=False)->bool:
+        key=str(key or "")
+        if multi_spots:return key=="connect"
+        if placement is None:return False
+        if key in {"data","purchase"}:return True
+        role=core.association_role(getattr(placement,"symbol",""))
+        if role in ("switch","light") or placement.symbol in {"spot","light_connection"}:return True
+        # Kabeloversigten er allerede beregnet én gang ved symbolvalget. Brug
+        # dens resultat i stedet for at gennemløbe hele kabelmodellen igen.
+        return bool(hasattr(self,"symbol_cables_combo") and self.symbol_cables_combo.count()>0)
+
+    def _set_properties_workflow(self,key:str,*,user:bool=False)->None:
+        key=key if key in {"connect","data","purchase"} else "data"
+        if user:self._properties_workflow_user_choice=True
+        self._properties_workflow=key
+        for name,button in getattr(self,"properties_workflow_buttons",{}).items():
+            button.setChecked(name==key)
+        hints={
+            "connect":"Tilknyt funktioner, lampesteder, spots og kabler.",
+            "data":"Redigér mærkning, gruppe, udseende og symboldata.",
+            "purchase":"Angiv montage, materialevalg, lagerstatus og artikler.",
+        }
+        if hasattr(self,"properties_workflow_hint"):
+            self.properties_workflow_hint.setText(hints[key])
+        self._apply_properties_workflow_visibility()
+
+    def _apply_properties_workflow_visibility(self)->None:
+        if not hasattr(self,"properties_workflow_bar"):return
+        p=getattr(self,"_properties_current_placement",None)
+        multi=bool(getattr(self,"_properties_multi_spots",False))
+        has_selection=bool(p is not None or multi)
+        self.properties_workflow_bar.setVisible(has_selection)
+        for name,button in getattr(self,"properties_workflow_buttons",{}).items():
+            button.setEnabled(self._property_workflow_has_content(name,p,multi_spots=multi))
+        if not has_selection:
+            for widget in (
+                self.assoc_group,self.spot_parent_group,self.symbol_cables_group,self.pl_box_group,
+                self.basic_group,self.prop_appearance_disclosure,self.combo_disclosure,
+                self.procurement_disclosure,self.bom_disclosure,self.property_actions_widget,
+            ):widget.hide()
+            return
+        key=getattr(self,"_properties_workflow","data")
+        symbol=str(getattr(p,"symbol","") or "") if p is not None else ""
+        role=core.association_role(symbol) if p is not None else None
+
+        # Forbind
+        self.assoc_group.setVisible(key=="connect" and role in ("switch","light"))
+        self.spot_parent_group.setVisible(key=="connect" and (multi or symbol in {"spot","light_connection"}))
+        cables_relevant=bool(
+            p is not None and self._property_workflow_has_content("connect",p)
+            and (symbol in {"light_connection","wall_light_outlet"} or self.symbol_cables_combo.count()>0)
+        )
+        self.symbol_cables_group.setVisible(key=="connect" and cables_relevant)
+        self.pl_box_group.setVisible(key=="connect" and symbol=="light_connection")
+
+        # Data
+        self.basic_group.setVisible(key=="data" and p is not None)
+        self.prop_appearance_disclosure.setVisible(key=="data" and p is not None)
+        self.combo_disclosure.setVisible(key=="data" and p is not None and core.is_combo_symbol(symbol))
+
+        # Indkøb
+        self.procurement_disclosure.setVisible(key=="purchase" and p is not None)
+        bom_relevant=bool(p is not None and (core.bom_supported_symbol(symbol) or self.project.rooms))
+        self.bom_disclosure.setVisible(key=="purchase" and bom_relevant)
+        self.property_actions_widget.setVisible(key in {"data","purchase"} and p is not None)
 
     def _enable_properties(self, enabled: bool) -> None:
         for w in (self.prop_label, self.prop_group, self.prop_size, self.prop_rotation, self.prop_line_width,
@@ -6063,6 +6157,9 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         selected_symbols=[x for x in self.scene.selectedItems() if isinstance(x,ElectricalSymbolItem)]
         selected_cables=[x for x in self.scene.selectedItems() if isinstance(x,CableItem)]
         selected_rooms=self._selected_rooms_from_scene()
+        self._properties_current_placement=None
+        self._properties_multi_spots=False
+        if hasattr(self,"properties_workflow_bar"):self._apply_properties_workflow_visibility()
         # Annotation detail is adaptive: selected symbols temporarily reveal
         # full detail even when the overview is in Auto mode. Only the old and
         # new selection can have changed detail; refreshing every label made
@@ -6112,6 +6209,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             self.prop_assoc.setText("—"); self.combo_disclosure.hide(); self._enable_properties(False)
             self._show_inspector_page("properties",title=f"{count} spots valgt",hint="Spotgruppe og lampested kan håndteres samlet her.")
             self.spot_parent_group.show(); self._refresh_spot_group_controls(spots)
+            self._properties_multi_spots=True
             expanded=self._expand_spots_to_groups(spots)
             parents={str(getattr(p,"parent_light_uid","") or "") for p in expanded if str(getattr(p,"parent_light_uid","") or "")}
             if len(parents)==1:
@@ -6124,6 +6222,8 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
                 self.spot_parent_value.setText("Lampested: Ikke tilknyttet")
             self.spot_parent_link_button.setEnabled(True)
             self.spot_parent_unlink_button.setEnabled(bool(parents))
+            self._properties_workflow_user_choice=False
+            self._set_properties_workflow("connect")
             self._update_inspector_summary(); self._refresh_context_toolbar(); return
         if len(selected) != 1:
             count=len(selected)+len(selected_cables)+len(selected_rooms)
@@ -6152,6 +6252,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             self.close_cable_tool()
         item=selected[0]
         p=item.placement
+        self._properties_current_placement=p
         self._update_inspector_summary(placement=p)
         ident=" · ".join(x for x in (str(p.group or "").strip(), str(p.label or "").strip()) if x)
         self._show_inspector_page(
@@ -6289,6 +6390,17 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self.assoc_button.setEnabled(role in ("switch","light"))
         has_assoc=bool(core.light_output_associations(p) if role=="light" else core.normalize_associations(p.associations))
         self.clear_assoc_button.setEnabled(has_assoc)
+
+        preferred="connect" if (
+            role in ("switch","light") or p.symbol in {"spot","light_connection"}
+        ) else "data"
+        current=getattr(self,"_properties_workflow","data")
+        if not getattr(self,"_properties_workflow_user_choice",False) or not self._property_workflow_has_content(current,p):
+            if not self._property_workflow_has_content(current,p):
+                self._properties_workflow_user_choice=False
+            self._set_properties_workflow(preferred)
+        else:
+            self._set_properties_workflow(current)
 
         self.selected_cable=None
         if hasattr(self,"_set_cable_panel_context"): self._set_cable_panel_context(None)

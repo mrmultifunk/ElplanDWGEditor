@@ -8,11 +8,12 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_version_and_progressive_inspector_source():
-    assert APP_VERSION == core.APP_VERSION == "0.59.82"
+    assert APP_VERSION == core.APP_VERSION == "0.59.83"
     source = (ROOT / "qt_app.py").read_text(encoding="utf-8")
     assert 'QPushButton("Tilføj / fjern lys…")' in source
     assert 'self.assoc_button.setText("Tilknyt til afbryder…")' in source
-    assert 'outer.insertWidget(0,self.assoc_group)' in source
+    assert 'outer.addWidget(self.assoc_group)' in source
+    assert 'self.assoc_group.setVisible(key=="connect"' in source
     assert 'DisclosureSection("Montage og indkøb"' in source
     assert 'DisclosureSection("Kombi-mærkning"' in source
     assert 'DisclosureSection("Artikler / BOM"' in source

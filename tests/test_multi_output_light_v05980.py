@@ -68,7 +68,7 @@ def test_gui_exposes_output_editor_and_graphical_count_badge():
     app=(ROOT/"qt_app.py").read_text(encoding="utf-8")
     graphics=(ROOT/"qt_graphics.py").read_text(encoding="utf-8")
     ast.parse(app); ast.parse(graphics)
-    assert APP_VERSION==core.APP_VERSION=="0.59.82"
+    assert APP_VERSION==core.APP_VERSION=="0.59.83"
     assert "light_outputs_table" in app
     assert "+ Tilføj tænding" in app
     assert "_choose_light_output" in app

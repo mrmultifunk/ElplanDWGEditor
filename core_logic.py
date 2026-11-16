@@ -32,7 +32,7 @@ from ezdxf import bbox, disassemble, path as ezpath
 from ezdxf.addons import odafc
 
 APP_NAME = "Elplan DWG Editor"
-APP_VERSION = "0.59.82"
+APP_VERSION = "0.59.83"
 ODA_DOWNLOAD_URL = "https://www.opendesign.com/guestfiles/oda_file_converter"
 # Programmet bruger separate lag til forskellige typer el-installationer.
 # EL-SYMBOLER beholdes kun som navn af hensyn til ældre eksporter, men nye
@@ -46,6 +46,7 @@ DATA_LAYER = "EL-TELE-DATA"
 LIGHT_OUTLET_LAYER = "EL-LYSUDTAG"
 LIGHTING_LAYER = "EL-BELYSNING"
 APPLIANCE_LAYER = "EL-BRUGSGENSTANDE"
+SOLAR_LAYER = "EL-SOLCELLER"
 BOARD_LAYER = "EL-TAVLER"
 EARTHING_LAYER = "EL-JORDING"
 DETECTOR_LAYER = "EL-DETEKTORER"
@@ -65,6 +66,7 @@ GENERATED_LAYER_COLORS = {
     LIGHT_OUTLET_LAYER: 1,
     LIGHTING_LAYER: 1,
     APPLIANCE_LAYER: 1,
+    SOLAR_LAYER: 3,
     BOARD_LAYER: 1,
     EARTHING_LAYER: 3,
     DETECTOR_LAYER: 1,
@@ -473,6 +475,11 @@ SYMBOL_GROUPS = {
         "Varmeapparat / elradiator": "heater",
         "Ventilator": "fan",
         "Elbilslader / ladeboks": "ev_charger",
+    },
+    "Solceller / energi": {
+        "Solcellepanel(er)": "solar_panel",
+        "Solcelleinverter": "solar_inverter",
+        "Solcellebatteri": "solar_battery",
     },
     "Tavler / forsyning": {
         "Fordelingsanlæg / tavle": "distribution_board",
@@ -5093,12 +5100,20 @@ def bom_symbol_parts(symbol: str):
     switch_codes=set(SYMBOL_GROUPS.get("Afbrydere",{}).values())
     socket_codes=set(SYMBOL_GROUPS.get("Stikkontakter",{}).values())
     data_codes=set(SYMBOL_GROUPS.get("Data / netværk",{}).values())
+    solar_codes=set(SYMBOL_GROUPS.get("Solceller / energi",{}).values())
     if symbol in switch_codes:
         return [{"id":"symbol","label":symbol_display_name(symbol),"kind":"switch","base":symbol,"required":True}]
     if symbol in socket_codes:
         return [{"id":"symbol","label":symbol_display_name(symbol),"kind":"socket","base":symbol,"required":True}]
     if symbol in data_codes:
         return [{"id":"symbol","label":symbol_display_name(symbol),"kind":"data","base":symbol,"required":True}]
+    if symbol in solar_codes:
+        kind={
+            "solar_panel":"solar_panel",
+            "solar_inverter":"solar_inverter",
+            "solar_battery":"solar_battery",
+        }.get(symbol,"solar")
+        return [{"id":"symbol","label":symbol_display_name(symbol),"kind":kind,"base":symbol,"required":True}]
     if symbol in {"light_connection","wall_light_outlet"}:
         # Lampeudtag er valgfrit i BOM: brugeren kan eksplicit tilknytte fx
         # Nordtronic 98425033, men der gættes aldrig automatisk en artikel.
@@ -5837,6 +5852,8 @@ def symbol_layer(symbol: str) -> str:
         return LIGHTING_LAYER
     if symbol in {"water_heater", "heater", "fan", "ev_charger"}:
         return APPLIANCE_LAYER
+    if symbol in {"solar_panel","solar_inverter","solar_battery"}:
+        return SOLAR_LAYER
     if symbol in {"distribution_board", "group_board", "meter_board"}:
         return BOARD_LAYER
     if symbol == "main_earthing_connection":
@@ -6767,6 +6784,30 @@ def symbol_primitives(symbol: str, size: float):
         poly([(-s*.08,s*.28),(s*.10,s*.28),(-s*.01,s*.04),(s*.16,s*.04),(-s*.14,-s*.31),(-s*.04,-s*.07),(-s*.20,-s*.07),(-s*.08,s*.28)])
         # Kort kabel/stik i siden.
         line(w/2, s*.12, s*.54, s*.12); line(s*.54,s*.12,s*.54,-s*.12); line(s*.49,-s*.12,s*.59,-s*.12)
+    elif symbol == "solar_panel":
+        # Solcellemodul med cellegitter. Ren vektorgrafik gør symbolet tydeligt
+        # i paletten og bevarer alle linjer i PDF/DXF.
+        w,h=s*1.10,s*.70
+        line(-w/2,-h/2,w/2,-h/2); line(w/2,-h/2,w/2,h/2); line(w/2,h/2,-w/2,h/2); line(-w/2,h/2,-w/2,-h/2)
+        line(-w/6,-h/2,-w/6,h/2); line(w/6,-h/2,w/6,h/2)
+        line(-w/2,0,w/2,0)
+        # Kort understel adskiller panelet fra en generisk tavlekapsling.
+        line(-s*.20,-h/2,-s*.30,-s*.52); line(s*.20,-h/2,s*.30,-s*.52); line(-s*.36,-s*.52,s*.36,-s*.52)
+    elif symbol == "solar_inverter":
+        # Inverter: DC-symbolik til venstre og en stiliseret sinus til højre.
+        w,h=s*.92,s*.88
+        line(-w/2,-h/2,w/2,-h/2); line(w/2,-h/2,w/2,h/2); line(w/2,h/2,-w/2,h/2); line(-w/2,h/2,-w/2,-h/2)
+        line(0,-h/2,0,h/2)
+        line(-s*.34,s*.12,-s*.12,s*.12); line(-s*.34,-s*.12,-s*.12,-s*.12)
+        poly([(s*.08,0),(s*.14,s*.13),(s*.22,s*.13),(s*.30,0),(s*.38,-s*.13),(s*.44,-s*.13)])
+        line(-s*.08,-s*.27,s*.12,s*.27)
+    elif symbol == "solar_battery":
+        # Stationært batteri med to terminaler og tre ladningsfelter.
+        w,h=s*.82,s*.88
+        line(-w/2,-h/2,w/2,-h/2); line(w/2,-h/2,w/2,h/2); line(w/2,h/2,-w/2,h/2); line(-w/2,h/2,-w/2,-h/2)
+        line(-s*.25,h/2,-s*.25,s*.55); line(-s*.34,s*.55,-s*.16,s*.55)
+        line(s*.25,h/2,s*.25,s*.55); line(s*.16,s*.55,s*.34,s*.55)
+        line(-s*.24,s*.18,s*.24,s*.18); line(-s*.24,0,s*.24,0); line(-s*.24,-s*.18,s*.24,-s*.18)
     elif symbol == "distribution_board":
         w,h=s*.90,s*.50; line(-w/2,-h/2,w/2,-h/2); line(w/2,-h/2,w/2,h/2); line(w/2,h/2,-w/2,h/2); line(-w/2,h/2,-w/2,-h/2)
     elif symbol == "group_board":
@@ -6861,6 +6902,12 @@ def symbol_connection_points(symbol: str, size: float) -> list[tuple[float, floa
         return [(0.0,s*.34),(0.0,-s*.34),(0.0,0.0)]
     if symbol == "main_earthing_connection":
         return [(0.0,s*.62),(0.0,0.0)]
+    if symbol == "solar_panel":
+        return [(-s*.55,0.0),(s*.55,0.0),(0.0,0.0)]
+    if symbol == "solar_inverter":
+        return [(-s*.46,0.0),(s*.46,0.0),(0.0,s*.44),(0.0,-s*.44)]
+    if symbol == "solar_battery":
+        return [(-s*.25,s*.55),(s*.25,s*.55),(0.0,-s*.44)]
     # Kontakter og alle øvrige komponenter kan tilsluttes i deres logiske centrum.
     if symbol in SYMBOL_NAMES_BY_CODE:
         return [(0.0, 0.0)]
@@ -6898,7 +6945,7 @@ def symbol_mount_points(symbol: str, size: float) -> list[tuple[float, float]]:
         return [(0.0,0.0)]
     if symbol.startswith("switch_") or symbol.startswith("pushbutton"):
         return [(0.0,0.0)]
-    if symbol in {"ev_charger","distribution_board","group_board","meter_board","main_earthing_connection","heater","electric_lock"}:
+    if symbol in {"ev_charger","solar_inverter","solar_battery","distribution_board","group_board","meter_board","main_earthing_connection","heater","electric_lock"}:
         return [(0.0,0.0)]
     return []
 

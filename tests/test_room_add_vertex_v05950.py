@@ -4,7 +4,7 @@ from project_model import APP_VERSION
 from interaction_math import room_nearest_edge_insert
 
 def test_v05957_room_can_insert_vertex_on_nearest_edge():
-    assert APP_VERSION == core.APP_VERSION == '0.59.82'
+    assert APP_VERSION == core.APP_VERSION == '0.59.83'
     points=[(0,0),(10,0),(10,10),(0,10)]
     index,point=room_nearest_edge_insert(points,4,-11)
     assert index==3 and point==(4.0,10.0)

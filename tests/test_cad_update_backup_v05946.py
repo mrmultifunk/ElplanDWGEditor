@@ -19,7 +19,7 @@ def test_backup_pair_for_new_cad_path_copies_old_source_and_retargets_project(tm
     old=tmp_path/'plan_old.dxf'; old.write_text('OLD CAD',encoding='utf-8')
     new=tmp_path/'plan_new.dxf'; new.write_text('NEW CAD',encoding='utf-8')
     result=create_pre_cad_update_backup(
-        project_data={'version':'0.59.82','source_file':'plan_old.dxf','placements':[{'uid':'S1'}]},
+        project_data={'version':'0.59.83','source_file':'plan_old.dxf','placements':[{'uid':'S1'}]},
         project_path=project_path,current_cad=old,target_cad=new,
         loaded_doc=FakeDxfDoc(),now=datetime(2026,8,30,15,10,0),
     )
@@ -34,7 +34,7 @@ def test_same_path_reload_uses_loaded_original_not_overwritten_disk_file(tmp_pat
     project_path=tmp_path/'house.elplan.json'
     cad=tmp_path/'plan.dxf'; cad.write_text('NEW REVISION ON DISK',encoding='utf-8')
     result=create_pre_cad_update_backup(
-        project_data={'version':'0.59.82','source_file':'plan.dxf'},
+        project_data={'version':'0.59.83','source_file':'plan.dxf'},
         project_path=project_path,current_cad=cad,target_cad=cad,
         loaded_doc=FakeDxfDoc('OLD REVISION STILL LOADED'),now=datetime(2026,8,30,15,11,0),
     )

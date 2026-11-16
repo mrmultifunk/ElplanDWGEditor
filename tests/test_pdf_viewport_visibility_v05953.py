@@ -15,7 +15,7 @@ def _app():
 
 
 def test_version_v05957():
-    assert APP_VERSION == core.APP_VERSION == "0.59.82"
+    assert APP_VERSION == core.APP_VERSION == "0.59.83"
 
 
 def test_pdf_output_visibility_respects_quick_cable_filter():

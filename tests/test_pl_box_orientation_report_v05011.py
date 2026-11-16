@@ -18,7 +18,7 @@ def _cable(uid, lamp_uid, cable_id, spec="5G1,5"):
 
 
 def test_current_version_is_05012():
-    assert APP_VERSION == core.APP_VERSION == "0.59.82"
+    assert APP_VERSION == core.APP_VERSION == "0.59.83"
 
 
 def test_pl_box_orientation_layout_rotates_port_numbers_physically():

@@ -275,6 +275,10 @@ def _application_stylesheet(dark: bool, canvas_dark: bool = False) -> str:
         QPushButton#quietButton { background: transparent; border-color: transparent; color: $accent; padding-left: 7px; padding-right: 7px; }
         QPushButton#quietButton:hover { background: $accent_bg; border-color: transparent; }
         QPushButton#quietButton:disabled { color: $disabled; background: transparent; border-color: transparent; }
+        QFrame#propertyWorkflowTabs { background: $surface; border: 0; }
+        QPushButton#propertyWorkflowTab { background: $surface2; color: $muted; border: 1px solid $border2; border-radius: 5px; padding: 6px 5px; font-weight: 600; }
+        QPushButton#propertyWorkflowTab:hover { color: $accent_strong; background: $accent_bg; border-color: $accent_border; }
+        QPushButton#propertyWorkflowTab:checked { color: #ffffff; background: #2f6fac; border-color: #3f7cb8; }
         QPushButton#dangerButton { color: $danger; background: $danger_bg; border-color: $danger; }
         QPushButton#dangerButton:hover { background: $accent_bg; }
         QPushButton#dangerButton:disabled { color: $disabled; background: $disabled_bg; border-color: $border2; }

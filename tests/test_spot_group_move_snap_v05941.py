@@ -7,7 +7,7 @@ ROOT=Path(__file__).resolve().parents[1]
 
 
 def test_version_05941():
-    assert APP_VERSION == core.APP_VERSION == "0.59.82"
+    assert APP_VERSION == core.APP_VERSION == "0.59.83"
 
 
 def test_grouped_spot_drag_expands_to_all_members_and_blocks_partial_locked_move():

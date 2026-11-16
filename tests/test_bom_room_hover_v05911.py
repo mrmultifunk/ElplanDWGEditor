@@ -29,7 +29,7 @@ def test_bom_article_room_usage_tracks_symbol_and_cable_rooms_without_changing_b
 
 
 def test_bom_ui_has_room_sort_field_and_non_interactive_hover_image_popup():
-    assert APP_VERSION == core.APP_VERSION == '0.59.82'
+    assert APP_VERSION == core.APP_VERSION == '0.59.83'
     src=Path('qt_articles.py').read_text(encoding='utf-8')
     assert '"Rum"' in src
     assert 'Sortér efter' in src
