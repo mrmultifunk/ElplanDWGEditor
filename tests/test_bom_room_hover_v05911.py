@@ -33,7 +33,8 @@ def test_bom_ui_has_room_sort_field_and_non_interactive_hover_image_popup():
     src=Path('qt_articles.py').read_text(encoding='utf-8')
     assert '"Rum"' in src
     assert 'Sortér efter' in src
-    assert 'bom_article_room_usage' in src
+    # Rumfordelingen er domænelogik og må ikke være koblet til Qt-modulet.
+    assert callable(core.bom_article_room_usage)
     assert 'class BomArticleHoverPopup' in src
     assert 'WA_TransparentForMouseEvents' in src
     assert 'self._bom_hover_timer.setInterval(320)' in src

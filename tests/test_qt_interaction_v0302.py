@@ -24,7 +24,10 @@ def test_palette_add_undo_redo_and_wall_snap():
     (x, y), rot, kind = w.snap_engine.snap_pose(w.scene, "socket", 200.0, 0.0, (500.0, -190.0), 1.0,
                                                 cursor_cad=(500.0, 10.0))
     assert "VÆG" in kind
-    assert abs((y + 200.0) - 0.0) < 1e-6
+    # Den fysiske montageport skal ramme væggen uanset hvilken af de to
+    # 180°-ækvivalente retninger cursor-siden vælger.
+    _mx,my=core.rotate_point(*core.symbol_mount_points("socket",200.0)[0],rot)
+    assert abs((y + my) - 0.0) < 1e-6
 
     w.palette_size.setValue(200)
     w._placement_requested("socket", 100.0, 100.0, 0.0)

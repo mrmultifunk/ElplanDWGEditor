@@ -89,5 +89,6 @@ Nye funktioner bør som udgangspunkt reducere klik, gøre redigering mere foruds
 - [Opgavebaseret Egenskaber og solceller](docs/reference/PROPERTY_WORKFLOW_SOLAR_0.59.83.md) – Forbind, Data, Indkøb og PV-symboler
 - [Hurtig og sikker lystilknytning](docs/reference/ASSOCIATION_SESSION_0.59.84.md) – synlig gem, tastatur og målrettede opdateringer
 - [Responsivt symbolvalg](docs/reference/SYMBOL_SELECTION_PERFORMANCE_0.59.85.md) – flyt først, indlæs Egenskaber efter muse-slip
+- [Sikkerhedsnet for core-refaktorering](docs/reference/CORE_REFACTOR_BASELINE_0.59.85.md) – lokale golden-tests, API-kontrakt og importlag uden GitHub Actions
 
 Detaljer om hver udgave hører hjemme i [CHANGELOG.md](CHANGELOG.md), ikke på projektets forside.

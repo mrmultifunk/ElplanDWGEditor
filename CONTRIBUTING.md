@@ -47,3 +47,22 @@ Hvis en ny funktion kan udtrykkes uden Qt, skal den som udgangspunkt ligge i `co
 - `qt_ui.py`: fælles dialogheader og progressive `DisclosureSection`-komponenter.
 
 Nye globale GUI-funktioner skal som udgangspunkt placeres i et lille featuremodul frem for direkte i `MainWindow`.
+
+## Refaktorering af `core_logic.py`
+
+Grundreglen er **flyt, ændr ikke**. En flytteændring må ikke samtidig omskrive
+algoritmer, navne, signaturer, standardværdier eller projektformat. Flyttede
+offentlige navne re-eksporteres fra `core_logic.py`, indtil alle eksisterende
+kaldere er migreret kontrolleret.
+
+Før hver flytning skal følgende bestå lokalt:
+
+- hele pytest-suiten og golden-testene
+- API-manifestet for `core_logic`
+- `lint-imports`
+- `python tools/analyze_core_dependencies.py`
+- en sammenlignende importtidsmåling
+
+GitHub Actions er ikke en forudsætning for refaktoreringen. Den samlede lokale
+kontrol køres på Windows med `tools/verify_refactor.ps1`, så en grøn kontrol
+ikke bruger GitHub Actions-minutter.

@@ -59,7 +59,7 @@ def test_excel_all_rooms_adds_filterable_room_breakdown_without_changing_main_to
             assert 'name="Rumoversigt"' in workbook
             assert 'name="BOM pr. rum"' in workbook
             assert 'name="BOMRoomTable"' in table3
-            assert '<autoFilter ref="A4:Z6"/>' in table3
+            assert '<autoFilter ref="A4:AH6"/>' in table3
             assert 'R01 · Gang' in summary and 'R02 · Køkken' in summary
             assert 'R01 · Gang' in sheet3
             assert 'R02 · Køkken' in sheet3

@@ -1,0 +1,31 @@
+{
+  "page_count": 1,
+  "page_sizes_points": [
+    [
+      841.89,
+      595.276
+    ]
+  ],
+  "text_lines": [
+    "STUE",
+    "KØKKEN",
+    "Golden fixture",
+    "R01 · Stue",
+    "R02 · Køkken",
+    "G01",
+    "Afbryder stue",
+    "G01",
+    "Loftlys",
+    "a",
+    "G02",
+    "Stik køkken",
+    "G02",
+    "Væglampe",
+    "b",
+    "G02",
+    "Spot 1",
+    "b",
+    "-> G02",
+    "a"
+  ]
+}

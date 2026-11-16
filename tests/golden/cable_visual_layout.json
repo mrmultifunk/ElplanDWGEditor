@@ -1,0 +1,114 @@
+{
+  "joints": [
+    {
+      "cable_ids": [
+        "K01",
+        "K02"
+      ],
+      "cable_indices": [
+        0,
+        1
+      ],
+      "count": 2,
+      "length": 1802.775638,
+      "point": [
+        3250.0,
+        1500.0
+      ]
+    }
+  ],
+  "meta": {
+    "cable-light-wall": {
+      "lane_count": 1,
+      "lane_index": 0,
+      "lane_offset": 0.0,
+      "max_parallel": 1,
+      "parallel_segments": 0,
+      "peer_ids": [
+        "K03"
+      ]
+    },
+    "cable-sw-light-a": {
+      "lane_count": 2,
+      "lane_index": 0,
+      "lane_offset": -30.0,
+      "max_parallel": 2,
+      "parallel_segments": 2,
+      "peer_ids": [
+        "K01",
+        "K02"
+      ]
+    },
+    "cable-sw-light-b": {
+      "lane_count": 2,
+      "lane_index": 1,
+      "lane_offset": 30.0,
+      "max_parallel": 2,
+      "parallel_segments": 2,
+      "peer_ids": [
+        "K01",
+        "K02"
+      ]
+    }
+  },
+  "paths": {
+    "cable-light-wall": [
+      [
+        4000.0,
+        2000.0
+      ],
+      [
+        5500.0,
+        2000.0
+      ],
+      [
+        8000.0,
+        2500.0
+      ]
+    ],
+    "cable-sw-light-a": [
+      [
+        1000.0,
+        1000.0
+      ],
+      [
+        1141.0,
+        970.0
+      ],
+      [
+        2509.083269,
+        970.0
+      ],
+      [
+        3899.321914,
+        1896.825764
+      ],
+      [
+        4000.0,
+        2000.0
+      ]
+    ],
+    "cable-sw-light-b": [
+      [
+        1000.0,
+        1000.0
+      ],
+      [
+        1141.0,
+        1030.0
+      ],
+      [
+        2490.916731,
+        1030.0
+      ],
+      [
+        3866.039903,
+        1946.748781
+      ],
+      [
+        4000.0,
+        2000.0
+      ]
+    ]
+  }
+}

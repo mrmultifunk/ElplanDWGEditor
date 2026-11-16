@@ -77,4 +77,5 @@ def test_symbol_wall_snap_ignores_visible_room_boundary_but_keeps_cad_wall_snap(
     )
     assert "VÆG" in kind
     assert math.isclose(xy[0], 500.0, abs_tol=1e-9)
-    assert math.isclose(xy[1], -200.0, abs_tol=1e-9)
+    _mx,my=core.rotate_point(*core.symbol_mount_points("socket",200.0)[0],_rot)
+    assert math.isclose(xy[1]+my, 0.0, abs_tol=1e-9)

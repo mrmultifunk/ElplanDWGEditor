@@ -59,7 +59,9 @@ def test_bom_xlsx_is_valid_ooxml_table_with_filter_freeze_and_missing_sheet():
             assert 'ySplit="4"' in sheet and 'topLeftCell="A5"' in sheet
             assert '<tableParts count="1">' in sheet
             assert 'name="BOMTable"' in table
-            assert 'ref="A4:Z5"' in table
+            # Montage-, farve-, indkøbs- og kategorifelter har udvidet den
+            # filterbare tabel til kolonne AH.
+            assert 'ref="A4:AH5"' in table
             assert 'TableStyleMedium2' in table
             assert 'name="Type/kategori"' in table
             assert 'name="Antal"' in table and 'name="Linjesum ekskl. moms"' in table

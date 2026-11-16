@@ -1,2 +1,4 @@
 -r requirements.txt
 pytest>=8
+import-linter>=2.1
+pypdf>=6

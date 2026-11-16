@@ -1,0 +1,7 @@
+{
+  "captured": "2026-11-16",
+  "cumulative_microseconds": 302019,
+  "enforced": false,
+  "platform": "Linux reference only; capture the authoritative Windows value with tools/verify_refactor.ps1",
+  "python": "3.12.14"
+}

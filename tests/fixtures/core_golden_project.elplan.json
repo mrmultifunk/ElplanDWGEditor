@@ -1,0 +1,191 @@
+{
+  "version": "0.59.85",
+  "source_file": "examples/demo_floor.dxf",
+  "placements": [
+    {
+      "symbol": "switch_1",
+      "x": 1000.0,
+      "y": 1000.0,
+      "rotation": 0.0,
+      "size": 500.0,
+      "label": "Afbryder stue",
+      "group": "G01",
+      "associations": ["a"],
+      "association_channels": ["a"],
+      "mounting_zone": "switch",
+      "mounting_height_mm": 1100.0,
+      "material_color": "Hvid",
+      "already_purchased": false,
+      "uid": "sw-01"
+    },
+    {
+      "symbol": "light_connection",
+      "x": 4000.0,
+      "y": 2000.0,
+      "rotation": 0.0,
+      "size": 500.0,
+      "label": "Loftlys",
+      "group": "G01",
+      "associations": ["a"],
+      "light_outputs": [
+        {"id": "out-main", "name": "Loftlys", "association": "a"}
+      ],
+      "mounting_zone": "ceiling",
+      "mounting_height_mm": 2400.0,
+      "material_color": "Hvid",
+      "already_purchased": false,
+      "pl_box_entries": {
+        "1": {"cable_uid": "cable-sw-light-a", "point_index": 2, "leg": "endpoint", "note": "Fra afbryder"},
+        "2": {"cable_uid": "cable-light-wall", "point_index": 0, "leg": "endpoint", "note": "Videre til køkken"}
+      },
+      "pl_box_wiring": [
+        {"cable_uid": "cable-sw-light-a", "point_index": 2, "leg": "endpoint", "core_id": "blue", "function": "n", "note": "N"},
+        {"cable_uid": "cable-light-wall", "point_index": 0, "leg": "endpoint", "core_id": "blue", "function": "n", "note": "N videre"}
+      ],
+      "pl_box_splices": [
+        {
+          "id": "wago-n",
+          "function": "n",
+          "members": [
+            {"cable_uid": "cable-sw-light-a", "point_index": 2, "leg": "endpoint", "core_id": "blue"},
+            {"cable_uid": "cable-light-wall", "point_index": 0, "leg": "endpoint", "core_id": "blue"}
+          ],
+          "article_no": "WAGO-221-413",
+          "connects_to_outlet": true,
+          "note": "N-samling"
+        }
+      ],
+      "pl_box_orientation": 90,
+      "lamp_outlet_type": "generic",
+      "uid": "light-01"
+    },
+    {
+      "symbol": "socket_earth",
+      "x": 7000.0,
+      "y": 1000.0,
+      "rotation": 90.0,
+      "size": 500.0,
+      "label": "Stik køkken",
+      "group": "G02",
+      "mounting_zone": "floor",
+      "mounting_height_mm": 300.0,
+      "material_color": "Koksgrå",
+      "already_purchased": true,
+      "uid": "socket-01"
+    },
+    {
+      "symbol": "wall_light_outlet",
+      "x": 8000.0,
+      "y": 2500.0,
+      "rotation": 180.0,
+      "size": 500.0,
+      "label": "Væglampe",
+      "group": "G02",
+      "associations": ["b"],
+      "mounting_zone": "custom",
+      "mounting_height_mm": 1800.0,
+      "material_color": "Hvid",
+      "already_purchased": false,
+      "uid": "wall-light-01"
+    },
+    {
+      "symbol": "spot",
+      "x": 6500.0,
+      "y": 2500.0,
+      "rotation": 0.0,
+      "size": 350.0,
+      "label": "Spot 1",
+      "group": "G02",
+      "associations": ["b"],
+      "spot_group_id": "spot-group-01",
+      "spot_group_name": "Køkken spots",
+      "parent_light_uid": "wall-light-01",
+      "uid": "spot-01"
+    }
+  ],
+  "cables": [
+    {
+      "points": [[1000.0, 1000.0], [2500.0, 1000.0], [4000.0, 2000.0]],
+      "layer": "EL-KABLER",
+      "cable_category": "power",
+      "cable_spec": "3G1,5",
+      "cable_id": "K01",
+      "circuit_id": "G01",
+      "route_chain_uid": "route-g01",
+      "symbol_connections": [
+        {"point_index": 0, "symbol_uid": "sw-01", "symbol_port": 0},
+        {"point_index": 2, "symbol_uid": "light-01", "symbol_port": 0}
+      ],
+      "uid": "cable-sw-light-a"
+    },
+    {
+      "points": [[1000.0, 1000.0], [2500.0, 1000.0], [4000.0, 2000.0]],
+      "layer": "EL-KABLER",
+      "cable_category": "switch_cable",
+      "cable_spec": "5G1,5",
+      "cable_id": "K02",
+      "circuit_id": "G01",
+      "route_chain_uid": "route-g01",
+      "symbol_connections": [
+        {"point_index": 0, "symbol_uid": "sw-01", "symbol_port": 0},
+        {"point_index": 2, "symbol_uid": "light-01", "symbol_port": 1}
+      ],
+      "uid": "cable-sw-light-b"
+    },
+    {
+      "points": [[4000.0, 2000.0], [5500.0, 2000.0], [8000.0, 2500.0]],
+      "layer": "EL-KABLER",
+      "cable_category": "power",
+      "cable_spec": "3G1,5",
+      "cable_id": "K03",
+      "circuit_id": "G02",
+      "route_chain_uid": "route-g02",
+      "symbol_connections": [
+        {"point_index": 0, "symbol_uid": "light-01", "symbol_port": 2},
+        {"point_index": 2, "symbol_uid": "wall-light-01", "symbol_port": 0}
+      ],
+      "uid": "cable-light-wall"
+    }
+  ],
+  "rooms": [
+    {
+      "name": "Stue",
+      "code": "R01",
+      "points": [[0.0, 0.0], [5000.0, 0.0], [5000.0, 4000.0], [0.0, 4000.0]],
+      "label_x": 2500.0,
+      "label_y": 3500.0,
+      "color": "#0f766e",
+      "uid": "room-stue"
+    },
+    {
+      "name": "Køkken",
+      "code": "R02",
+      "points": [[5000.0, 0.0], [10000.0, 0.0], [10000.0, 4000.0], [5000.0, 4000.0]],
+      "label_x": 7500.0,
+      "label_y": 3500.0,
+      "color": "#2563eb",
+      "uid": "room-koekken"
+    }
+  ],
+  "texts": [
+    {"text": "Golden fixture", "x": 5000.0, "y": 3800.0, "height": 180.0, "rotation": 0.0, "color": "#202020", "uid": "text-01"}
+  ],
+  "placement_articles": {
+    "sw-01": {"symbol": [{"article_no": "SW-001", "qty": 1.0}]},
+    "light-01": {"outlet": [{"article_no": "OUT-001", "qty": 1.0}]},
+    "socket-01": {"symbol": [{"article_no": "SOCKET-001", "qty": 1.0}]},
+    "wall-light-01": {"outlet": [{"article_no": "OUT-WALL-001", "qty": 1.0}]}
+  },
+  "placement_assemblies": {
+    "sw-01": {"symbol": "asm-switch-standard"}
+  },
+  "cable_instance_articles": {
+    "cable-sw-light-a": "CBL-3G15",
+    "cable-sw-light-b": "CBL-5G15",
+    "cable-light-wall": "CBL-3G15"
+  },
+  "placement_bom_room_additions": {
+    "wall-light-01": ["room-stue"]
+  },
+  "layer_visibility": {}
+}

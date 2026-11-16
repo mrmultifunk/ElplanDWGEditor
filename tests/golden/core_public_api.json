@@ -1,0 +1,1745 @@
+{
+  "count": 348,
+  "symbols": [
+    {
+      "kind": "constant",
+      "name": "ANNOTATION_STYLES",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "APPEARANCE_MODES",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "APPLIANCE_LAYER",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "APP_NAME",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "APP_VERSION",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "ARTICLE_METADATA_FIELDS",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "ARTICLE_STRUCTURED_FIELDS",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "AUTOSAVE_INTERVAL_MS",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "BOARD_LAYER",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "CABLE_LAYER",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "CABLE_LINE_STYLES",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "CABLE_SPEC_PRESETS",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "CABLE_TYPES",
+      "signature": ""
+    },
+    {
+      "kind": "class",
+      "name": "CADPrimitive",
+      "signature": "(kind: 'str', layer: 'str', data: 'tuple') -> None"
+    },
+    {
+      "kind": "constant",
+      "name": "COMBO_LABEL_MODES",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "COMBO_LAYER",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "COMBO_ROW_PARTS",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "COMBO_SYMBOLS",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "CUSTOM_COMBO_MAX_MODULES",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "CUSTOM_COMBO_PREFIX",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "CUSTOM_SOCKET_TYPES",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "CUSTOM_SWITCH_SHORT",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "CUSTOM_SWITCH_TYPES",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "CUSTOM_SYMBOL_NAMES",
+      "signature": ""
+    },
+    {
+      "kind": "class",
+      "name": "CablePlacement",
+      "signature": "(points: 'list[tuple[float, float]]', layer: 'str' = 'EL-KABLER', line_width: 'float' = 0.35, color: 'str' = '#d00000', line_style: 'str' = 'solid', cable_category: 'str' = 'other', label: 'str' = '', cable_spec: 'str' = '', cable_id: 'str' = '', circuit_id: 'str' = '', route_chain_uid: 'str' = '', auto_label: 'bool' = False, start_symbol_uid: 'str' = '', end_symbol_uid: 'str' = '', start_symbol_port: 'int' = 0, end_symbol_port: 'int' = 0, orthogonal: 'bool' = False, route_section_modes: 'list[dict]' = <factory>, spec_section_overrides: 'list[dict]' = <factory>, symbol_connections: 'list[dict]' = <factory>, uid: 'str' = <factory>) -> None"
+    },
+    {
+      "kind": "constant",
+      "name": "DATA_LAYER",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "DEFAULT_ANNOTATION_FONT_SIZE",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "DEFAULT_ANNOTATION_STYLE",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "DEFAULT_CABLE_CATEGORIES",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "DEFAULT_CABLE_CATEGORY",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "DEFAULT_CABLE_COLOR",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "DEFAULT_CABLE_LINE_STYLE",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "DEFAULT_PRINT_SCOPE",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "DEFAULT_SYMBOL_COLOR",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "DEFAULT_THEME",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "DETECTOR_LAYER",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "EARTHING_LAYER",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "ELECTRICAL_LAYER",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "EXTENDED_SOCKET_MOUNT_FACTOR",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "FREE_TEXT_LAYER",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "GENERATED_LAYERS",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "GENERATED_LAYER_COLORS",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "INSUNITS_METERS",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "LEGACY_SWITCH_LAYER",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "LIGHTING_LAYER",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "LIGHT_ASSOCIATION_SYMBOLS",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "LIGHT_OUTLET_LAYER",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "MATERIAL_COLOR_PRESETS",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "MAX_RECENT_PROJECTS",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "META_LAYER",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "MISC_LAYER",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "MOUNTING_ZONE_LABELS",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "MOUNTING_ZONE_OPTIONS",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "ODA_DOWNLOAD_URL",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "OUTPUT_SCREEN_DPI",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "PATCH_CABLE_LAYER",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "PL_BOX_ENTRY_COUNT",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "PL_BOX_LEG_CAPTIONS",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "PL_BOX_ORIENTATIONS",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "PL_CONDUCTOR_VISUALS",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "PL_OUTLET_TYPES",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "PL_PASSTHROUGH_ROLES",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "PL_WAGO_ARTICLE_PORTS",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "PRINT_MARGIN_MM",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "PRINT_SCOPES",
+      "signature": ""
+    },
+    {
+      "kind": "class",
+      "name": "Placement",
+      "signature": "(symbol: 'str', x: 'float', y: 'float', rotation: 'float' = 0.0, size: 'float' = 500.0, label: 'str' = '', group: 'str' = '', label_mode: 'str' = 'Fælles', switch_label: 'str' = '', switch_group: 'str' = '', socket_label: 'str' = '', socket_group: 'str' = '', line_width: 'float' = 0.25, color: 'str' = '#d00000', associations: 'list[str]' = <factory>, association_channels: 'list[str]' = <factory>, light_outputs: 'list[dict]' = <factory>, locked: 'bool' = False, mounting_zone: 'str' = '', mounting_height_mm: 'float | None' = None, material_color: 'str' = '', already_purchased: 'bool' = False, spot_group_id: 'str' = '', spot_group_name: 'str' = '', parent_light_uid: 'str' = '', parent_light_output_id: 'str' = '', pl_box_entries: 'dict[str, dict]' = <factory>, pl_box_wiring: 'list[dict]' = <factory>, pl_box_splices: 'list[dict]' = <factory>, pl_box_orientation: 'int' = 0, lamp_outlet_type: 'str' = 'generic', pl_field_record: 'dict' = <factory>, uid: 'str' = <factory>) -> None"
+    },
+    {
+      "kind": "constant",
+      "name": "ROOM_LAYER",
+      "signature": ""
+    },
+    {
+      "kind": "class",
+      "name": "RoomPlacement",
+      "signature": "(name: 'str', points: 'list[tuple[float, float]]', code: 'str' = '', label_x: 'float' = 0.0, label_y: 'float' = 0.0, color: 'str' = '#0f766e', uid: 'str' = <factory>) -> None"
+    },
+    {
+      "kind": "constant",
+      "name": "SNAP_ALIGN_TOLERANCE_PX",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "SNAP_DEVICE_TOLERANCE_PX",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "SNAP_SYMBOL_BODY_PAD_PX",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "SNAP_SYMBOL_PORT_TOLERANCE_PX",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "SNAP_TOLERANCE_PX",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "SNAP_WALL_TOLERANCE_PX",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "SOCKET_3FN_BODY_OFFSET_FACTOR",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "SOCKET_LAYER",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "SOCKET_STEM_FACTOR",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "SOLAR_LAYER",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "SWITCH_ASSOCIATION_SYMBOLS",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "SWITCH_CONDUCTOR_PREFERRED_ORDER",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "SWITCH_CONDUCTOR_TYPICAL_SUPPLY_IDS",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "SWITCH_LAYER",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "SYMBOLS",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "SYMBOLS_CLIPBOARD_PREFIX",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "SYMBOL_CLIPBOARD_PREFIX",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "SYMBOL_GROUPS",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "SYMBOL_NAMES_BY_CODE",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "THEMES",
+      "signature": ""
+    },
+    {
+      "kind": "constant",
+      "name": "THEME_MODES",
+      "signature": ""
+    },
+    {
+      "kind": "class",
+      "name": "TextPlacement",
+      "signature": "(text: 'str', x: 'float', y: 'float', height: 'float' = 250.0, rotation: 'float' = 0.0, color: 'str' = '#202020', uid: 'str' = <factory>) -> None"
+    },
+    {
+      "kind": "constant",
+      "name": "WIRE_LAYER",
+      "signature": ""
+    },
+    {
+      "kind": "function",
+      "name": "add_cable_to_dxf",
+      "signature": "(msp, cable: 'CablePlacement') -> 'None'"
+    },
+    {
+      "kind": "function",
+      "name": "add_free_text_to_dxf",
+      "signature": "(msp, item: 'TextPlacement') -> 'None'"
+    },
+    {
+      "kind": "function",
+      "name": "add_placement_to_dxf",
+      "signature": "(msp, placement: 'Placement', annotation_style: 'str' = 'Kompakt') -> 'None'"
+    },
+    {
+      "kind": "function",
+      "name": "annotation_visual_profile",
+      "signature": "(mode: 'str', view_scale: 'float', selected: 'bool' = False) -> 'dict'"
+    },
+    {
+      "kind": "function",
+      "name": "article_filter_facets",
+      "signature": "(record)"
+    },
+    {
+      "kind": "function",
+      "name": "article_packaging",
+      "signature": "(record) -> 'dict'"
+    },
+    {
+      "kind": "function",
+      "name": "article_price_basis_quantity",
+      "signature": "(record, required_quantity) -> 'float'"
+    },
+    {
+      "kind": "function",
+      "name": "article_purchase_requirement",
+      "signature": "(record, required_quantity) -> 'dict'"
+    },
+    {
+      "kind": "function",
+      "name": "assign_pl_conductor_function",
+      "signature": "(records, cable_legs, conductor_key, function_id: 'str') -> 'list[dict]'"
+    },
+    {
+      "kind": "function",
+      "name": "assigned_association_channel_count",
+      "signature": "(placement: \"'Placement'\") -> 'int'"
+    },
+    {
+      "kind": "function",
+      "name": "association_capacity",
+      "signature": "(symbol: 'str') -> 'int'"
+    },
+    {
+      "kind": "function",
+      "name": "association_channel_base",
+      "signature": "(symbol: 'str', index: 'int') -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "association_channel_bases",
+      "signature": "(symbol: 'str') -> 'list[str]'"
+    },
+    {
+      "kind": "function",
+      "name": "association_channel_caption",
+      "signature": "(symbol: 'str', index: 'int') -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "association_channel_letters",
+      "signature": "(placement: \"'Placement'\") -> 'list[str]'"
+    },
+    {
+      "kind": "function",
+      "name": "association_channel_module",
+      "signature": "(symbol: 'str', size: 'float', index: 'int')"
+    },
+    {
+      "kind": "function",
+      "name": "association_channel_prefers_existing",
+      "signature": "(symbol: 'str', index: 'int') -> 'bool'"
+    },
+    {
+      "kind": "function",
+      "name": "association_channel_records",
+      "signature": "(placement: \"'Placement'\") -> 'list[dict]'"
+    },
+    {
+      "kind": "function",
+      "name": "association_channel_source_mark",
+      "signature": "(placement: \"'Placement'\", index: 'int') -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "association_channel_stable_id",
+      "signature": "(placement: \"'Placement'\", index: 'int') -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "association_display",
+      "signature": "(placement: 'Placement') -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "association_module_layout",
+      "signature": "(symbol: 'str', size: 'float')"
+    },
+    {
+      "kind": "function",
+      "name": "association_role",
+      "signature": "(symbol: 'str') -> 'str | None'"
+    },
+    {
+      "kind": "function",
+      "name": "association_world_point",
+      "signature": "(placement: 'Placement') -> 'tuple[float, float]'"
+    },
+    {
+      "kind": "function",
+      "name": "attach_symbol_to_existing_cable",
+      "signature": "(cable: 'CablePlacement', symbol_uid: 'str', symbol_port: 'int', target_point, segment_index: 'int | None' = None) -> 'dict'"
+    },
+    {
+      "kind": "function",
+      "name": "auto_assign_pl_box_entries",
+      "signature": "(cable_legs, existing=None) -> 'dict[str, dict]'"
+    },
+    {
+      "kind": "function",
+      "name": "bom_article_category",
+      "signature": "(record, roles=None, source_types=None) -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "bom_article_room_usage",
+      "signature": "(placements, bindings, rooms=None, cables=None, cable_bindings=None, assemblies=None, assembly_bindings=None, placement_room_additions=None) -> 'dict[str, list[str]]'"
+    },
+    {
+      "kind": "function",
+      "name": "bom_article_source_uids",
+      "signature": "(article_no, placements, bindings, rooms=None, cables=None, cable_bindings=None, assemblies=None, assembly_bindings=None, room_filter_uid='', placement_room_additions=None)"
+    },
+    {
+      "kind": "function",
+      "name": "bom_assembly_effective_items",
+      "signature": "(assembly)"
+    },
+    {
+      "kind": "function",
+      "name": "bom_assembly_item_counts",
+      "signature": "(assembly)"
+    },
+    {
+      "kind": "function",
+      "name": "bom_assembly_lookup",
+      "signature": "(records)"
+    },
+    {
+      "kind": "function",
+      "name": "bom_assembly_usage",
+      "signature": "(placements, article_catalog, bindings, rooms=None, assemblies=None, assembly_bindings=None, room_filter_uid='', placement_room_additions=None)"
+    },
+    {
+      "kind": "function",
+      "name": "bom_binding_summary",
+      "signature": "(symbol: 'str', article_catalog, bindings, assemblies=None, assembly_bindings=None, binding_key: 'str | None' = None) -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "bom_purchase_segment_key",
+      "signature": "(article_no, context=None) -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "bom_source_breakdown",
+      "signature": "(placements, article_catalog, bindings, rooms=None, cables=None, cable_bindings=None, assemblies=None, assembly_bindings=None, room_filter_uid='', placement_room_additions=None, metres_per_unit=None, reserve_percent=0.0)"
+    },
+    {
+      "kind": "function",
+      "name": "bom_supported_symbol",
+      "signature": "(symbol: 'str') -> 'bool'"
+    },
+    {
+      "kind": "function",
+      "name": "bom_symbol_bindings",
+      "signature": "(symbol: 'str', bindings)"
+    },
+    {
+      "kind": "function",
+      "name": "bom_symbol_parts",
+      "signature": "(symbol: 'str')"
+    },
+    {
+      "kind": "function",
+      "name": "build_bom",
+      "signature": "(placements, article_catalog, bindings, cables=None, cable_bindings=None, metres_per_unit=None, reserve_percent=0.0, assemblies=None, assembly_bindings=None, rooms=None, room_filter_uid: 'str' = '', placement_room_additions=None)"
+    },
+    {
+      "kind": "function",
+      "name": "cable_article_key",
+      "signature": "(layer: 'str', cable_spec: 'str') -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "cable_article_key_parts",
+      "signature": "(key: 'str') -> 'tuple[str, str]'"
+    },
+    {
+      "kind": "function",
+      "name": "cable_category_layer_label",
+      "signature": "(layer_name: 'str', records=None) -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "cable_category_layer_name",
+      "signature": "(base_layer: 'str', category_id: 'str') -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "cable_category_record",
+      "signature": "(records, category_id: 'str') -> 'dict'"
+    },
+    {
+      "kind": "function",
+      "name": "cable_category_style",
+      "signature": "(records, category_id: 'str') -> 'tuple[str, str]'"
+    },
+    {
+      "kind": "function",
+      "name": "cable_conductor_external_allocations",
+      "signature": "(cable_uid: 'str', core_id: 'str', placements, cables, *, current_placement_uid: 'str' = '', current_wiring=None) -> 'dict'"
+    },
+    {
+      "kind": "function",
+      "name": "cable_conductor_preset",
+      "signature": "(cable_spec: 'str') -> 'list[dict]'"
+    },
+    {
+      "kind": "function",
+      "name": "cable_connection_at",
+      "signature": "(cable: 'CablePlacement', point_index: 'int')"
+    },
+    {
+      "kind": "function",
+      "name": "cable_connection_sections",
+      "signature": "(cable: 'CablePlacement') -> 'list[dict]'"
+    },
+    {
+      "kind": "function",
+      "name": "cable_display_label",
+      "signature": "(cable: 'CablePlacement') -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "cable_effective_layer",
+      "signature": "(cable) -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "cable_effective_specs",
+      "signature": "(cable: 'CablePlacement') -> 'list[str]'"
+    },
+    {
+      "kind": "function",
+      "name": "cable_estimated_length_metres",
+      "signature": "(cable: 'CablePlacement', metres_per_unit: 'float | None', reserve_percent: 'float' = 0.0) -> 'float | None'"
+    },
+    {
+      "kind": "function",
+      "name": "cable_is_physical_segment",
+      "signature": "(cable: 'CablePlacement') -> 'bool'"
+    },
+    {
+      "kind": "function",
+      "name": "cable_label_point",
+      "signature": "(cable: 'CablePlacement') -> 'tuple[float, float]'"
+    },
+    {
+      "kind": "function",
+      "name": "cable_legs_at_symbol",
+      "signature": "(cables, symbol_uid: 'str') -> 'list[dict]'"
+    },
+    {
+      "kind": "function",
+      "name": "cable_length_by_spec_metres",
+      "signature": "(cable: 'CablePlacement', metres_per_unit: 'float | None') -> 'dict[str, float] | None'"
+    },
+    {
+      "kind": "function",
+      "name": "cable_length_by_spec_room_metres",
+      "signature": "(cable, rooms, room_uid: 'str | None', metres_per_unit: 'float | None')"
+    },
+    {
+      "kind": "function",
+      "name": "cable_length_metres",
+      "signature": "(cable: 'CablePlacement', metres_per_unit: 'float | None') -> 'float | None'"
+    },
+    {
+      "kind": "function",
+      "name": "cable_light_endpoint_marking",
+      "signature": "(cable, placements, separator: 'str' = ' → ') -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "cable_neighbor_connection",
+      "signature": "(cable: 'CablePlacement', point_index: 'int', leg: 'str')"
+    },
+    {
+      "kind": "function",
+      "name": "cable_pl_display",
+      "signature": "(cable) -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "cable_plan_label",
+      "signature": "(cable: 'CablePlacement') -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "cable_room_length_metres",
+      "signature": "(cable, rooms, room_uid: 'str | None', metres_per_unit: 'float | None', reserve_percent: 'float' = 0.0)"
+    },
+    {
+      "kind": "function",
+      "name": "cable_room_marking",
+      "signature": "(cable, rooms, style: 'str' = 'name', separator: 'str' = ' → ') -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "cable_rooms",
+      "signature": "(cable, rooms)"
+    },
+    {
+      "kind": "function",
+      "name": "cable_route_chain_estimated_length_metres",
+      "signature": "(cable: 'CablePlacement', cables, metres_per_unit: 'float | None', reserve_percent: 'float' = 0.0) -> 'float | None'"
+    },
+    {
+      "kind": "function",
+      "name": "cable_route_chain_key",
+      "signature": "(cable: 'CablePlacement') -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "cable_route_chain_length_metres",
+      "signature": "(cable: 'CablePlacement', cables, metres_per_unit: 'float | None') -> 'float | None'"
+    },
+    {
+      "kind": "function",
+      "name": "cable_route_chain_members",
+      "signature": "(cable: 'CablePlacement', cables) -> 'list[CablePlacement]'"
+    },
+    {
+      "kind": "function",
+      "name": "cable_route_length",
+      "signature": "(cable: 'CablePlacement') -> 'float'"
+    },
+    {
+      "kind": "function",
+      "name": "cable_route_mode_for_point_index",
+      "signature": "(cable: 'CablePlacement', point_index: 'int') -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "cable_route_points_to",
+      "signature": "(start, end, orthogonal: 'bool' = False) -> 'list[tuple[float, float]]'"
+    },
+    {
+      "kind": "function",
+      "name": "cable_route_section_at_segment",
+      "signature": "(cable: 'CablePlacement', segment_index: 'int') -> 'dict | None'"
+    },
+    {
+      "kind": "function",
+      "name": "cable_route_section_mode",
+      "signature": "(cable: 'CablePlacement', a, b) -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "cable_section_spec_labels",
+      "signature": "(cable: 'CablePlacement') -> 'list[dict]'"
+    },
+    {
+      "kind": "function",
+      "name": "cable_spec_for_leg",
+      "signature": "(cable: 'CablePlacement', point_index: 'int', leg: 'str') -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "cable_spec_for_section",
+      "signature": "(cable: 'CablePlacement', a, b) -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "cable_spec_section_at_segment",
+      "signature": "(cable: 'CablePlacement', segment_index: 'int') -> 'dict | None'"
+    },
+    {
+      "kind": "function",
+      "name": "cable_switch_conductor_assignment_advice",
+      "signature": "(cable_uid: 'str', core_id: 'str', target_function: 'str', placements, cables, *, current_placement_uid: 'str' = '', current_wiring=None) -> 'dict'"
+    },
+    {
+      "kind": "function",
+      "name": "cable_switch_conductor_usage",
+      "signature": "(cable_uid: 'str', placements, cables, *, current_placement_uid: 'str' = '', current_wiring=None) -> 'dict'"
+    },
+    {
+      "kind": "function",
+      "name": "cable_symbol_connections",
+      "signature": "(cable: 'CablePlacement')"
+    },
+    {
+      "kind": "function",
+      "name": "cable_type_display",
+      "signature": "(layer: 'str') -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "cable_visible_in_layers",
+      "signature": "(cable, layer_visibility) -> 'bool'"
+    },
+    {
+      "kind": "function",
+      "name": "cable_visual_layout",
+      "signature": "(cables, lane_gap: 'float', *, tolerance: 'float | None' = None, fan_length: 'float | None' = None)"
+    },
+    {
+      "kind": "function",
+      "name": "cable_visual_paths",
+      "signature": "(cables, lane_gap: 'float', *, tolerance: 'float | None' = None, fan_length: 'float | None' = None)"
+    },
+    {
+      "kind": "function",
+      "name": "combo_modules",
+      "signature": "(symbol: 'str') -> 'list[str]'"
+    },
+    {
+      "kind": "function",
+      "name": "combo_socket_kind",
+      "signature": "(symbol: 'str') -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "combo_switch_symbol",
+      "signature": "(symbol: 'str') -> 'str | None'"
+    },
+    {
+      "kind": "function",
+      "name": "constrain_polyline_target_to_locked_neighbors",
+      "signature": "(points, index: 'int', target, locked_indices=None, orthogonal=False)"
+    },
+    {
+      "kind": "function",
+      "name": "convert_cable_route_mode_geometry",
+      "signature": "(points, connections=None, *, from_orthogonal: 'bool', to_orthogonal: 'bool')"
+    },
+    {
+      "kind": "function",
+      "name": "convert_cable_route_section_geometry",
+      "signature": "(points, connections, start_point_index: 'int', end_point_index: 'int', *, from_orthogonal: 'bool', to_orthogonal: 'bool')"
+    },
+    {
+      "kind": "function",
+      "name": "crop_extents_to_aspect",
+      "signature": "(extents, target_ratio: 'float')"
+    },
+    {
+      "kind": "function",
+      "name": "custom_combo_auto_name",
+      "signature": "(modules, socket_kind='none') -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "custom_symbol_records",
+      "signature": "()"
+    },
+    {
+      "kind": "function",
+      "name": "default_cable_category_records",
+      "signature": "() -> 'list[dict]'"
+    },
+    {
+      "kind": "function",
+      "name": "detect_oda_exec_path",
+      "signature": "() -> 'str | None'"
+    },
+    {
+      "kind": "function",
+      "name": "document_extents",
+      "signature": "(doc) -> 'tuple[float, float, float, float]'"
+    },
+    {
+      "kind": "function",
+      "name": "drawing_unit_info",
+      "signature": "(doc) -> 'tuple[int, str, float | None]'"
+    },
+    {
+      "kind": "function",
+      "name": "ensure_layers",
+      "signature": "(doc: 'ezdxf.document.Drawing') -> 'None'"
+    },
+    {
+      "kind": "function",
+      "name": "export_pl_box_report_pdf",
+      "signature": "(path, placements, cables, project_name='') -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "export_vector_pdf",
+      "signature": "(path: 'str | Path', cad_primitives, placements, cables=None, layer_visibility=None, paper='A4', orientation='Auto', annotation_style='Kompakt', annotation_font_size=8, extents_override=None, texts=None, fill_page=False, cad_opacity=1.0, annotation_mode='Auto', rooms=None, room_labels_visible=True, room_codes_visible=False, room_boundaries_visible=False) -> 'None'"
+    },
+    {
+      "kind": "function",
+      "name": "extract_cad_primitives",
+      "signature": "(doc) -> 'tuple[list[CADPrimitive], dict[str, int]]'"
+    },
+    {
+      "kind": "function",
+      "name": "first_unassigned_association_channel",
+      "signature": "(placement: \"'Placement'\") -> 'int | None'"
+    },
+    {
+      "kind": "function",
+      "name": "fit_view_extents",
+      "signature": "(cad_primitives, placements=None, cables=None, layer_visibility=None, texts=None)"
+    },
+    {
+      "kind": "function",
+      "name": "is_combo_row_symbol",
+      "signature": "(symbol: 'str') -> 'bool'"
+    },
+    {
+      "kind": "function",
+      "name": "is_combo_symbol",
+      "signature": "(symbol: 'str') -> 'bool'"
+    },
+    {
+      "kind": "function",
+      "name": "is_custom_combo_symbol",
+      "signature": "(symbol: 'str') -> 'bool'"
+    },
+    {
+      "kind": "function",
+      "name": "light_can_share_switch_group",
+      "signature": "(placement: \"'Placement'\") -> 'bool'"
+    },
+    {
+      "kind": "function",
+      "name": "light_output_associations",
+      "signature": "(placement: \"'Placement'\") -> 'list[str]'"
+    },
+    {
+      "kind": "function",
+      "name": "light_output_by_id",
+      "signature": "(placement: \"'Placement'\", output_id: 'str') -> 'dict'"
+    },
+    {
+      "kind": "function",
+      "name": "light_output_records",
+      "signature": "(placement: \"'Placement'\") -> 'list[dict]'"
+    },
+    {
+      "kind": "function",
+      "name": "load_app_settings",
+      "signature": "() -> 'dict'"
+    },
+    {
+      "kind": "function",
+      "name": "load_document",
+      "signature": "(path: 'str')"
+    },
+    {
+      "kind": "function",
+      "name": "load_predefined_article_catalog",
+      "signature": "()"
+    },
+    {
+      "kind": "function",
+      "name": "make_custom_combo_code",
+      "signature": "(modules, socket_kind='none') -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "mounting_zone_label",
+      "signature": "(value) -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "move_polyline_endpoint",
+      "signature": "(points, index: 'int', target, orthogonal=False, locked_indices=None)"
+    },
+    {
+      "kind": "function",
+      "name": "move_polyline_endpoint_flexible",
+      "signature": "(points, index: 'int', target, orthogonal=False)"
+    },
+    {
+      "kind": "function",
+      "name": "move_polyline_endpoint_stable",
+      "signature": "(points, index: 'int', target, orthogonal=False, locked_indices=None)"
+    },
+    {
+      "kind": "function",
+      "name": "move_polyline_vertex",
+      "signature": "(points, index: 'int', target, orthogonal=False)"
+    },
+    {
+      "kind": "function",
+      "name": "move_polyline_vertex_flexible",
+      "signature": "(points, index: 'int', target, orthogonal=False)"
+    },
+    {
+      "kind": "function",
+      "name": "move_polyline_vertex_stable",
+      "signature": "(points, index: 'int', target, orthogonal=False, locked_indices=None)"
+    },
+    {
+      "kind": "function",
+      "name": "nearest_cable_segment",
+      "signature": "(points, point) -> 'dict | None'"
+    },
+    {
+      "kind": "function",
+      "name": "next_association_letter",
+      "signature": "(placements) -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "normalize_already_purchased",
+      "signature": "(value) -> 'bool'"
+    },
+    {
+      "kind": "function",
+      "name": "normalize_appearance_mode",
+      "signature": "(value) -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "normalize_article_catalog",
+      "signature": "(records)"
+    },
+    {
+      "kind": "function",
+      "name": "normalize_article_color",
+      "signature": "(value) -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "normalize_article_module",
+      "signature": "(value) -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "normalize_article_unit",
+      "signature": "(value, default='stk') -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "normalize_association_channels",
+      "signature": "(symbol: 'str', channels, associations=None) -> 'list[str]'"
+    },
+    {
+      "kind": "function",
+      "name": "normalize_associations",
+      "signature": "(values) -> 'list[str]'"
+    },
+    {
+      "kind": "function",
+      "name": "normalize_bom_assemblies",
+      "signature": "(records)"
+    },
+    {
+      "kind": "function",
+      "name": "normalize_cable_article_bindings",
+      "signature": "(data)"
+    },
+    {
+      "kind": "function",
+      "name": "normalize_cable_category_id",
+      "signature": "(value: 'str') -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "normalize_cable_category_records",
+      "signature": "(records) -> 'list[dict]'"
+    },
+    {
+      "kind": "function",
+      "name": "normalize_cable_line_style",
+      "signature": "(value: 'str') -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "normalize_cable_route_section_modes",
+      "signature": "(records)"
+    },
+    {
+      "kind": "function",
+      "name": "normalize_cable_spec_section_overrides",
+      "signature": "(records, default_spec: 'str | None' = None)"
+    },
+    {
+      "kind": "function",
+      "name": "normalize_cable_symbol_connections",
+      "signature": "(records, point_count: 'int | None' = None)"
+    },
+    {
+      "kind": "function",
+      "name": "normalize_cable_visual_settings",
+      "signature": "(data: 'dict | None') -> 'dict'"
+    },
+    {
+      "kind": "function",
+      "name": "normalize_combo_label_mode",
+      "signature": "(value: 'str') -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "normalize_combo_template_records",
+      "signature": "(records)"
+    },
+    {
+      "kind": "function",
+      "name": "normalize_dark_canvas",
+      "signature": "(value, default: 'bool' = True) -> 'bool'"
+    },
+    {
+      "kind": "function",
+      "name": "normalize_hex_color",
+      "signature": "(value: 'str', fallback: 'str' = '#d00000') -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "normalize_light_associations",
+      "signature": "(values) -> 'list[str]'"
+    },
+    {
+      "kind": "function",
+      "name": "normalize_light_outputs",
+      "signature": "(values, legacy_associations=None, *, ensure_one: 'bool' = True) -> 'list[dict]'"
+    },
+    {
+      "kind": "function",
+      "name": "normalize_material_color",
+      "signature": "(value) -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "normalize_mounting_height_mm",
+      "signature": "(value)"
+    },
+    {
+      "kind": "function",
+      "name": "normalize_mounting_zone",
+      "signature": "(value) -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "normalize_pl_box_entries",
+      "signature": "(records) -> 'dict[str, dict]'"
+    },
+    {
+      "kind": "function",
+      "name": "normalize_pl_box_orientation",
+      "signature": "(value) -> 'int'"
+    },
+    {
+      "kind": "function",
+      "name": "normalize_pl_box_splices",
+      "signature": "(records) -> 'list[dict]'"
+    },
+    {
+      "kind": "function",
+      "name": "normalize_pl_box_wiring",
+      "signature": "(records) -> 'list[dict]'"
+    },
+    {
+      "kind": "function",
+      "name": "normalize_pl_field_record",
+      "signature": "(record) -> 'dict'"
+    },
+    {
+      "kind": "function",
+      "name": "normalize_pl_outlet_type",
+      "signature": "(value) -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "normalize_pl_passthrough_role",
+      "signature": "(value, function_id: 'str' = '') -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "normalize_pl_splice_position",
+      "signature": "(value)"
+    },
+    {
+      "kind": "function",
+      "name": "normalize_placement_bom_room_additions",
+      "signature": "(data) -> 'dict[str, list[str]]'"
+    },
+    {
+      "kind": "function",
+      "name": "normalize_recent_project_paths",
+      "signature": "(records, limit: 'int' = 8, existing_only: 'bool' = False) -> 'list[str]'"
+    },
+    {
+      "kind": "function",
+      "name": "normalize_symbol_article_bindings",
+      "signature": "(data)"
+    },
+    {
+      "kind": "function",
+      "name": "normalize_symbol_assembly_bindings",
+      "signature": "(data)"
+    },
+    {
+      "kind": "function",
+      "name": "output_cad_text_font_size",
+      "signature": "(height: 'float', page_scale: 'float') -> 'float'"
+    },
+    {
+      "kind": "function",
+      "name": "output_equivalent_view_scale",
+      "signature": "(page_scale: 'float') -> 'float'"
+    },
+    {
+      "kind": "function",
+      "name": "output_free_text_font_size",
+      "signature": "(height: 'float') -> 'float'"
+    },
+    {
+      "kind": "function",
+      "name": "output_switch_association_tag_origin",
+      "signature": "(anchor_x: 'float', anchor_y: 'float', symbol_bounds: 'tuple[float, float, float, float]', tag_width: 'float', tag_height: 'float', *, overview: 'bool' = False) -> 'tuple[float, float, str]'"
+    },
+    {
+      "kind": "function",
+      "name": "output_switch_association_tag_profile",
+      "signature": "(overview: 'bool' = False) -> 'dict'"
+    },
+    {
+      "kind": "function",
+      "name": "output_symbol_text_font_size",
+      "signature": "(height: 'float', page_scale: 'float') -> 'float'"
+    },
+    {
+      "kind": "function",
+      "name": "page_layout",
+      "signature": "(extents, paper='A4', orientation='Auto', margin_mm=5.0, fill_page=False)"
+    },
+    {
+      "kind": "function",
+      "name": "parse_custom_combo_symbol",
+      "signature": "(symbol: 'str')"
+    },
+    {
+      "kind": "function",
+      "name": "pl_box_conductor_key",
+      "signature": "(record: 'dict') -> 'tuple[str, int, str, str]'"
+    },
+    {
+      "kind": "function",
+      "name": "pl_box_conductor_ref",
+      "signature": "(key) -> 'dict'"
+    },
+    {
+      "kind": "function",
+      "name": "pl_box_conductors",
+      "signature": "(cable_legs) -> 'list[dict]'"
+    },
+    {
+      "kind": "function",
+      "name": "pl_box_leg_key",
+      "signature": "(record: 'dict') -> 'tuple[str, str]'"
+    },
+    {
+      "kind": "function",
+      "name": "pl_box_port_layout",
+      "signature": "(orientation=0) -> 'dict[int, tuple[str, int]]'"
+    },
+    {
+      "kind": "function",
+      "name": "pl_box_status",
+      "signature": "(entries, cable_legs) -> 'dict'"
+    },
+    {
+      "kind": "function",
+      "name": "pl_box_unplaced_legs",
+      "signature": "(entries, cable_legs) -> 'list[dict]'"
+    },
+    {
+      "kind": "function",
+      "name": "pl_box_wiring_status",
+      "signature": "(records, cable_legs) -> 'dict'"
+    },
+    {
+      "kind": "function",
+      "name": "pl_expected_switch_connections",
+      "signature": "(light: 'Placement', placements, cables) -> 'list[dict]'"
+    },
+    {
+      "kind": "function",
+      "name": "pl_field_cable_spec_key",
+      "signature": "(value: 'str') -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "pl_field_entry_state",
+      "signature": "(entry) -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "pl_field_suggested_leg",
+      "signature": "(entry, cable_legs, used_keys=None) -> 'dict | None'"
+    },
+    {
+      "kind": "function",
+      "name": "pl_montage_status",
+      "signature": "(outlet_type, associations, wiring, splices, requirements=None, cable_legs=None) -> 'dict'"
+    },
+    {
+      "kind": "function",
+      "name": "pl_outlet_capacity_issues",
+      "signature": "(outlet_type, associations, wiring, splices) -> 'list[dict]'"
+    },
+    {
+      "kind": "function",
+      "name": "pl_outlet_profile",
+      "signature": "(outlet_type, associations=None) -> 'dict'"
+    },
+    {
+      "kind": "function",
+      "name": "pl_outlet_terminal_capacity",
+      "signature": "(outlet_type, associations, function_id: 'str')"
+    },
+    {
+      "kind": "function",
+      "name": "pl_passthrough_function",
+      "signature": "(role: 'str', association: 'str' = '') -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "pl_passthrough_function_parts",
+      "signature": "(function_id: 'str') -> 'dict'"
+    },
+    {
+      "kind": "function",
+      "name": "pl_recommended_wago_article",
+      "signature": "(member_count: 'int', connects_to_outlet: 'bool' = True) -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "pl_report_wiring_rows",
+      "signature": "(placement, placements, cables) -> 'list[dict]'"
+    },
+    {
+      "kind": "function",
+      "name": "pl_splice_member_keys",
+      "signature": "(splice: 'dict') -> 'list[tuple[str, int, str, str]]'"
+    },
+    {
+      "kind": "function",
+      "name": "pl_switch_requirement_status",
+      "signature": "(requirements, wiring, splices=None) -> 'list[dict]'"
+    },
+    {
+      "kind": "function",
+      "name": "pl_terminal_occupancy",
+      "signature": "(function_id: 'str', wiring, splices) -> 'dict'"
+    },
+    {
+      "kind": "function",
+      "name": "pl_wago_article_capacity",
+      "signature": "(article_no: 'str') -> 'int'"
+    },
+    {
+      "kind": "function",
+      "name": "pl_wago_required_ports",
+      "signature": "(member_count: 'int', connects_to_outlet: 'bool' = True) -> 'int'"
+    },
+    {
+      "kind": "function",
+      "name": "pl_wiring_function_caption",
+      "signature": "(function_id: 'str', associations=None, outlet_type=None) -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "pl_wiring_function_options",
+      "signature": "(associations=None, outlet_type=None) -> 'list[tuple[str, str]]'"
+    },
+    {
+      "kind": "function",
+      "name": "pl_wiring_lamp_terminal",
+      "signature": "(function_id: 'str') -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "pl_wiring_requirement_summary",
+      "signature": "(requirements, wiring, splices=None) -> 'dict'"
+    },
+    {
+      "kind": "function",
+      "name": "pl_wiring_suggestions",
+      "signature": "(cable_legs, wiring, requirements=None, external_allocations=None) -> 'list[dict]'"
+    },
+    {
+      "kind": "function",
+      "name": "pl_wiring_workflow_issues",
+      "signature": "(cable_legs, wiring, requirements=None, splices=None, outlet_type='generic', associations=None, external_allocations=None) -> 'list[dict]'"
+    },
+    {
+      "kind": "function",
+      "name": "placement_bom_room_uids",
+      "signature": "(placement, rooms=None, additions=None, include_physical=True) -> 'list[str]'"
+    },
+    {
+      "kind": "function",
+      "name": "placement_connection_points",
+      "signature": "(placement: 'Placement') -> 'list[tuple[float, float]]'"
+    },
+    {
+      "kind": "function",
+      "name": "placement_connection_ports",
+      "signature": "(placement: 'Placement') -> 'list[tuple[float, float, int]]'"
+    },
+    {
+      "kind": "function",
+      "name": "placement_from_clipboard_payload",
+      "signature": "(text: 'str') -> 'Placement | None'"
+    },
+    {
+      "kind": "function",
+      "name": "placement_identification_caption",
+      "signature": "(placement, *, separator: 'str' = ' · ') -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "placement_matches_bom_room",
+      "signature": "(placement, rooms, additions, room_filter_uid: 'str') -> 'bool'"
+    },
+    {
+      "kind": "function",
+      "name": "placement_mating_sites",
+      "signature": "(placement: 'Placement') -> 'dict[str, tuple[float, float]]'"
+    },
+    {
+      "kind": "function",
+      "name": "placement_mount_points",
+      "signature": "(placement: 'Placement') -> 'list[tuple[float, float]]'"
+    },
+    {
+      "kind": "function",
+      "name": "placement_procurement_context",
+      "signature": "(placement) -> 'dict'"
+    },
+    {
+      "kind": "function",
+      "name": "placements_from_clipboard_payload",
+      "signature": "(text: 'str') -> 'list[Placement]'"
+    },
+    {
+      "kind": "function",
+      "name": "polyline_label_point",
+      "signature": "(points) -> 'tuple[float, float]'"
+    },
+    {
+      "kind": "function",
+      "name": "polyline_length",
+      "signature": "(points) -> 'float'"
+    },
+    {
+      "kind": "function",
+      "name": "polyline_room_lengths",
+      "signature": "(points, rooms)"
+    },
+    {
+      "kind": "function",
+      "name": "print_extents",
+      "signature": "(cad_primitives, placements, cables=None, layer_visibility=None, texts=None, rooms=None, room_labels_visible=True, room_boundaries_visible=False)"
+    },
+    {
+      "kind": "function",
+      "name": "print_vector_windows",
+      "signature": "(cad_primitives, placements, cables=None, layer_visibility=None, paper='A4', orientation='Auto', annotation_style='Kompakt', annotation_font_size=8, extents_override=None, printer_name=None, texts=None, fill_page=False, cad_opacity=1.0, rooms=None, room_labels_visible=True, room_codes_visible=False, room_boundaries_visible=False) -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "project_control_issues",
+      "signature": "(placements, cables, rooms=None, project_raw=None, assemblies=None) -> 'list[dict]'"
+    },
+    {
+      "kind": "function",
+      "name": "reconcile_pl_box_entries",
+      "signature": "(entries, cable_legs) -> 'dict[str, dict]'"
+    },
+    {
+      "kind": "function",
+      "name": "reconcile_pl_box_splices",
+      "signature": "(records, wiring, cable_legs) -> 'list[dict]'"
+    },
+    {
+      "kind": "function",
+      "name": "reconcile_pl_box_wiring",
+      "signature": "(records, cable_legs) -> 'list[dict]'"
+    },
+    {
+      "kind": "function",
+      "name": "register_custom_symbol",
+      "signature": "(code: 'str', name: 'str | None' = None) -> 'str | None'"
+    },
+    {
+      "kind": "function",
+      "name": "register_custom_symbol_records",
+      "signature": "(records)"
+    },
+    {
+      "kind": "function",
+      "name": "replace_cable_connection",
+      "signature": "(cable: 'CablePlacement', point_index: 'int', symbol_uid: 'str' = '', symbol_port: 'int' = 0) -> 'None'"
+    },
+    {
+      "kind": "function",
+      "name": "resolve_page_size",
+      "signature": "(paper: 'str', orientation: 'str', extents)"
+    },
+    {
+      "kind": "function",
+      "name": "room_contains_point",
+      "signature": "(room, x: 'float', y: 'float') -> 'bool'"
+    },
+    {
+      "kind": "function",
+      "name": "room_display_text",
+      "signature": "(room) -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "room_for_point",
+      "signature": "(rooms, x: 'float', y: 'float')"
+    },
+    {
+      "kind": "function",
+      "name": "room_output_label",
+      "signature": "(room, show_code: 'bool' = False) -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "room_polygon_centroid",
+      "signature": "(points) -> 'tuple[float, float]'"
+    },
+    {
+      "kind": "function",
+      "name": "rooms_along_polyline",
+      "signature": "(rooms, points)"
+    },
+    {
+      "kind": "function",
+      "name": "rotate_point",
+      "signature": "(x: 'float', y: 'float', deg: 'float') -> 'tuple[float, float]'"
+    },
+    {
+      "kind": "function",
+      "name": "save_app_settings",
+      "signature": "(data: 'dict') -> 'None'"
+    },
+    {
+      "kind": "function",
+      "name": "set_association_channel",
+      "signature": "(placement: \"'Placement'\", index: 'int', letter: 'str') -> 'list[str]'"
+    },
+    {
+      "kind": "function",
+      "name": "set_cable_route_section_mode",
+      "signature": "(cable: 'CablePlacement', a, b, mode: 'str') -> 'None'"
+    },
+    {
+      "kind": "function",
+      "name": "set_cable_spec_for_section",
+      "signature": "(cable: 'CablePlacement', a, b, cable_spec: 'str') -> 'None'"
+    },
+    {
+      "kind": "function",
+      "name": "set_cable_symbol_connections",
+      "signature": "(cable: 'CablePlacement', records) -> 'None'"
+    },
+    {
+      "kind": "function",
+      "name": "set_light_output_association",
+      "signature": "(placement: \"'Placement'\", output_id: 'str', letter: 'str') -> 'list[dict]'"
+    },
+    {
+      "kind": "function",
+      "name": "set_lights_shared_association",
+      "signature": "(placements, letter: 'str') -> 'int'"
+    },
+    {
+      "kind": "function",
+      "name": "set_oda_exec_path",
+      "signature": "(path: 'str | Path') -> 'bool'"
+    },
+    {
+      "kind": "function",
+      "name": "shift_cable_connection_indices",
+      "signature": "(cable: 'CablePlacement', start_index: 'int', delta: 'int') -> 'None'"
+    },
+    {
+      "kind": "function",
+      "name": "split_cable_into_physical_segments",
+      "signature": "(cable: 'CablePlacement', cable_ids=None, *, return_legacy_map: 'bool' = False)"
+    },
+    {
+      "kind": "function",
+      "name": "symbol_annotation_lines",
+      "signature": "(placement: 'Placement', style: 'str' = 'Kompakt') -> 'list[str]'"
+    },
+    {
+      "kind": "function",
+      "name": "symbol_clipboard_payload",
+      "signature": "(placement: 'Placement') -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "symbol_connection_points",
+      "signature": "(symbol: 'str', size: 'float') -> 'list[tuple[float, float]]'"
+    },
+    {
+      "kind": "function",
+      "name": "symbol_display_name",
+      "signature": "(code: 'str') -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "symbol_layer",
+      "signature": "(symbol: 'str') -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "symbol_local_bbox",
+      "signature": "(symbol: 'str', size: 'float') -> 'tuple[float, float, float, float]'"
+    },
+    {
+      "kind": "function",
+      "name": "symbol_mating_sites",
+      "signature": "(symbol: 'str', size: 'float') -> 'dict[str, tuple[float, float]]'"
+    },
+    {
+      "kind": "function",
+      "name": "symbol_mount_points",
+      "signature": "(symbol: 'str', size: 'float') -> 'list[tuple[float, float]]'"
+    },
+    {
+      "kind": "function",
+      "name": "symbol_primitives",
+      "signature": "(symbol: 'str', size: 'float')"
+    },
+    {
+      "kind": "function",
+      "name": "symbols_clipboard_payload",
+      "signature": "(placements) -> 'str'"
+    },
+    {
+      "kind": "function",
+      "name": "sync_association_channels",
+      "signature": "(placement: \"'Placement'\", channels=None) -> 'list[str]'"
+    },
+    {
+      "kind": "function",
+      "name": "sync_light_outputs",
+      "signature": "(placement: \"'Placement'\", outputs=None) -> 'list[dict]'"
+    },
+    {
+      "kind": "function",
+      "name": "wall_device_rotation_for_wall",
+      "signature": "(symbol: 'str', current_rotation: 'float', wall_angle: 'float') -> 'float'"
+    },
+    {
+      "kind": "function",
+      "name": "wall_device_snap_origins",
+      "signature": "(moving_symbol: 'str', moving_size: 'float', fixed: 'Placement', moving_rotation: 'float' = 0.0) -> 'list[tuple[float, float, str]]'"
+    }
+  ]
+}

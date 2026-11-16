@@ -1,0 +1,119 @@
+{
+  "modules": [
+    {
+      "name": "models",
+      "names": ["Placement", "CablePlacement", "TextPlacement", "RoomPlacement", "CADPrimitive"]
+    },
+    {
+      "name": "settings",
+      "names": ["load_app_settings", "save_app_settings", "_settings_file", "_recovery_file", "normalize_appearance_mode", "normalize_dark_canvas", "normalize_recent_project_paths", "normalize_cable_visual_settings"]
+    },
+    {
+      "name": "platform.oda",
+      "names": ["set_oda_exec_path", "detect_oda_exec_path"]
+    },
+    {
+      "name": "rooms",
+      "names": ["room_polygon_centroid", "room_contains_point", "room_for_point", "room_display_text", "room_output_label", "_segment_edge_intersection_t", "rooms_along_polyline", "cable_rooms", "polyline_room_lengths", "cable_room_length_metres", "cable_length_by_spec_room_metres", "cable_room_marking", "cable_light_endpoint_marking"]
+    },
+    {
+      "name": "cables.categories",
+      "patterns": ["cable_category_.*", "normalize_cable_category_.*"],
+      "names": ["default_cable_category_records", "cable_effective_layer", "cable_visible_in_layers"]
+    },
+    {
+      "name": "cables.geometry",
+      "patterns": ["move_polyline_.*", "cable_route_(?!section_mode$|mode_for_point_index$|section_at_segment$).*", "cable_length_(?!by_spec_room_metres$).*"],
+      "names": ["polyline_length", "rotate_point", "constrain_polyline_target_to_locked_neighbors", "convert_cable_route_mode_geometry", "cable_route_points_to"]
+    },
+    {
+      "name": "cables.sections",
+      "names": ["normalize_cable_route_section_modes", "cable_connection_sections", "cable_spec_for_section", "set_cable_route_section_mode", "convert_cable_route_section_geometry", "split_cable_into_physical_segments", "attach_symbol_to_existing_cable", "nearest_cable_segment", "shift_cable_connection_indices", "cable_route_section_mode", "cable_route_mode_for_point_index", "cable_route_section_at_segment"]
+    },
+    {
+      "name": "symbols.registry",
+      "patterns": ["custom_symbol_.*", "normalize_combo_template_records"],
+      "names": ["parse_custom_combo_symbol", "make_custom_combo_code", "is_combo_symbol", "combo_modules", "register_custom_symbol", "symbol_display_name"]
+    },
+    {
+      "name": "symbols.geometry",
+      "patterns": ["placement_.*_points"],
+      "names": ["symbol_primitives", "symbol_connection_points", "symbol_mount_points", "symbol_local_bbox", "symbol_mating_sites", "wall_device_snap_origins", "wall_device_rotation_for_wall"]
+    },
+    {
+      "name": "symbols.clipboard",
+      "names": ["symbol_clipboard_payload", "placement_from_clipboard_payload", "symbols_clipboard_payload", "placements_from_clipboard_payload", "symbol_layer", "symbol_annotation_lines"]
+    },
+    {
+      "name": "associations",
+      "patterns": ["association_.*", "light_output_.*"],
+      "names": ["normalize_associations", "normalize_light_associations", "normalize_light_outputs", "sync_light_outputs", "set_light_output_association", "light_can_share_switch_group", "set_lights_shared_association", "normalize_association_channels", "sync_association_channels", "set_association_channel", "next_association_letter"]
+    },
+    {
+      "name": "pl_box.model",
+      "patterns": ["normalize_pl_.*", "pl_field_.*"],
+      "names": ["pl_box_port_layout", "pl_outlet_profile", "reconcile_pl_box_entries", "auto_assign_pl_box_entries", "pl_box_status"]
+    },
+    {
+      "name": "pl_box.wiring",
+      "patterns": ["pl_wiring_(?!workflow_issues$).*", "cable_switch_conductor_.*"],
+      "names": ["pl_expected_switch_connections", "pl_switch_requirement_status", "cable_conductor_preset", "cable_legs_at_symbol", "reconcile_pl_box_wiring"]
+    },
+    {
+      "name": "pl_box.wago",
+      "patterns": ["pl_wago_.*"],
+      "names": ["pl_recommended_wago_article", "reconcile_pl_box_splices", "pl_terminal_occupancy", "pl_outlet_capacity_issues"]
+    },
+    {
+      "name": "pl_box.status",
+      "names": ["pl_wiring_workflow_issues", "pl_montage_status"]
+    },
+    {
+      "name": "export.pl_report",
+      "names": ["_pdf_wrap_lines", "_pdf_fit_text", "pl_report_wiring_rows", "_draw_pl_report_box", "export_pl_box_report_pdf"]
+    },
+    {
+      "name": "bom.articles",
+      "patterns": ["normalize_article_.*", "cable_article_key.*"],
+      "names": ["article_packaging", "article_purchase_requirement", "bom_article_category", "article_filter_facets", "normalize_article_catalog", "load_predefined_article_catalog"]
+    },
+    {
+      "name": "bom.procurement",
+      "names": ["normalize_mounting_zone", "normalize_mounting_height_mm", "placement_procurement_context", "bom_purchase_segment_key"]
+    },
+    {
+      "name": "bom.assemblies",
+      "patterns": ["bom_assembly_.*", "normalize_bom_assemblies"],
+      "names": ["normalize_symbol_assembly_bindings", "normalize_symbol_article_bindings"]
+    },
+    {
+      "name": "bom.build",
+      "names": ["bom_symbol_parts", "bom_source_breakdown", "bom_article_room_usage", "project_control_issues", "build_bom", "bom_binding_summary"]
+    },
+    {
+      "name": "export.output_profiles",
+      "patterns": ["output_.*"],
+      "names": ["annotation_visual_profile"]
+    },
+    {
+      "name": "export.dxf_writer",
+      "names": ["ensure_layers", "add_placement_to_dxf", "add_cable_to_dxf", "add_free_text_to_dxf"]
+    },
+    {
+      "name": "export.extents",
+      "names": ["print_extents", "fit_view_extents", "crop_extents_to_aspect", "page_layout", "resolve_page_size"]
+    },
+    {
+      "name": "export.pdf",
+      "names": ["export_vector_pdf"]
+    },
+    {
+      "name": "cad_io",
+      "names": ["load_document", "document_extents", "extract_cad_primitives", "drawing_unit_info"]
+    },
+    {
+      "name": "platform.printing",
+      "names": ["print_vector_windows"]
+    }
+  ]
+}

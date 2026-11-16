@@ -31,6 +31,7 @@ def test_one_switch_channel_can_control_multiple_lights():
     assert l2.associations==["a"]
     assert sw.associations==["a"]
     assert w.association_source_uid==sw.uid
+    w.project.dirty=False
     w.close()
 
 
@@ -46,6 +47,7 @@ def test_light_moves_to_new_association_instead_of_collecting_letters():
     w.association_source_uid=b.uid; w.association_active_letter="b"
     w._symbol_clicked(w.symbol_items[light.uid])
     assert light.associations==["b"]
+    w.project.dirty=False
     w.close()
 
 
@@ -61,6 +63,7 @@ def test_spot_parent_inherits_the_single_light_relation_and_has_visible_parent_c
     ann.refresh()
     assert "G07" in ann.toHtml()
     assert "a" in ann.toHtml()
+    w.project.dirty=False
     w.close()
 
 
@@ -84,6 +87,7 @@ def test_individual_spot_is_selected_for_parent_assignment():
     assert w.symbol_items[spot.uid].isSelected()
     w.start_spot_parent_for_selection()
     assert w.spot_parent_pending==[spot.uid]
+    w.project.dirty=False
     w.close()
 
 
@@ -111,6 +115,7 @@ def test_crown_guide_advances_to_second_switching_and_finishes():
     assert w.association_source_uid==""
     assert w.symbol_items[sw.uid].isSelected()
     assert w.apply_button.isEnabled()
+    w.project.dirty=False
     w.close()
 
 
@@ -126,6 +131,7 @@ def test_correspondence_reuses_existing_relation_without_removing_it_from_light(
     w._symbol_clicked(w.symbol_items[light.uid])
     assert new_switch.associations==["a"]
     assert light.associations==["a"]
+    w.project.dirty=False
     w.close()
 
 
@@ -148,6 +154,7 @@ def test_double_correspondence_guide_reuses_two_existing_relations_and_advances(
     assert l1.associations==["a"]
     assert l2.associations==["b"]
     assert w.association_source_uid==""
+    w.project.dirty=False
     w.close()
 
 
@@ -169,4 +176,5 @@ def test_four_pushbuttons_guide_advances_through_all_four_channels():
     assert sw.associations==["a","b","c","d"]
     assert [x.associations for x in lights]==[["a"],["b"],["c"],["d"]]
     assert w.association_source_uid==""
+    w.project.dirty=False
     w.close()

@@ -1,0 +1,24 @@
+{
+  "metres_per_unit": 0.001,
+  "reserve_percent": 10.0,
+  "catalog": [
+    {"article_no": "SW-001", "description": "Afbryderindsats 1-polet", "manufacturer": "Test", "unit": "stk", "unit_price": 95.0, "price_currency": "DKK", "bom_category": "Indsats"},
+    {"article_no": "FRAME-001", "description": "Ramme 1 modul", "manufacturer": "Test", "unit": "stk", "unit_price": 22.5, "price_currency": "DKK", "bom_category": "Rammer"},
+    {"article_no": "OUT-001", "description": "Lampeudtag loft", "manufacturer": "Test", "unit": "stk", "unit_price": 75.0, "price_currency": "DKK", "bom_category": "Lampeudtag"},
+    {"article_no": "OUT-WALL-001", "description": "Lampeudtag væg", "manufacturer": "Test", "unit": "stk", "unit_price": 64.0, "price_currency": "DKK", "bom_category": "Lampeudtag"},
+    {"article_no": "SOCKET-001", "description": "Stikkontakt med jord", "manufacturer": "Test", "unit": "stk", "unit_price": 110.0, "price_currency": "DKK", "bom_category": "Stikkontakter"},
+    {"article_no": "WAGO-221-413", "description": "Wago 3-leder", "manufacturer": "Wago", "unit": "stk", "unit_price": 3.25, "price_currency": "DKK", "bom_category": "Samlemuffer"},
+    {"article_no": "CBL-3G15", "description": "Installationskabel 3G1,5", "manufacturer": "Test", "unit": "m", "price_unit": "m", "unit_price": 8.5, "price_currency": "DKK", "bom_category": "Kabler"},
+    {"article_no": "CBL-5G15", "description": "Installationskabel 5G1,5", "manufacturer": "Test", "unit": "rulle", "price_unit": "rulle", "package_length_m": 25.0, "unit_price": 425.0, "price_currency": "DKK", "bom_category": "Kabler"}
+  ],
+  "assemblies": [
+    {
+      "id": "asm-switch-standard",
+      "name": "Standardafbryder",
+      "items": [
+        {"article_no": "SW-001", "qty": 1.0, "role": "Indsats"},
+        {"article_no": "FRAME-001", "qty": 1.0, "role": "Ramme"}
+      ]
+    }
+  ]
+}

@@ -39,7 +39,8 @@ def test_overview_keeps_only_primary_group():
     text=ann.toHtml()
     assert "G01" in text
     assert "S01" not in text
-    assert "a" not in text
+    # Tilhørsbogstavet er nu bevidst synligt allerede i oversigtsniveauet.
+    assert "a" in text
 
 
 def test_hidden_mode_hides_every_annotation_detail():
@@ -60,4 +61,5 @@ def test_room_direction_follows_symbol_side_of_vertical_wall():
     rdx,_=w._annotation_room_direction(right)
     assert ldx < 0
     assert rdx > 0
+    w.project.dirty=False
     w.close()

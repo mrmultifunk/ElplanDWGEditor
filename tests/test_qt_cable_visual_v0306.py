@@ -26,6 +26,7 @@ def test_cad_background_opacity_only_affects_cad_items():
     w._cad_opacity_changed(40)
     assert abs(cad.opacity()-0.40)<1e-9
     assert abs(w.symbol_items[p.uid].opacity()-1.0)<1e-9
+    w.project.dirty=False
     w.close()
 
 
@@ -46,4 +47,5 @@ def test_cable_workspace_live_settings():
     assert w.view._cable_snap_symbols is True
     assert w.view._cable_snap_walls is False
     w.view.remove_last_cable_point()
+    w.project.dirty=False
     w.close()

@@ -46,4 +46,5 @@ def test_output_dimming_setting_is_independent_from_scene_symbols():
     assert w._output_cad_opacity()==1.0
     w.print_cad_dimming=True
     assert abs(w._output_cad_opacity()-.40)<1e-9
+    w.project.dirty=False
     w.close()

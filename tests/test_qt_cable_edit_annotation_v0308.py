@@ -25,6 +25,10 @@ def test_existing_cable_can_be_selected_and_edited_with_undo():
     w._add_cable(cable)
     item=w.cable_items[id(cable)]
     item.setSelected(True)
+    # 0.59.85 udskyder Egenskaber til efter muse-slip; tøm den samlede
+    # valghændelse eksplicit i denne programmatisk drevne test.
+    w._flush_queued_selection_changed()
+    item._selection_refresh()
     assert item.handles
     before=CableItem.state(cable)
     item.begin_handle_edit()
@@ -34,6 +38,7 @@ def test_existing_cable_can_be_selected_and_edited_with_undo():
     assert CableItem.state(cable)!=before
     w.undo_stack.undo()
     assert CableItem.state(cable)==before
+    w.project.dirty=False
     w.close()
 
 
@@ -51,8 +56,8 @@ def test_doubleclick_style_breakpoint_insert_and_remove():
 
 def test_annotation_modes_keep_association_visible():
     _app()
-    p=core.Placement(symbol="switch_1",x=0,y=0,size=200,label="S01",group="G12",associations=["a"])
-    ann=AnnotationItem(p,scale_provider=lambda:0.05,mode_provider=lambda:"Auto")
+    p=core.Placement(symbol="light_connection",x=0,y=0,size=200,label="S01",group="G12",associations=["a"])
+    ann=AnnotationItem(p,scale_provider=lambda:0.06,mode_provider=lambda:"Auto")
     html=ann.toHtml()
     assert "G12" in html
     assert "a" in html

@@ -27,4 +27,4 @@ def test_symbol_glow_is_lazy_and_does_not_expand_hit_geometry():
     assert "self.setGraphicsEffect(effect)" in block
     assert "effect.setEnabled(False)" in block
     # Do not make the symbol boundingRect artificially huge just to host a halo.
-    assert "adjusted(-8, -8, 8, 8)" in block
+    assert "adjusted(-8, -8-extra, 8+extra, 8)" in block

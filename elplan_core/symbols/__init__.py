@@ -1,0 +1,1 @@
+"""Symbolregister og ren symbolgeometri."""

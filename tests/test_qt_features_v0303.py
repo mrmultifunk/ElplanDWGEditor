@@ -74,4 +74,5 @@ def test_rotate_association_and_cable_undo():
     assert len(w.project.cables) == before
     w.undo_stack.redo()
     assert len(w.project.cables) == before + 1
+    w.project.dirty=False
     w.close()

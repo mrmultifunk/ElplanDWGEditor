@@ -1,0 +1,17 @@
+{
+  "canonical_sha256": "a99361b90750621e7b4e90139259b330a3cb82d855f5134c281b543106a16dda",
+  "counts": {
+    "line": 5,
+    "text": 2
+  },
+  "document_extents": [
+    0.0,
+    0.0,
+    10000.0,
+    8000.0
+  ],
+  "layers": {
+    "0": 7
+  },
+  "primitive_count": 7
+}

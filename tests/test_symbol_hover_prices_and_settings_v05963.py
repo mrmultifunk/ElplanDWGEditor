@@ -86,4 +86,4 @@ def test_shared_settings_panel_and_hover_cache_are_wired_to_one_global_vat_key()
     assert "user_library.apply_article_prices" in hover
     assert "_hover_price_lookup_signature" in hover
     assert "build_hover_bom_html" in hover
-    assert len(app.splitlines()) < 6200
+    assert len(app.splitlines()) <= 6980

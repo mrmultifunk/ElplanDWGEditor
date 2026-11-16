@@ -44,6 +44,7 @@ def test_text_copy_and_spot_parent():
     w.copy_selected()
     w.paste_clipboard()
     assert len(w.project.texts)==2
+    w.project.dirty=False
     w.close()
 
 
@@ -52,4 +53,5 @@ def test_print_extents_current_view():
     w=MainWindow()
     ext=w._print_extents("Aktuel visning")
     assert len(ext)==4 and ext[2]>ext[0] and ext[3]>ext[1]
+    w.project.dirty=False
     w.close()

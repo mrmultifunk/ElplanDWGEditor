@@ -37,7 +37,9 @@ def test_symbol_drag_defers_plan_wide_work_until_release():
 def test_selection_reuses_catalog_and_only_refreshes_changed_annotations():
     source=inspect.getsource(MainWindow._selection_changed)
     assert "load_core_article_catalog" not in source
-    assert "_cached_article_catalog" in source
+    assert "_cached_article_catalog" not in source
+    assert 'if target_workflow=="purchase"' in source
+    assert "_refresh_selected_symbol_bom_ui" in source
     assert "selected_annotation_uids | self._last_selected_annotation_uids" in source
     assert "_symbol_metadata_refresh_timer.start()" in source
 

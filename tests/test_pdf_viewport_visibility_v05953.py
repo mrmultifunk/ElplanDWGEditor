@@ -28,6 +28,7 @@ def test_pdf_output_visibility_respects_quick_cable_filter():
     w.quick_visibility["cables"]=False
     visibility=w._output_layer_visibility()
     assert visibility[effective] is False
+    w.project.dirty=False
     w.close()
 
 
@@ -41,6 +42,7 @@ def test_pdf_output_visibility_keeps_layer_hidden_when_quick_filter_is_on():
     w.quick_visibility["cables"]=True
     visibility=w._output_layer_visibility()
     assert visibility[effective] is False
+    w.project.dirty=False
     w.close()
 
 
