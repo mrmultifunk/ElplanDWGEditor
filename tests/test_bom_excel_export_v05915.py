@@ -9,7 +9,7 @@ from bom_xlsx_export import write_bom_xlsx
 
 
 def test_version_05915():
-    assert APP_VERSION == core.APP_VERSION == "0.59.83"
+    assert APP_VERSION == core.APP_VERSION == "0.59.84"
 
 
 def _sample_rows():

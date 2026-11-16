@@ -7,7 +7,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_v0561_version_and_category_chips():
-    assert APP_VERSION == core.APP_VERSION == "0.59.83"
+    assert APP_VERSION == core.APP_VERSION == "0.59.84"
     visual = (ROOT / "qt_visual_workspace.py").read_text(encoding="utf-8")
     theme = (ROOT / "qt_theme.py").read_text(encoding="utf-8")
     app = (ROOT / "qt_app.py").read_text(encoding="utf-8")

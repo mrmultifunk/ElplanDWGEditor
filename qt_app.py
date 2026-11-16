@@ -776,6 +776,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self.spot_link_paths: list = []
         self.relation_overview_items: list = []
         self.association_target_overlays: list[QGraphicsRectItem] = []
+        self.association_target_overlay_by_uid: dict[str,QGraphicsRectItem] = {}
         self.association_guide: QGraphicsPathItem | None = None
         self.association_badge: QGraphicsSimpleTextItem | None = None
         self.association_source_overlay: QGraphicsEllipseItem | None = None
@@ -1205,6 +1206,18 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self.act_save.triggered.connect(self.save_project)
         self.act_save_as = QAction("Gem som…", self)
         self.act_save_as.triggered.connect(lambda: self.save_project(save_as=True))
+        # Enter used to work only while the drawing view had keyboard focus.
+        # Keep this window-scoped action disabled outside an association
+        # session, so tables and buttons can no longer swallow the save key.
+        self.act_finish_association=QAction("Gem tilknytning",self)
+        self.act_finish_association.setShortcuts([
+            QKeySequence(Qt.Key.Key_Return),QKeySequence(Qt.Key.Key_Enter),
+            QKeySequence("Ctrl+Return"),QKeySequence("Ctrl+Enter"),
+        ])
+        self.act_finish_association.setShortcutContext(Qt.ShortcutContext.WindowShortcut)
+        self.act_finish_association.setEnabled(False)
+        self.act_finish_association.triggered.connect(self._finish_active_association)
+        self.addAction(self.act_finish_association)
         self.act_export_core = QAction("Eksportér kernedata…", self)
         self.act_export_core.setToolTip("Eksportér artikelbase, globale styklister, prisbog og portable programindstillinger til én fil.")
         self.act_export_core.triggered.connect(self.export_core_data_package)
@@ -1944,7 +1957,23 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self.clear_assoc_button.clicked.connect(self.clear_selected_associations)
         ar.addWidget(self.assoc_button, 1)
         ar.addWidget(self.clear_assoc_button)
-        al.addLayout(ar)
+        self.assoc_edit_actions=QWidget()
+        self.assoc_edit_actions.setLayout(ar)
+        ar.setContentsMargins(0,0,0,0)
+        al.addWidget(self.assoc_edit_actions)
+        self.assoc_session_actions=QWidget()
+        session_row=QHBoxLayout(self.assoc_session_actions)
+        session_row.setContentsMargins(0,0,0,0)
+        self.assoc_save_button=_set_role(QPushButton("Gem tilknytning"),"primaryButton")
+        self.assoc_save_button.setToolTip("Gem alle ændringer i den aktive tilknytningssession (Enter eller Ctrl+Enter).")
+        self.assoc_save_button.clicked.connect(self._finish_active_association)
+        self.assoc_cancel_button=_set_role(QPushButton("Annuller"),"quietButton")
+        self.assoc_cancel_button.setToolTip("Fortryd hele den aktive tilknytningssession (Esc).")
+        self.assoc_cancel_button.clicked.connect(self.cancel_active_tool)
+        session_row.addWidget(self.assoc_save_button,1)
+        session_row.addWidget(self.assoc_cancel_button)
+        self.assoc_session_actions.hide()
+        al.addWidget(self.assoc_session_actions)
         self.assoc_note = QLabel(
             "Vælg en betjening i tabellen, vælg Tilføj / fjern lys, og klik derefter "
             "lampesteder på tegningen. Enter gemmer; Esc annullerer."
@@ -2253,7 +2282,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             self.association_channel_index = 0
             self._association_session_before=None
             self._association_session_dirty_before=False
-            self.view.set_association_mode_active(False)
+            self._sync_association_session_ui()
         self.spot_parent_pending = []
         self._clear_association_visuals()
         self._refresh_switch_association_badges()
@@ -2598,6 +2627,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         item.signals.hoverMoved.connect(lambda obj,pos:self._hover_info_move("symbol",obj,pos))
         item.signals.hoverLeft.connect(lambda obj:self._hover_info_leave("symbol",obj))
         item.snapper = self._snap_moving_symbol
+        item.workflow_click_only=bool(self.association_source_uid or self.association_pick_source)
 
     def _wire_cable_item(self, item: CableItem) -> None:
         item.signals.editStarted.connect(self._cable_handle_edit_started)
@@ -5051,6 +5081,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             if overlay.scene() is not None:
                 self.scene.removeItem(overlay)
         self.association_target_overlays.clear()
+        self.association_target_overlay_by_uid.clear()
         if self.association_guide is not None and self.association_guide.scene() is not None:
             self.scene.removeItem(self.association_guide)
         if self.association_badge is not None and self.association_badge.scene() is not None:
@@ -5248,7 +5279,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             self.start_association_mode(); return
         self._activate_association_source(item,self._selected_association_channel_index(item.placement))
 
-    def _refresh_association_visuals(self) -> None:
+    def _refresh_association_visuals(self,*,refresh_badges:bool=True) -> None:
         self._clear_association_visuals()
         source=self._placement_by_uid(self.association_source_uid)
         source_item=self.symbol_items.get(self.association_source_uid)
@@ -5271,20 +5302,12 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
                 continue
             item=self.symbol_items.get(p.uid)
             if item is None or not item.isVisible():continue
-            target_letters=core.light_output_associations(p)
-            linked=bool(active and active in target_letters)
-            occupied=bool(target_letters and not linked)
             rect=item.sceneBoundingRect().adjusted(-margin,-margin,margin,margin)
             overlay=QGraphicsRectItem(rect)
-            color="#126bc4" if linked else ("#d97706" if occupied else "#0f9f91")
-            pen=QPen(QColor(color))
-            pen.setCosmetic(True); pen.setWidthF(2.0 if linked else 1.3)
-            pen.setStyle(Qt.PenStyle.SolidLine if linked else Qt.PenStyle.DashLine)
-            overlay.setPen(pen)
-            fill=QColor(color); fill.setAlpha(55 if linked else 18)
-            overlay.setBrush(QBrush(fill))
+            self._style_association_target_overlay(p,overlay,active)
             overlay.setZValue(1450); overlay.setAcceptedMouseButtons(Qt.MouseButton.NoButton)
             self.scene.addItem(overlay); self.association_target_overlays.append(overlay)
+            self.association_target_overlay_by_uid[p.uid]=overlay
 
         self.association_guide=QGraphicsPathItem()
         pen=QPen(QColor("#2b84d6")); pen.setCosmetic(True); pen.setWidthF(1.2); pen.setStyle(Qt.PenStyle.DashLine)
@@ -5307,7 +5330,32 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self.association_badge.setFont(QFont("Segoe UI",8,QFont.Weight.DemiBold)); self.association_badge.setZValue(1460)
         c=source_anchor if source_anchor is not None else source_item.sceneBoundingRect().center()
         self.association_badge.setPos(c+QPointF(12.0/scale,-28.0/scale)); self.scene.addItem(self.association_badge)
-        self._refresh_switch_association_badges()
+        if refresh_badges:self._refresh_switch_association_badges()
+        elif not self.association_source_uid:self._symbol_metadata_refresh_timer.start()
+        if self.view.last_mouse_scene is not None:self._association_mouse_moved(self.view.last_mouse_scene)
+
+    def _style_association_target_overlay(
+        self,p:core.Placement,overlay:QGraphicsRectItem,active:str|None=None
+    )->None:
+        active=str(self.association_active_letter if active is None else active or "")
+        target_letters=core.light_output_associations(p)
+        linked=bool(active and active in target_letters)
+        occupied=bool(target_letters and not linked)
+        color="#126bc4" if linked else ("#d97706" if occupied else "#0f9f91")
+        pen=QPen(QColor(color)); pen.setCosmetic(True); pen.setWidthF(2.0 if linked else 1.3)
+        pen.setStyle(Qt.PenStyle.SolidLine if linked else Qt.PenStyle.DashLine)
+        overlay.setPen(pen)
+        fill=QColor(color); fill.setAlpha(55 if linked else 18)
+        overlay.setBrush(QBrush(fill))
+
+    def _refresh_association_target_visual(self,target:core.Placement)->None:
+        """Repaint one changed target without rebuilding every hit outline."""
+        overlay=self.association_target_overlay_by_uid.get(target.uid)
+        if overlay is None:
+            self._refresh_association_visuals(refresh_badges=False)
+            return
+        self._style_association_target_overlay(target,overlay)
+        overlay.update()
         if self.view.last_mouse_scene is not None:self._association_mouse_moved(self.view.last_mouse_scene)
 
     def _association_mouse_moved(self, scene_pos: QPointF) -> None:
@@ -5413,6 +5461,38 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             if f"({letter})" in choice:return letter
         return existing[0] if prefer_existing else new_letter
 
+    def _sync_association_session_ui(self)->None:
+        """Keep save/cancel controls and click-only canvas behavior in sync."""
+        active=bool(self.association_source_uid or self.association_pick_source)
+        can_save=bool(self.association_source_uid)
+        self.view.set_association_mode_active(can_save)
+        action=getattr(self,"act_finish_association",None)
+        if action is not None:action.setEnabled(can_save)
+        edit_actions=getattr(self,"assoc_edit_actions",None)
+        if edit_actions is not None:edit_actions.setVisible(not active)
+        session_actions=getattr(self,"assoc_session_actions",None)
+        if session_actions is not None:session_actions.setVisible(active)
+        save_button=getattr(self,"assoc_save_button",None)
+        if save_button is not None:
+            save_button.setEnabled(can_save)
+            save_button.setText("Gem tilknytning" if can_save else "Vælg afbryder på tegningen…")
+        for symbol_item in self.symbol_items.values():
+            if bool(getattr(symbol_item,"workflow_click_only",False))!=active:
+                symbol_item.workflow_click_only=active
+        if hasattr(self,"_refresh_workflow_bar"):self._refresh_workflow_bar()
+
+    def _refresh_association_annotations(self,*uids:str)->None:
+        """Refresh only labels whose relation changed; defer global layout."""
+        wanted={str(uid or "") for uid in uids if str(uid or "")}
+        for uid in wanted:
+            ann=self.annotation_items.get(uid)
+            if ann is not None:ann.refresh()
+        # Collision layout and the complete switch-badge pass are deliberately
+        # deferred until commit/cancel. The active overlay already gives live
+        # feedback, so a plan-wide layout after every target click adds latency
+        # without helping the current decision.
+        if not self.association_source_uid:self._symbol_metadata_refresh_timer.start()
+
     def _finish_association_mode(self,source_uid:str,status:str,*,commit:bool=True)->None:
         before=self._association_session_before
         dirty_before=bool(self._association_session_dirty_before)
@@ -5428,7 +5508,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self.association_channel_index=0
         self._association_session_before=None
         self._association_session_dirty_before=False
-        self.view.set_association_mode_active(False)
+        self._sync_association_session_ui()
         self._clear_association_visuals()
         self._refresh_switch_association_badges()
         self.view.unsetCursor()
@@ -5469,7 +5549,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
 
         self.view.cancel_tool(emit_signal=False); self.view.setCursor(Qt.CursorShape.CrossCursor)
         self.view.setFocus(Qt.FocusReason.OtherFocusReason)
-        self.view.set_association_mode_active(True)
+        self._sync_association_session_ui()
         self._refresh_association_visuals()
         caption=core.association_channel_caption(p.symbol,self.association_channel_index)
         if self.association_active_letter:
@@ -5500,8 +5580,8 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self.association_channel_index=0
         self._association_session_before=None
         self._association_session_dirty_before=False
-        self.view.set_association_mode_active(False)
         self.association_pick_source=True
+        self._sync_association_session_ui()
         self.view.cancel_tool(emit_signal=False); self.view.setCursor(Qt.CursorShape.CrossCursor)
         self._refresh_association_source_picker()
         self._set_status(
@@ -5622,8 +5702,10 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
 
         self._sync_spot_parent_associations()
         self.project.dirty=True; self._update_title()
-        for ann in self.annotation_items.values():ann.refresh()
-        self._refresh_switch_association_badges()
+        affected=[source.uid,target.uid]
+        if target.symbol=="light_connection":
+            affected.extend(p.uid for p in self.project.placements if str(getattr(p,"parent_light_uid","") or "")==target.uid)
+        self._refresh_association_annotations(*affected)
 
         # Ved førstegangsopsætning af flerfunktions-/kombiafbrydere går guiden
         # videre til den næste FYSISKE, endnu tomme kanal. Kanalrækkefølgen er
@@ -5635,13 +5717,12 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             if next_index is not None:
                 self.association_active_letter=""
                 self.association_channel_index=next_index
-                self._refresh_association_visuals()
+                self._refresh_association_visuals(refresh_badges=False)
                 next_caption=core.association_channel_caption(source.symbol,next_index)
                 self._set_status(
                     f"{completed}/{cap} betjeninger gemt · fortsæt med {next_caption} "
                     f"({completed+1}/{cap}): klik et BLÅT lampested/lampe."
                 )
-                QTimer.singleShot(0,lambda:self._reselect_uid(source.uid))
                 return
 
             summary=core.association_display(source) or ", ".join(core.normalize_associations(source.associations))
@@ -5653,24 +5734,30 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
             )
             return
 
-        self._refresh_association_visuals()
+        if new_channel_created:
+            # The first click establishes the active letter, so every target
+            # changes from neutral/occupied to a letter-specific state.
+            self._refresh_association_visuals(refresh_badges=False)
+        else:
+            self._refresh_association_target_visual(target)
         count=self._association_target_count(active)
         caption=core.association_channel_caption(source.symbol,channel_index)
         self._set_status(
             f"{caption} · {active}: {count} lys valgt. "
             "Klik BLÅ lys til/fra · Enter gemmer · Esc annullerer"
         )
-        QTimer.singleShot(0,lambda:self._reselect_uid(source.uid))
 
     def _reselect_uid(self, uid: str) -> None:
+        blocker=QSignalBlocker(self.scene)
         for item in self.scene.selectedItems():
             item.setSelected(False)
         item = self.symbol_items.get(uid)
         if item:
             item.setSelected(True)
-            # selectionChanged udsendes normalt af scenen, men en eksplicit
-            # refresh gør Egenskaber deterministisk efter en guidehandling.
-            self._selection_changed()
+        del blocker
+        # Exactly one inspector rebuild after a workflow, even when the
+        # selection already pointed at the source symbol.
+        self._selection_changed()
 
     def clear_selected_associations(self) -> None:
         item = self._selected_symbol_item()

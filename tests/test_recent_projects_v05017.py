@@ -5,7 +5,7 @@ from project_model import APP_VERSION
 
 
 def test_version_05017():
-    assert APP_VERSION == core.APP_VERSION == "0.59.83"
+    assert APP_VERSION == core.APP_VERSION == "0.59.84"
 
 
 def test_recent_project_paths_are_deduplicated_filtered_and_limited(tmp_path):

@@ -51,5 +51,5 @@ def test_project_roundtrip_preserves_extra_bom_rooms_and_old_readers_can_ignore_
     doc.rooms=[hall,kitchen]; doc.placements=[p]; doc.raw["placement_bom_room_additions"]={p.uid:[kitchen.uid]}
     with tempfile.TemporaryDirectory() as td:
         path=Path(td)/"demo.elplan.json"; doc.save(path); loaded=ProjectDocument.load(path)
-        assert loaded.raw["version"] == APP_VERSION == "0.59.83"
+        assert loaded.raw["version"] == APP_VERSION == "0.59.84"
         assert loaded.raw["placement_bom_room_additions"] == {p.uid:[kitchen.uid]}

@@ -8,7 +8,7 @@ ROOT=Path(__file__).resolve().parents[1]
 
 
 def test_version_and_task_based_property_workflow_source():
-    assert APP_VERSION==core.APP_VERSION=="0.59.83"
+    assert APP_VERSION==core.APP_VERSION=="0.59.84"
     app=(ROOT/"qt_app.py").read_text(encoding="utf-8")
     theme=(ROOT/"qt_theme.py").read_text(encoding="utf-8")
     for token in ('("connect","Forbind")','("data","Data")','("purchase","Indkøb")'):

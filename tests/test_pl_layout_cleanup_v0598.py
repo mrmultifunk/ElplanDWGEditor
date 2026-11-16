@@ -5,7 +5,7 @@ from project_model import APP_VERSION
 
 
 def test_version_0598():
-    assert APP_VERSION == core.APP_VERSION == "0.59.83"
+    assert APP_VERSION == core.APP_VERSION == "0.59.84"
 
 
 def test_port_cards_reserve_a_separate_conductor_band():

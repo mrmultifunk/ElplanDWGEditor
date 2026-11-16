@@ -578,6 +578,10 @@ class ElectricalSymbolItem(QGraphicsItem):
         self._drag_start_pose = None
         self._dragging = False
         self._press_screen = None
+        # Relation workflows use symbols as click targets, not as a new
+        # selection or drag source. MainWindow toggles this for the duration
+        # of the workflow so every target click stays cheap and deterministic.
+        self.workflow_click_only = False
         self.setPos(placement.x, -placement.y)
         self.setRotation(-placement.rotation)
         flags = QGraphicsItem.GraphicsItemFlag.ItemIsSelectable
@@ -787,6 +791,9 @@ class ElectricalSymbolItem(QGraphicsItem):
 
     def mousePressEvent(self, event) -> None:
         self.signals.clicked.emit(self)
+        if self.workflow_click_only:
+            event.accept()
+            return
         self._drag_start_pose = (float(self.placement.x), float(self.placement.y), float(self.placement.rotation))
         self._dragging = False
         try:

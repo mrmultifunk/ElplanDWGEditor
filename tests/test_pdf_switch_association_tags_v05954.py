@@ -43,4 +43,4 @@ def test_pdf_switch_relation_uses_compact_font(tmp_path):
 
 def test_version_is_05954():
     root = Path(__file__).resolve().parents[1]
-    assert 'APP_VERSION = "0.59.83"' in (root / "project_model.py").read_text(encoding="utf-8")
+    assert 'APP_VERSION = "0.59.84"' in (root / "project_model.py").read_text(encoding="utf-8")

@@ -32,7 +32,7 @@ from ezdxf import bbox, disassemble, path as ezpath
 from ezdxf.addons import odafc
 
 APP_NAME = "Elplan DWG Editor"
-APP_VERSION = "0.59.83"
+APP_VERSION = "0.59.84"
 ODA_DOWNLOAD_URL = "https://www.opendesign.com/guestfiles/oda_file_converter"
 # Programmet bruger separate lag til forskellige typer el-installationer.
 # EL-SYMBOLER beholdes kun som navn af hensyn til ældre eksporter, men nye

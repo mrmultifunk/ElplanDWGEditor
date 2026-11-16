@@ -5,7 +5,7 @@ from project_model import APP_VERSION
 
 
 def test_version_05936():
-    assert APP_VERSION == core.APP_VERSION == "0.59.83"
+    assert APP_VERSION == core.APP_VERSION == "0.59.84"
 
 
 def test_pl_graphics_has_compact_and_detailed_modes():

@@ -650,14 +650,19 @@ class VisualWorkspaceMixin:
             }
 
         if str(getattr(self, "association_source_uid", "") or "") or bool(getattr(self, "association_pick_source", False)):
+            can_save=bool(str(getattr(self,"association_source_uid","") or ""))
             return {
                 "active": True,
                 "mode": "TILHØRSFORHOLD",
                 "title": "Tilknyt lys og afbryder",
-                "detail": "Klik på det fremhævede mål · Esc afslutter",
-                "finish": False,
+                "detail": (
+                    "Klik lys til/fra · Enter eller Ctrl+Enter gemmer"
+                    if can_save else "Klik den orange afbryder, der skal styre lyset"
+                ),
+                "finish": can_save,
+                "finish_text": "Gem tilknytning",
                 "undo": False,
-                "cancel_text": "Esc · afslut",
+                "cancel_text": "Esc · annullér",
             }
         return {"active": False}
 
@@ -669,7 +674,9 @@ class VisualWorkspaceMixin:
         self._position_workflow_bar()
 
     def _workflow_finish(self) -> None:
-        if bool(getattr(self.view,"_room_active",False)):
+        if str(getattr(self,"association_source_uid","") or ""):
+            self._finish_active_association()
+        elif bool(getattr(self.view,"_room_active",False)):
             self.view.finish_room()
         elif bool(getattr(self.view, "_cable_active", False)):
             self.view.finish_cable()
@@ -685,7 +692,9 @@ class VisualWorkspaceMixin:
         self._refresh_workflow_bar()
 
     def _workflow_cancel(self) -> None:
-        if bool(getattr(self,"_cable_marking_active",False)) and hasattr(self,"act_cable_marking"):
+        if str(getattr(self,"association_source_uid","") or "") or bool(getattr(self,"association_pick_source",False)):
+            self.cancel_active_tool()
+        elif bool(getattr(self,"_cable_marking_active",False)) and hasattr(self,"act_cable_marking"):
             self.act_cable_marking.setChecked(False)
         else:
             self.view.cancel_tool()

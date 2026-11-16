@@ -86,7 +86,7 @@ def test_project_roundtrip_preserves_bom_data():
         path=Path(td)/'bom.elplan.json'
         doc.save(path)
         loaded=ProjectDocument.load(path)
-        assert loaded.raw['version']==APP_VERSION=='0.59.83'
+        assert loaded.raw['version']==APP_VERSION=='0.59.84'
         assert loaded.raw['article_catalog']==[]  # 0.45: article database is core data, not project data
         assert loaded.raw['placement_articles'][doc.placements[0].uid]['symbol'][0]['article_no']=='A1'
 

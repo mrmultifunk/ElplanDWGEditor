@@ -1,3 +1,10 @@
+## 0.59.83 → 0.59.84
+
+- Projektformat, tilhørsbogstaver, afbryderkanaler, lampestedsudgange, artikeldata og BOM er uændrede.
+- En påbegyndt lystilknytning gemmes fortsat som én fortrydelig kommando. `Esc` annullerer fortsat hele sessionen og gendanner tilstanden fra før start.
+- Optimeringen ændrer kun den midlertidige brugerflade under sessionen. Den gemte relation mellem afbryderkanal, bogstav og lampested er uændret.
+- Eksisterende projekter kan åbnes direkte uden konvertering.
+
 ## 0.59.82 → 0.59.83
 
 - Projektformatet får ingen nye obligatoriske felter. Opdelingen i `Forbind`, `Data` og `Indkøb` er en ren brugerfladeændring.

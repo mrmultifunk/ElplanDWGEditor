@@ -31,7 +31,7 @@ def _row(article_no="A1", room="Alle rum", qty=1.0):
 
 
 def test_version_05922():
-    assert APP_VERSION == core.APP_VERSION == "0.59.83"
+    assert APP_VERSION == core.APP_VERSION == "0.59.84"
 
 
 def test_excel_all_rooms_adds_filterable_room_breakdown_without_changing_main_total():

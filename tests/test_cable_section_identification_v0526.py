@@ -5,7 +5,7 @@ from project_model import APP_VERSION
 
 
 def test_version_and_section_identification_source():
-    assert APP_VERSION == core.APP_VERSION == "0.59.83"
+    assert APP_VERSION == core.APP_VERSION == "0.59.84"
     source = Path("qt_cable_sections.py").read_text(encoding="utf-8")
     assert 'group=str(getattr(placement,"group","") or "").strip()' in source
     assert 'label=str(getattr(placement,"label","") or "").strip()' in source

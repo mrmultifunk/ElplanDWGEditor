@@ -1,3 +1,13 @@
+## 0.59.84 - Hurtigere og sikker gemning af lystilknytninger
+
+- En aktiv tilknytningssession har nu en tydelig `Gem tilknytning`-knap både over tegningen og i `Forbind`-panelet. `Annuller` er synlig ved siden af og ruller hele sessionen tilbage.
+- `Enter` og `Ctrl+Enter` gemmer nu, selv om tastaturfokus ligger i tabellen eller Egenskaber i stedet for på selve tegningsfladen.
+- Arbejdslinjen skelner mellem at vælge afbryder og at vælge lys. Gem-knappen aktiveres først, når en konkret afbryderkanal er valgt.
+- Klik på lampesteder under en tilknytningssession ændrer ikke længere det aktuelle symbolvalg og kan ikke ved et uheld starte en symbolflytning.
+- Hvert målklik opdaterer kun afbryderen, det berørte lys og eventuelle spots, som følger lampestedet. Alle øvrige symbolmærkninger lades urørte.
+- Egenskaber-panelet genopbygges ikke længere to gange for hvert valgt lampested. Det opdateres samlet én gang, når sessionen gemmes eller annulleres.
+- Global placering af tilhørsbadges og kollisionskontrol udskydes til sessionens afslutning, så målklik ikke udløser gentaget helplanslayout.
+
 ## 0.59.83 - Opgavebaseret Egenskaber og solcellesymboler
 
 - Egenskaber er nu opdelt i tre tydelige arbejdsspor: `Forbind`, `Data` og `Indkøb`. Kun det valgte spor vises, så højrepanelet ikke længere er én lang formular.
