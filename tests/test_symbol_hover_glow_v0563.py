@@ -7,7 +7,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_v0563_symbol_hover_uses_device_space_glow_for_all_placements():
-    assert APP_VERSION == core.APP_VERSION == "0.59.84"
+    assert APP_VERSION == core.APP_VERSION == "0.59.85"
     source=(ROOT / "qt_graphics.py").read_text(encoding="utf-8")
     block=source[source.index("class ElectricalSymbolItem"):source.index("class CablePointHandle")]
     assert "QGraphicsDropShadowEffect" in source

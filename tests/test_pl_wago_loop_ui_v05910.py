@@ -4,7 +4,7 @@ from pathlib import Path
 def test_version_05910():
     import core_logic as core
     from project_model import APP_VERSION
-    assert APP_VERSION == core.APP_VERSION == "0.59.84"
+    assert APP_VERSION == core.APP_VERSION == "0.59.85"
 
 
 def test_primary_ui_exposes_loop_only_wago_as_first_class_action():

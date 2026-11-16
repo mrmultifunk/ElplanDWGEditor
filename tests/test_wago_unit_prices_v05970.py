@@ -24,7 +24,7 @@ def _wago(**extra):
 
 
 def test_version():
-    assert APP_VERSION == core.APP_VERSION == "0.59.84"
+    assert APP_VERSION == core.APP_VERSION == "0.59.85"
 
 
 def _product_html(price, *, name="WAGO 221-412"):

@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_version_and_visible_session_actions():
-    assert APP_VERSION == core.APP_VERSION == "0.59.84"
+    assert APP_VERSION == core.APP_VERSION == "0.59.85"
     app = (ROOT / "qt_app.py").read_text(encoding="utf-8")
     workspace = (ROOT / "qt_visual_workspace.py").read_text(encoding="utf-8")
     assert 'QPushButton("Gem tilknytning")' in app

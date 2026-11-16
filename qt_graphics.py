@@ -557,6 +557,8 @@ class QtSnapEngine:
 class ItemSignals(QObject):
     moved = Signal(object)
     clicked = Signal(object)
+    pointerPressed = Signal(object)
+    pointerReleased = Signal(object, bool)
     doubleClicked = Signal(object)
     contextRequested = Signal(object, object)
     dragStarted = Signal(object, object)
@@ -794,6 +796,8 @@ class ElectricalSymbolItem(QGraphicsItem):
         if self.workflow_click_only:
             event.accept()
             return
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.signals.pointerPressed.emit(self)
         self._drag_start_pose = (float(self.placement.x), float(self.placement.y), float(self.placement.rotation))
         self._dragging = False
         try:
@@ -815,6 +819,8 @@ class ElectricalSymbolItem(QGraphicsItem):
         super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event) -> None:
+        had_pointer_press=self._drag_start_pose is not None
+        was_dragging=bool(self._dragging)
         super().mouseReleaseEvent(event)
         if self._drag_start_pose is not None and self._dragging:
             end = (float(self.placement.x), float(self.placement.y), float(self.placement.rotation))
@@ -822,6 +828,8 @@ class ElectricalSymbolItem(QGraphicsItem):
         self._drag_start_pose = None
         self._dragging = False
         self._press_screen = None
+        if had_pointer_press:
+            self.signals.pointerReleased.emit(self,was_dragging)
 
     def itemChange(self, change, value):
         if change == QGraphicsItem.GraphicsItemChange.ItemSelectedHasChanged:

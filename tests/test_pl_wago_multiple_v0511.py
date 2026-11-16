@@ -13,7 +13,7 @@ def member(uid):
 
 
 def test_version_0511():
-    assert APP_VERSION == core.APP_VERSION == "0.59.84"
+    assert APP_VERSION == core.APP_VERSION == "0.59.85"
 
 
 def test_multiple_wagos_can_share_same_function():

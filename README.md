@@ -2,7 +2,7 @@
 
 Windows-program til planlægning og dokumentation af elektriske installationer direkte på DWG- og DXF-plantegninger.
 
-**Aktuel version:** `0.59.84`
+**Aktuel version:** `0.59.85`
 **Platform:** Windows 10/11 · Python 3.11 eller 3.12
 
 ## Hvad kan programmet?
@@ -88,5 +88,6 @@ Nye funktioner bør som udgangspunkt reducere klik, gøre redigering mere foruds
 - [Lystilknytning og Egenskaber](docs/reference/ASSOCIATION_INSPECTOR_0.59.82.md) – den primære arbejdsgang i højrepanelet
 - [Opgavebaseret Egenskaber og solceller](docs/reference/PROPERTY_WORKFLOW_SOLAR_0.59.83.md) – Forbind, Data, Indkøb og PV-symboler
 - [Hurtig og sikker lystilknytning](docs/reference/ASSOCIATION_SESSION_0.59.84.md) – synlig gem, tastatur og målrettede opdateringer
+- [Responsivt symbolvalg](docs/reference/SYMBOL_SELECTION_PERFORMANCE_0.59.85.md) – flyt først, indlæs Egenskaber efter muse-slip
 
 Detaljer om hver udgave hører hjemme i [CHANGELOG.md](CHANGELOG.md), ikke på projektets forside.

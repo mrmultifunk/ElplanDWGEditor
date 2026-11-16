@@ -58,7 +58,7 @@ def test_project_roundtrip_preserves_manual_wago(tmp_path):
     assert got[0]["id"]=="w1"
     assert got[0]["function"]=="n"
     assert len(got[0]["members"])==2
-    assert APP_VERSION=="0.59.84"
+    assert APP_VERSION=="0.59.85"
 
 
 def test_clipboard_does_not_copy_physical_wago():

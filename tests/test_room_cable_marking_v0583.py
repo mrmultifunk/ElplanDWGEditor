@@ -33,7 +33,7 @@ def test_room_cable_marking_one_room_and_no_room():
 
 
 def test_room_ui_separates_text_and_boundary_visibility_and_drops_symbol_automarking():
-    assert APP_VERSION == core.APP_VERSION == '0.59.84'
+    assert APP_VERSION == core.APP_VERSION == '0.59.85'
     src=Path('qt_rooms.py').read_text(encoding='utf-8')
     app=Path('qt_app.py').read_text(encoding='utf-8')
     assert 'Vis rumnavne' in src

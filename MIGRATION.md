@@ -1,3 +1,10 @@
+## 0.59.84 → 0.59.85
+
+- Projektformat, symbolplaceringer, kabeltilslutninger, artikelbindinger, priser og BOM-resultater er uændrede.
+- Udskydelsen af Egenskaber gælder kun brugerfladen under et klik eller træk. Det valgte symbol er fortsat Qt-scenens autoritative udvalg.
+- Kabelindekset og artikelcacherne findes kun i hukommelsen og genopbygges automatisk ved projektåbning og relevante dataændringer.
+- Eksisterende projekter kan åbnes direkte uden konvertering.
+
 ## 0.59.83 → 0.59.84
 
 - Projektformat, tilhørsbogstaver, afbryderkanaler, lampestedsudgange, artikeldata og BOM er uændrede.

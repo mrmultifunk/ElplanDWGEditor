@@ -1,3 +1,13 @@
+## 0.59.85 - Øjeblikkeligt symbolvalg og hurtigere Egenskaber
+
+- Et symbolvalg bygger ikke længere hele Egenskaber-panelet inde i muse-ned-hændelsen. Symbolet markeres straks, og panelopdateringen udføres efter muse-slip.
+- Starter brugeren et træk, sættes panelopdateringen på pause til flytningen er afsluttet. Tegnefladen får dermed første prioritet, så symbolet følger markøren uden den tidligere startforsinkelse.
+- Flere hurtige selection-signaler fra samme klik, multivalg eller programmatisk genvalg samles til én Egenskaber-opdatering.
+- Kabeltilslutninger indekseres pr. symbol sammen med kabelcachen. Start af symbolflytning og visning af tilsluttede kabler gennemløber derfor kun de relevante kabler.
+- Symbolvalg genindlæser ikke længere kabelartikelkatalog og prisbog fra disken. Kabelkataloget er cachet og opdateres kun ved kabel-/artikelarbejde.
+- Artikler/BOM for et symbol beregnes først, når `Indkøb` faktisk er aktiv. `Data` og `Forbind` betaler ikke længere prisen for et skjult BOM-resumé.
+- Visuel dæmpning genbruges, når fokusforholdet er uændret. Skift mellem almindelige symboler skriver derfor ikke den samme opacitet tilbage til alle kabler, symboler og mærkninger.
+
 ## 0.59.84 - Hurtigere og sikker gemning af lystilknytninger
 
 - En aktiv tilknytningssession har nu en tydelig `Gem tilknytning`-knap både over tegningen og i `Forbind`-panelet. `Annuller` er synlig ved siden af og ruller hele sessionen tilbage.

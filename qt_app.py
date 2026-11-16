@@ -766,6 +766,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self._group_drag_blocked = False
         self._symbol_drag_cables: dict[str,list[core.CablePlacement]] = {}
         self._symbol_drag_cables_changed = False
+        self._cables_by_symbol_uid: dict[str,list[tuple[core.CablePlacement,dict]]] = {}
         self._symbol_drag_visual_uids: set[str] = set()
         self._last_selected_annotation_uids: set[str] = set()
         self.spot_parent_pending: list[str] = []
@@ -882,6 +883,14 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         # coalesced to at most one update per display frame.
         self._symbol_drag_visual_timer=QTimer(self); self._symbol_drag_visual_timer.setSingleShot(True); self._symbol_drag_visual_timer.setInterval(16)
         self._symbol_drag_visual_timer.timeout.connect(self._flush_symbol_drag_visuals)
+        # Selection must never block the mouse-down event that starts a symbol
+        # drag.  Coalesce scene signals and build the inspector after release.
+        self._selection_refresh_timer=QTimer(self); self._selection_refresh_timer.setSingleShot(True); self._selection_refresh_timer.setInterval(28)
+        self._selection_refresh_timer.timeout.connect(self._flush_queued_selection_changed)
+        self._selection_refresh_pending=False
+        self._selection_last_signature=None
+        self._symbol_pointer_down=False
+        self._symbol_drag_active=False
         self.view.set_lighting_alignment_enabled(self.lighting_alignment_snap)
         self.setCentralWidget(self.view)
         self.cable_assistant_popup = CableAssistantPopup(self.view.viewport())
@@ -889,7 +898,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self.cable_assistant_popup.undoRequested.connect(self._cable_assistant_undo)
         self.cable_assistant_popup.passByRequested.connect(self._cable_assistant_pass_by)
         self.cable_assistant_popup.restartRequested.connect(self._cable_assistant_restart)
-        self.scene.selectionChanged.connect(self._selection_changed)
+        self.scene.selectionChanged.connect(self._queue_selection_changed)
         self.view.zoomChanged.connect(self._zoom_changed)
         self.view.placementRequested.connect(self._placement_requested)
         self.view.cableFinished.connect(self._cable_finished)
@@ -2102,14 +2111,18 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         if key in {"data","purchase"}:return True
         role=core.association_role(getattr(placement,"symbol",""))
         if role in ("switch","light") or placement.symbol in {"spot","light_connection"}:return True
-        # Kabeloversigten er allerede beregnet én gang ved symbolvalget. Brug
-        # dens resultat i stedet for at gennemløbe hele kabelmodellen igen.
-        return bool(hasattr(self,"symbol_cables_combo") and self.symbol_cables_combo.count()>0)
+        # The connection index is maintained with the cable visual cache, so
+        # workflow availability never has to scan every physical cable.
+        uid=str(getattr(placement,"uid","") or "")
+        return bool(self._cables_by_symbol_uid.get(uid,[]))
 
     def _set_properties_workflow(self,key:str,*,user:bool=False)->None:
         key=key if key in {"connect","data","purchase"} else "data"
         if user:self._properties_workflow_user_choice=True
         self._properties_workflow=key
+        p=getattr(self,"_properties_current_placement",None)
+        if user and key=="purchase" and p is not None:
+            self._refresh_selected_symbol_bom_ui(p)
         for name,button in getattr(self,"properties_workflow_buttons",{}).items():
             button.setChecked(name==key)
         hints={
@@ -2185,6 +2198,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         """
         if refresh or not hasattr(self,"global_article_catalog"):
             self.global_article_catalog=user_library.load_core_article_catalog()
+            self._cable_article_catalog_cache=None
         return self.global_article_catalog
 
     def open_bom_manager(self) -> None:
@@ -2221,6 +2235,24 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         extra=[core.room_display_text(by_uid[uid]) for uid in additions.get(str(getattr(placement,'uid','') or ''),[]) if uid in by_uid]
         self.bom_room_summary.setText(f"Fysisk: {physical_text}" + (f" · ekstra BOM-rum: {', '.join(extra)}" if extra else " · ingen ekstra BOM-rum"))
         self.bom_room_button.setEnabled(bool(self.project.rooms))
+
+    def _refresh_selected_symbol_bom_ui(self,placement)->None:
+        """Materialize the symbol BOM only while Indkøb is actually used."""
+        if placement is None:return
+        if core.bom_supported_symbol(placement.symbol):
+            effective_assemblies={a["id"]:a for a in core.normalize_bom_assemblies(self.global_bom_assemblies)}
+            for assembly in core.normalize_bom_assemblies(self.project.raw.get("bom_assemblies",[])):
+                effective_assemblies.setdefault(assembly["id"],assembly)
+            self.bom_summary.setText(core.bom_binding_summary(
+                placement.symbol,self._cached_article_catalog(),self.project.raw.get("placement_articles",{}),
+                list(effective_assemblies.values()),self.project.raw.get("placement_assemblies",{}),binding_key=placement.uid,
+            ))
+            self._refresh_selected_bom_room_summary(placement)
+            self.bom_assign_button.setEnabled(True)
+        elif self.project.rooms:
+            self.bom_summary.setText("Denne symboltype har ingen direkte BOM-dele, men du kan stadig angive ekstra BOM-rum som projektkontekst.")
+            self._refresh_selected_bom_room_summary(placement)
+            self.bom_assign_button.setEnabled(False)
 
     def open_bom_for_selection(self) -> None:
         selected=self._selected_symbol_item()
@@ -2551,6 +2583,10 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
 
     def _rebuild_scene(self) -> None:
         self._clear_hover_info()
+        self._visual_emphasis_signature=None
+        self._selection_last_signature=None
+        self._selection_refresh_pending=False
+        if hasattr(self,"_selection_refresh_timer"):self._selection_refresh_timer.stop()
         self._bom_highlight_placement_uids=set(); self._bom_highlight_cable_uids=set()
         self.view.scene_will_reset()
         # Scene.clear() destroys overlay C++ objects; drop Python references first.
@@ -2558,6 +2594,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self._switch_badge_render_signature=None
         self._cable_bundle_badges.clear()
         self.association_target_overlays.clear()
+        self.association_target_overlay_by_uid.clear()
         self.association_guide=None
         self.association_badge=None
         self.association_source_overlay=None
@@ -2619,6 +2656,8 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
     def _wire_symbol_item(self, item: ElectricalSymbolItem) -> None:
         item.signals.moved.connect(self._symbol_moved)
         item.signals.clicked.connect(self._symbol_clicked)
+        item.signals.pointerPressed.connect(self._symbol_pointer_pressed)
+        item.signals.pointerReleased.connect(self._symbol_pointer_released)
         item.signals.doubleClicked.connect(self._symbol_double_clicked)
         item.signals.contextRequested.connect(self._symbol_context_menu)
         item.signals.dragStarted.connect(self._symbol_drag_started)
@@ -2905,6 +2944,12 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         Lane spacing is cosmetic and never changes saved cable geometry, length
         or BOM.  A logical centreline is therefore safe to reuse for many cables.
         """
+        connection_index=defaultdict(list)
+        for cable in self.project.cables:
+            for rec in core.cable_symbol_connections(cable):
+                uid=str(rec.get("symbol_uid","") or "")
+                if uid:connection_index[uid].append((cable,rec))
+        self._cables_by_symbol_uid=dict(connection_index)
         try:
             scale=max(float(self.view.current_scale()),1e-9)
         except Exception:
@@ -3161,6 +3206,8 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self._update_title()
 
     def _symbol_drag_started(self, item, old_pose) -> None:
+        self._symbol_drag_active=True
+        self._selection_refresh_timer.stop()
         self._symbol_drag_visual_timer.stop()
         self._symbol_drag_visual_uids.clear()
         self._symbol_drag_cables={}
@@ -3201,16 +3248,16 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
 
         self._group_drag_before={x.placement.uid:(float(x.placement.x),float(x.placement.y),float(x.placement.rotation)) for x in expanded.values()}
         drag_uids=set(self._group_drag_before)
-        self._symbol_drag_cables={uid:[] for uid in drag_uids}
-        seen={uid:set() for uid in drag_uids}
-        # Resolve connected cables once per gesture. Previously every mouse
-        # point scanned the complete cable collection for every moved symbol.
-        for cable in self.project.cables:
-            for rec in core.cable_symbol_connections(cable):
-                uid=str(rec.get("symbol_uid","") or "")
-                if uid not in self._symbol_drag_cables or id(cable) in seen[uid]:
-                    continue
-                self._symbol_drag_cables[uid].append(cable); seen[uid].add(id(cable))
+        self._symbol_drag_cables={}
+        # The cable connection index is rebuilt whenever cable geometry/data
+        # changes. Starting a drag is therefore O(connected cables), not a scan
+        # of every cable and every connection in the project.
+        for uid in drag_uids:
+            seen=set(); connected=[]
+            for cable,_rec in self._cables_by_symbol_uid.get(uid,[]):
+                if id(cable) in seen:continue
+                seen.add(id(cable)); connected.append(cable)
+            self._symbol_drag_cables[uid]=connected
         self.view.begin_lighting_alignment_snapshot(drag_uids)
         self._clear_spot_link_visuals(); self._clear_relation_overview()
 
@@ -3973,12 +4020,15 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self._set_status(f"PL-dåserapport gemt: {path}")
         QMessageBox.information(self,"PL-dåserapport",f"Rapport med {len(boxes)} PL-dåse(r) er gemt:\n{path}")
 
-    def _cable_article_catalog(self) -> list[dict]:
+    def _cable_article_catalog(self,*,refresh:bool=False) -> list[dict]:
         """Merged, priced catalogue used by the compact cable article picker."""
+        cached=getattr(self,"_cable_article_catalog_cache",None)
+        if cached is not None and not refresh:return cached
         merged={a["article_no"]:deepcopy(a) for a in user_library.load_core_article_catalog()}
         for art in user_library.load_global_bom_articles():
             merged[art["article_no"]]=deepcopy(art)
-        return user_library.apply_article_prices(merged.values(),user_library.load_article_prices())
+        self._cable_article_catalog_cache=user_library.apply_article_prices(merged.values(),user_library.load_article_prices())
+        return self._cable_article_catalog_cache
 
     def _ensure_project_article(self, article_no: str) -> bool:
         """Ensure a selected article exists in the global core article database."""
@@ -3990,6 +4040,7 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         if src is None:return False
         catalog.append(deepcopy(src))
         user_library.save_core_article_catalog(catalog)
+        self._cable_article_catalog_cache=None
         return True
 
     def _cable_article_bindings(self) -> dict[str,str]:
@@ -4679,17 +4730,13 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         rows=[]
         uid=str(getattr(placement,"uid","") or "") if placement is not None else ""
         is_light=bool(placement is not None and str(getattr(placement,"symbol","") or "") in {"light_connection","wall_light_outlet"})
-        for cable in self.project.cables:
-            connections=core.cable_symbol_connections(cable)
-            for rec in connections:
-                if str(rec.get("symbol_uid","") or "") != uid:
-                    continue
-                idx=int(rec.get("point_index",-1)); last=max(0,len(cable.points)-1)
-                if idx==0 and idx==last: role="tilsluttet"
-                elif idx==0: role="starter her"
-                elif idx==last: role="ender her"
-                else: role="gennemgående"
-                rows.append((cable,role,idx))
+        for cable,rec in self._cables_by_symbol_uid.get(uid,[]):
+            idx=int(rec.get("point_index",-1)); last=max(0,len(cable.points)-1)
+            if idx==0 and idx==last: role="tilsluttet"
+            elif idx==0: role="starter her"
+            elif idx==last: role="ender her"
+            else: role="gennemgående"
+            rows.append((cable,role,idx))
         self.symbol_cables_combo.blockSignals(True); self.symbol_cables_combo.clear()
         for cable,role,_idx in rows:
             label=core.cable_display_label(cable) or str(cable.cable_id or "Kabel")
@@ -6240,7 +6287,56 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self.project.dirty = True
         self._update_title()
 
+    def _selection_signature(self):
+        rows=[]
+        for item in self.scene.selectedItems():
+            if isinstance(item,ElectricalSymbolItem):
+                rows.append(("symbol",str(item.placement.uid)))
+            elif isinstance(item,CableItem):
+                rows.append(("cable",str(getattr(item.cable,"uid","") or id(item.cable))))
+            else:
+                room=getattr(item,"room",None)
+                rows.append(("room",str(getattr(room,"uid","") or id(item))))
+        return tuple(sorted(rows))
+
+    def _queue_selection_changed(self)->None:
+        """Coalesce scene signals without delaying a pending symbol drag."""
+        self._selection_refresh_pending=True
+        self._selection_refresh_timer.stop()
+        if self._symbol_pointer_down or self._symbol_drag_active:
+            return
+        self._selection_refresh_timer.setInterval(28)
+        self._selection_refresh_timer.start()
+
+    def _flush_queued_selection_changed(self)->None:
+        if self._symbol_pointer_down or self._symbol_drag_active:
+            return
+        if not self._selection_refresh_pending:
+            return
+        signature=self._selection_signature()
+        self._selection_refresh_pending=False
+        if signature==self._selection_last_signature:
+            return
+        self._selection_changed()
+
+    def _symbol_pointer_pressed(self,_item)->None:
+        self._symbol_pointer_down=True
+        self._selection_refresh_timer.stop()
+
+    def _symbol_pointer_released(self,_item,was_dragging:bool)->None:
+        self._symbol_pointer_down=False
+        self._symbol_drag_active=False
+        if self._selection_refresh_pending:
+            # Let Qt finish the release/paint event first. A click therefore
+            # opens Egenskaber immediately afterwards, while a drag never has
+            # to wait for the inspector during mouse movement.
+            self._selection_refresh_timer.setInterval(0 if not was_dragging else 12)
+            self._selection_refresh_timer.start()
+
     def _selection_changed(self) -> None:
+        if hasattr(self,"_selection_refresh_timer"):self._selection_refresh_timer.stop()
+        self._selection_refresh_pending=False
+        self._selection_last_signature=self._selection_signature()
         selected_symbols=[x for x in self.scene.selectedItems() if isinstance(x,ElectricalSymbolItem)]
         selected_cables=[x for x in self.scene.selectedItems() if isinstance(x,CableItem)]
         selected_rooms=self._selected_rooms_from_scene()
@@ -6369,6 +6465,16 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         else:self.prop_material_color.setCurrentText(material_color)
         self.prop_already_purchased.setChecked(core.normalize_already_purchased(getattr(p,"already_purchased",False)))
         role=core.association_role(p.symbol)
+        preferred_workflow="connect" if (
+            role in ("switch","light") or p.symbol in {"spot","light_connection"}
+        ) else "data"
+        current_workflow=getattr(self,"_properties_workflow","data")
+        if not getattr(self,"_properties_workflow_user_choice",False) or not self._property_workflow_has_content(current_workflow,p):
+            if not self._property_workflow_has_content(current_workflow,p):
+                self._properties_workflow_user_choice=False
+            target_workflow=preferred_workflow
+        else:
+            target_workflow=current_workflow
         self.assoc_group.setVisible(role in ("switch","light"))
         assoc_text=core.association_display(p)
         if role=="switch":
@@ -6393,24 +6499,8 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         self._refresh_association_channel_table(p)
         self._refresh_light_outputs_table(p)
 
-        if core.bom_supported_symbol(p.symbol):
-            self.bom_disclosure.show()
-            effective_assemblies={a["id"]:a for a in core.normalize_bom_assemblies(self.global_bom_assemblies)}
-            for a in core.normalize_bom_assemblies(self.project.raw.get("bom_assemblies",[])):
-                effective_assemblies.setdefault(a["id"],a)
-            self.bom_summary.setText(core.bom_binding_summary(
-                p.symbol, self._cached_article_catalog(), self.project.raw.get("placement_articles",{}),
-                list(effective_assemblies.values()), self.project.raw.get("placement_assemblies",{}), binding_key=p.uid
-            ))
-            self._refresh_selected_bom_room_summary(p)
-            self.bom_assign_button.setEnabled(True)
-        elif self.project.rooms:
-            self.bom_disclosure.show()
-            self.bom_summary.setText("Denne symboltype har ingen direkte BOM-dele, men du kan stadig angive ekstra BOM-rum som projektkontekst.")
-            self._refresh_selected_bom_room_summary(p)
-            self.bom_assign_button.setEnabled(False)
-        else:
-            self.bom_disclosure.hide()
+        if target_workflow=="purchase":self._refresh_selected_symbol_bom_ui(p)
+        else:self.bom_disclosure.hide()
 
         if p.symbol=="spot":
             self.spot_parent_group.show(); self._refresh_spot_group_controls([p])
@@ -6478,22 +6568,12 @@ class MainWindow(ProjectOpenMixin, HoverInfoMixin, VisualWorkspaceMixin, Workspa
         has_assoc=bool(core.light_output_associations(p) if role=="light" else core.normalize_associations(p.associations))
         self.clear_assoc_button.setEnabled(has_assoc)
 
-        preferred="connect" if (
-            role in ("switch","light") or p.symbol in {"spot","light_connection"}
-        ) else "data"
-        current=getattr(self,"_properties_workflow","data")
-        if not getattr(self,"_properties_workflow_user_choice",False) or not self._property_workflow_has_content(current,p):
-            if not self._property_workflow_has_content(current,p):
-                self._properties_workflow_user_choice=False
-            self._set_properties_workflow(preferred)
-        else:
-            self._set_properties_workflow(current)
+        self._set_properties_workflow(target_workflow)
 
         self.selected_cable=None
         if hasattr(self,"_set_cable_panel_context"): self._set_cable_panel_context(None)
         if hasattr(self,"cable_apply_selected"):
             self.cable_apply_selected.setEnabled(False)
-        self._refresh_cable_article_ui()
         self._refresh_context_toolbar()
 
     def _selected_symbol_item(self) -> ElectricalSymbolItem | None:

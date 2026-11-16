@@ -19,7 +19,7 @@ def _three_stop_cable():
 
 
 def test_version_and_default_section_spec_field():
-    assert APP_VERSION == core.APP_VERSION == "0.59.84"
+    assert APP_VERSION == core.APP_VERSION == "0.59.85"
     cable=core.CablePlacement(points=[(0,0),(10,0)],cable_spec="3G1,5")
     assert cable.spec_section_overrides == []
 
@@ -92,7 +92,7 @@ def test_legacy_section_spec_materialises_on_physical_cables(tmp_path):
     assert len(loaded.cables)==2
     assert [c.cable_spec for c in loaded.cables] == ["3G1,5","5G1,5"]
     assert all(c.spec_section_overrides==[] for c in loaded.cables)
-    assert loaded.raw["version"] == "0.59.84"
+    assert loaded.raw["version"] == "0.59.85"
 
 
 def test_qt_source_exposes_section_spec_editor_and_context_menu():

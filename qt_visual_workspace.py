@@ -435,6 +435,7 @@ class VisualWorkspaceMixin:
 
     def _create_visual_workspace(self) -> None:
         self._focus_group_id = ""
+        self._visual_emphasis_signature = None
         self._trace_group_id = ""
         self._trace_order = []
         self._trace_reveal_count = 0
@@ -465,6 +466,7 @@ class VisualWorkspaceMixin:
     def _reset_visual_workspace_transients(self) -> None:
         """Clear presentation-only state before switching project/CAD scene."""
         self._focus_group_id = ""
+        self._visual_emphasis_signature = None
         timer = getattr(self, "_trace_timer", None)
         if timer is not None:
             timer.stop()
@@ -870,12 +872,31 @@ class VisualWorkspaceMixin:
         selected_cables = [x for x in self.scene.selectedItems() if isinstance(x, CableItem)]
         selected_symbols = [x for x in self.scene.selectedItems() if isinstance(x, ElectricalSymbolItem)]
         selected_cable = selected_cables[0].cable if len(selected_cables) == 1 and not selected_symbols else None
-
-        cable_opacity = {id(c): 1.0 for c in self.project.cables}
-        symbol_opacity = {str(p.uid): 1.0 for p in self.project.placements}
         bom_placements=set(getattr(self,"_bom_highlight_placement_uids",set()) or set())
         bom_cables=set(getattr(self,"_bom_highlight_cable_uids",set()) or set())
         focus_room=str(getattr(self,"_focus_room_id","") or "").strip()
+        legacy_uid=""
+        if (
+            not focus_group and not bom_placements and not bom_cables and not focus_room
+            and len(selected_symbols)==1 and hasattr(self,"cable_focus_related")
+            and self.cable_focus_related.isChecked()
+        ):
+            legacy_uid=str(selected_symbols[0].placement.uid)
+        trace_group=str(getattr(self,"_trace_group_id","") or "")
+        trace_order=tuple(getattr(self,"_trace_order",[]) or [])
+        reveal=int(getattr(self,"_trace_reveal_count",0) or 0)
+        signature=(
+            focus_group,str(getattr(selected_cable,"uid","") or ""),legacy_uid,focus_room,
+            frozenset(bom_placements),frozenset(bom_cables),trace_group,trace_order,reveal,
+            len(self.project.placements),len(self.project.cables),
+        )
+        if signature==getattr(self,"_visual_emphasis_signature",None):
+            self._refresh_focus_actions()
+            return
+        self._visual_emphasis_signature=signature
+
+        cable_opacity = {id(c): 1.0 for c in self.project.cables}
+        symbol_opacity = {str(p.uid): 1.0 for p in self.project.placements}
 
         if bom_placements or bom_cables:
             for cable in self.project.cables:
@@ -892,9 +913,6 @@ class VisualWorkspaceMixin:
                 symbol_opacity[str(p.uid)]=1.0 if str(getattr(room,"uid","") or "")==focus_room else 0.12
         elif focus_group:
             focus_uids = self._group_symbol_uids(focus_group)
-            trace_group=str(getattr(self,"_trace_group_id","") or "")
-            trace_order=list(getattr(self,"_trace_order",[]) or [])
-            reveal=int(getattr(self,"_trace_reveal_count",0) or 0)
             revealed=set(trace_order[:reveal]) if trace_group==focus_group and trace_order else set()
             for cable in self.project.cables:
                 group = str(getattr(cable, "circuit_id", "") or "").strip()
@@ -926,13 +944,6 @@ class VisualWorkspaceMixin:
             for p in self.project.placements:
                 symbol_opacity[str(p.uid)] = 0.92 if str(p.uid) in peer_uids else self._SELECTED_SYMBOL_OTHER
         else:
-            legacy_uid = ""
-            if (
-                len(selected_symbols) == 1
-                and hasattr(self, "cable_focus_related")
-                and self.cable_focus_related.isChecked()
-            ):
-                legacy_uid = str(selected_symbols[0].placement.uid)
             if legacy_uid:
                 for cable in self.project.cables:
                     related = any(
@@ -941,7 +952,6 @@ class VisualWorkspaceMixin:
                     )
                     cable_opacity[id(cable)] = 1.0 if related else 0.14
 
-        trace_group=str(getattr(self,"_trace_group_id","") or "")
         trace_revealed=set((getattr(self,"_trace_order",[]) or [])[:int(getattr(self,"_trace_reveal_count",0) or 0)])
         for cable in self.project.cables:
             item = self.cable_items.get(id(cable))

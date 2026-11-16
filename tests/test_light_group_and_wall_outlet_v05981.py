@@ -58,7 +58,7 @@ def test_context_toolbar_exposes_same_switch_action_for_multi_selection():
     workspace=(ROOT/"qt_workspace.py").read_text(encoding="utf-8")
     cable_attach=(ROOT/"qt_cable_attach.py").read_text(encoding="utf-8")
     ast.parse(app); ast.parse(workspace); ast.parse(cable_attach)
-    assert APP_VERSION==core.APP_VERSION=="0.59.84"
+    assert APP_VERSION==core.APP_VERSION=="0.59.85"
     assert "group_selected_lights_same_switch" in app
     assert "Samme tænding…" in workspace
     assert "same_switch_ready" in workspace

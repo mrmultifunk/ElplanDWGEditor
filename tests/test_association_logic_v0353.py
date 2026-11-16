@@ -54,7 +54,7 @@ def test_channel_mapping_roundtrips_project_file(tmp_path):
     out = tmp_path / "combo.elplan.json"
     project.save(out)
     raw = json.loads(out.read_text(encoding="utf-8"))
-    assert raw["version"] == "0.59.84"
+    assert raw["version"] == "0.59.85"
     assert raw["placements"][0]["association_channels"] == ["b", "c", "a"]
 
     loaded = ProjectDocument.load(out)

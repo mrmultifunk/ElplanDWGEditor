@@ -5,7 +5,7 @@ from project_model import APP_VERSION
 
 
 def test_version_05016():
-    assert APP_VERSION == core.APP_VERSION == "0.59.84"
+    assert APP_VERSION == core.APP_VERSION == "0.59.85"
 
 
 def test_pl_entry_data_supports_compact_hover_summary():
