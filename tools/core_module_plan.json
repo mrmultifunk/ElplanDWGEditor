@@ -1,10 +1,6 @@
 {
-  "completed_modules": ["constants", "models", "platform.oda", "settings"],
+  "completed_modules": ["constants", "models", "platform.oda", "rooms", "settings"],
   "modules": [
-    {
-      "name": "rooms",
-      "names": ["room_polygon_centroid", "room_contains_point", "room_for_point", "room_display_text", "room_output_label", "_segment_edge_intersection_t", "rooms_along_polyline", "cable_rooms", "polyline_room_lengths", "cable_room_length_metres", "cable_length_by_spec_room_metres", "cable_room_marking", "cable_light_endpoint_marking"]
-    },
     {
       "name": "cables.categories",
       "patterns": ["cable_category_.*", "normalize_cable_category_.*"],
@@ -17,7 +13,7 @@
     },
     {
       "name": "cables.sections",
-      "names": ["normalize_cable_route_section_modes", "cable_connection_sections", "cable_spec_for_section", "set_cable_route_section_mode", "convert_cable_route_section_geometry", "split_cable_into_physical_segments", "attach_symbol_to_existing_cable", "nearest_cable_segment", "shift_cable_connection_indices", "cable_route_section_mode", "cable_route_mode_for_point_index", "cable_route_section_at_segment"]
+      "names": ["normalize_cable_route_section_modes", "set_cable_route_section_mode", "convert_cable_route_section_geometry", "split_cable_into_physical_segments", "attach_symbol_to_existing_cable", "nearest_cable_segment", "shift_cable_connection_indices", "cable_route_section_mode", "cable_route_mode_for_point_index", "cable_route_section_at_segment"]
     },
     {
       "name": "symbols.registry",

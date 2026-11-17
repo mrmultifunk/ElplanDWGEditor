@@ -25,7 +25,8 @@ layers = [
   "elplan_core.export",
   "elplan_core.bom",
   "elplan_core.clipboard | elplan_core.associations | elplan_core.pl_box",
-  "elplan_core.settings | elplan_core.symbols | elplan_core.cables | elplan_core.rooms | elplan_core.cad_io",
+  "elplan_core.settings | elplan_core.symbols | elplan_core.rooms | elplan_core.cad_io",
+  "elplan_core.cables",
   "elplan_core.models",
   "elplan_core.constants",
 ]

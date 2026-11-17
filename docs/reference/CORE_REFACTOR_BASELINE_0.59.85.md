@@ -101,3 +101,14 @@ Gennemført 17. november 2026 uden ændring af programadfærd:
 - artikelbibliotekets direkte indstillingskald og monkeypatch-test peger på det nye modul
 - `core_logic.py` reduceret videre til 8.185 linjer og 284 definitioner
 - den resterende modulplan har fortsat 0 kendte cykler
+
+### Fase 2.3 – rooms
+
+Gennemført 17. november 2026 uden ændring af programadfærd:
+
+- 13 funktioner til rumgeometri, rumtekster og rumfordelt kabellængde flyttet til `elplan_core/rooms.py`
+- 8 uændrede kabeltilslutnings-/sektionshjælpere flyttet til `elplan_core/cables/sections.py` som nødvendig, nedadgående afhængighed
+- alle tidligere navne re-eksporteres fortsat fra `core_logic.py`
+- lagkontrakten beskriver nu den faktiske retning `rooms → cables → models → constants`
+- `core_logic.py` reduceret videre til 7.828 linjer og 263 definitioner
+- den resterende modulplan har fortsat 0 kendte cykler

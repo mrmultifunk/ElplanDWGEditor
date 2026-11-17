@@ -18,6 +18,16 @@ import uuid
 from dataclasses import asdict
 from pathlib import Path
 
+from elplan_core.cables.sections import (
+    _cable_route_section_key,
+    _cable_spec_section_key,
+    cable_connection_sections,
+    cable_spec_for_section,
+    cable_spec_section_at_segment,
+    cable_symbol_connections,
+    normalize_cable_spec_section_overrides,
+    normalize_cable_symbol_connections,
+)
 from elplan_core.constants import *  # noqa: F403 - kompatibilitetsfacade
 from elplan_core.models import (
     CADPrimitive,
@@ -27,6 +37,21 @@ from elplan_core.models import (
     TextPlacement,
 )
 from elplan_core.platform.oda import detect_oda_exec_path, set_oda_exec_path
+from elplan_core.rooms import (
+    _segment_edge_intersection_t,
+    cable_length_by_spec_room_metres,
+    cable_light_endpoint_marking,
+    cable_room_length_metres,
+    cable_room_marking,
+    cable_rooms,
+    polyline_room_lengths,
+    room_contains_point,
+    room_display_text,
+    room_for_point,
+    room_output_label,
+    room_polygon_centroid,
+    rooms_along_polyline,
+)
 from elplan_core.settings import (
     _recovery_file,
     _settings_file,
@@ -860,54 +885,6 @@ def bom_purchase_segment_key(article_no, context=None) -> str:
         normalize_material_color(row.get("material_color")).casefold(),
         "1" if normalize_already_purchased(row.get("already_purchased",False)) else "0",
     ))
-
-
-def normalize_cable_symbol_connections(records, point_count: int | None = None):
-    """Normalisér fysiske symboltilslutninger langs én kabelrute.
-
-    ``point_index`` refererer til kabelpolyline-punktet, mens ``symbol_uid`` og
-    ``symbol_port`` fortæller hvilket fysisk installationspunkt kablet passerer.
-    Der kan være mange tilslutninger på samme kabel (sløjfning).
-    """
-    out=[]; seen=set()
-    limit = None if point_count is None else max(0, int(point_count))
-    for raw in records or []:
-        if not isinstance(raw, dict):
-            continue
-        try:
-            index=max(0,int(raw.get("point_index",0) or 0))
-            port=max(0,int(raw.get("symbol_port",0) or 0))
-        except (TypeError,ValueError):
-            continue
-        uid=str(raw.get("symbol_uid","") or "").strip()
-        if not uid or (limit is not None and (limit == 0 or index >= limit)):
-            continue
-        key=(index,uid,port)
-        if key in seen:
-            continue
-        seen.add(key)
-        out.append({"point_index":index,"symbol_uid":uid,"symbol_port":port})
-    # Et polyline-punkt kan kun være tilsluttet ét symbol ad gangen. Sidste
-    # registrering vinder, og rækkefølgen følger kabelruten.
-    by_index={int(row["point_index"]):row for row in out}
-    return [by_index[i] for i in sorted(by_index)]
-
-
-def cable_symbol_connections(cable: CablePlacement):
-    """Returnér tilslutninger og migrér legacy start/slut-referencer i hukommelsen."""
-    points=list(getattr(cable,"points",[]) or [])
-    rows=normalize_cable_symbol_connections(getattr(cable,"symbol_connections",[]),len(points))
-    if not rows and points:
-        start_uid=str(getattr(cable,"start_symbol_uid","") or "").strip()
-        end_uid=str(getattr(cable,"end_symbol_uid","") or "").strip()
-        if start_uid:
-            rows.append({"point_index":0,"symbol_uid":start_uid,"symbol_port":max(0,int(getattr(cable,"start_symbol_port",0) or 0))})
-        if end_uid:
-            end_index=len(points)-1
-            rec={"point_index":end_index,"symbol_uid":end_uid,"symbol_port":max(0,int(getattr(cable,"end_symbol_port",0) or 0))}
-            if not rows or rows[-1] != rec:
-                rows.append(rec)
-    return normalize_cable_symbol_connections(rows,len(points))
 
 
 def set_cable_symbol_connections(cable: CablePlacement, records) -> None:
@@ -2965,75 +2942,6 @@ def normalize_cable_route_section_modes(records):
     return out
 
 
-def normalize_cable_spec_section_overrides(records, default_spec: str | None = None):
-    """Normalisér lokale kabeltype-overrides mellem fysiske tilslutninger.
-
-    Posterne bruger samme stabile, retningsløse A/B-identitet som lokal
-    ruteføring. Hvis ``default_spec`` gives, fjernes overrides der er identiske
-    med kabellets globale kabeltype, så projektfilen forbliver kompakt.
-    """
-    out=[]; by_key={}
-    default=str(default_spec or "").strip() if default_spec is not None else None
-    for raw in records or []:
-        if not isinstance(raw,dict):
-            continue
-        a_uid=str(raw.get("a_symbol_uid",raw.get("from_symbol_uid","")) or "").strip()
-        b_uid=str(raw.get("b_symbol_uid",raw.get("to_symbol_uid","")) or "").strip()
-        if not a_uid or not b_uid or a_uid==b_uid:
-            continue
-        try:
-            a_port=max(0,int(raw.get("a_symbol_port",raw.get("from_symbol_port",0)) or 0))
-            b_port=max(0,int(raw.get("b_symbol_port",raw.get("to_symbol_port",0)) or 0))
-        except (TypeError,ValueError):
-            continue
-        spec=str(raw.get("cable_spec",raw.get("spec","")) or "").strip()
-        if not spec or (default is not None and spec==default):
-            continue
-        a=(a_uid,a_port); b=(b_uid,b_port)
-        if b<a:
-            a,b=b,a
-        by_key[(a,b)]={
-            "a_symbol_uid":a[0],"a_symbol_port":a[1],
-            "b_symbol_uid":b[0],"b_symbol_port":b[1],
-            "cable_spec":spec,
-        }
-    for key in sorted(by_key):
-        out.append(by_key[key])
-    return out
-
-
-def _cable_route_section_key(a,b):
-    """Canonical key for two connection dictionaries/tuples."""
-    def endpoint(value):
-        if isinstance(value,dict):
-            return (str(value.get("symbol_uid","") or "").strip(),max(0,int(value.get("symbol_port",0) or 0)))
-        return (str(value[0] or "").strip(),max(0,int(value[1] or 0)))
-    x=endpoint(a); y=endpoint(b)
-    return tuple(sorted((x,y)))
-
-
-def _cable_spec_section_key(a,b):
-    return _cable_route_section_key(a,b)
-
-
-def cable_connection_sections(cable: CablePlacement) -> list[dict]:
-    """Return adjacent physical connection-to-connection sections along a cable."""
-    rows=cable_symbol_connections(cable)
-    out=[]
-    for index,(a,b) in enumerate(zip(rows,rows[1:])):
-        ai=int(a.get("point_index",0) or 0); bi=int(b.get("point_index",0) or 0)
-        if bi<=ai:
-            continue
-        out.append({
-            "section_index":index,
-            "start_point_index":ai,
-            "end_point_index":bi,
-            "a":dict(a),"b":dict(b),
-            "key":_cable_route_section_key(a,b),
-        })
-    return out
-
-
 def cable_route_section_mode(cable: CablePlacement, a, b) -> str:
     """Effective route mode for a physical section, falling back to cable default."""
     key=_cable_route_section_key(a,b)
@@ -3041,19 +2949,6 @@ def cable_route_section_mode(cable: CablePlacement, a, b) -> str:
         if _cable_route_section_key((row["a_symbol_uid"],row["a_symbol_port"]),(row["b_symbol_uid"],row["b_symbol_port"]))==key:
             return str(row["mode"])
     return "orthogonal" if bool(getattr(cable,"orthogonal",False)) else "free"
-
-
-def cable_spec_for_section(cable: CablePlacement, a, b) -> str:
-    """Effektiv kabeltype for ét fysisk afsnit, ellers kabellets standardtype."""
-    key=_cable_spec_section_key(a,b)
-    for row in normalize_cable_spec_section_overrides(
-        getattr(cable,"spec_section_overrides",[]),getattr(cable,"cable_spec","")
-    ):
-        if _cable_spec_section_key(
-            (row["a_symbol_uid"],row["a_symbol_port"]),(row["b_symbol_uid"],row["b_symbol_port"])
-        )==key:
-            return str(row["cable_spec"])
-    return str(getattr(cable,"cable_spec","") or "").strip()
 
 
 def set_cable_spec_for_section(cable: CablePlacement, a, b, cable_spec: str) -> None:
@@ -3078,17 +2973,6 @@ def set_cable_spec_for_section(cable: CablePlacement, a, b, cable_spec: str) -> 
             "cable_spec":spec,
         })
     cable.spec_section_overrides=normalize_cable_spec_section_overrides(rows,default)
-
-
-def cable_spec_section_at_segment(cable: CablePlacement, segment_index: int) -> dict | None:
-    """Find fysisk afsnit og effektiv kabeltype for et polyline-segment."""
-    seg=int(segment_index)
-    for section in cable_connection_sections(cable):
-        if int(section["start_point_index"]) <= seg < int(section["end_point_index"]):
-            rec=dict(section)
-            rec["cable_spec"]=cable_spec_for_section(cable,section["a"],section["b"])
-            return rec
-    return None
 
 
 def cable_spec_for_leg(cable: CablePlacement, point_index: int, leg: str) -> str:
@@ -3439,247 +3323,6 @@ def shift_cable_connection_indices(cable: CablePlacement, start_index: int, delt
         if idx>=0:
             rec["point_index"]=idx; rows.append(rec)
     set_cable_symbol_connections(cable,rows)
-
-
-def room_polygon_centroid(points) -> tuple[float, float]:
-    pts=[(float(x),float(y)) for x,y in (points or [])]
-    if not pts:
-        return 0.0,0.0
-    if len(pts)<3:
-        return sum(x for x,_ in pts)/len(pts),sum(y for _,y in pts)/len(pts)
-    area2=0.0; cx=0.0; cy=0.0
-    for i,(x1,y1) in enumerate(pts):
-        x2,y2=pts[(i+1)%len(pts)]
-        cross=x1*y2-x2*y1
-        area2+=cross; cx+=(x1+x2)*cross; cy+=(y1+y2)*cross
-    if abs(area2)<1e-9:
-        return sum(x for x,_ in pts)/len(pts),sum(y for _,y in pts)/len(pts)
-    return cx/(3.0*area2),cy/(3.0*area2)
-
-
-def room_contains_point(room, x: float, y: float) -> bool:
-    """Ray-casting point-in-polygon including points on the boundary."""
-    pts=list(getattr(room,"points",[]) or [])
-    if len(pts)<3:return False
-    px=float(x); py=float(y); inside=False
-    eps=1e-7
-    for i,(ax,ay) in enumerate(pts):
-        bx,by=pts[(i+1)%len(pts)]
-        ax=float(ax); ay=float(ay); bx=float(bx); by=float(by)
-        dx=bx-ax; dy=by-ay
-        cross=(px-ax)*dy-(py-ay)*dx
-        if abs(cross)<=eps*max(1.0,abs(dx)+abs(dy)):
-            dot=(px-ax)*(px-bx)+(py-ay)*(py-by)
-            if dot<=eps:return True
-        if (ay>py)!=(by>py):
-            xin=ax+(py-ay)*(bx-ax)/(by-ay)
-            if px < xin:inside=not inside
-    return inside
-
-
-def room_for_point(rooms, x: float, y: float):
-    """Returnér det mindste rum som indeholder punktet ved overlap."""
-    hits=[]
-    for room in rooms or []:
-        if room_contains_point(room,x,y):
-            pts=list(getattr(room,"points",[]) or [])
-            area=0.0
-            for i,(x1,y1) in enumerate(pts):
-                x2,y2=pts[(i+1)%len(pts)]; area+=float(x1)*float(y2)-float(x2)*float(y1)
-            hits.append((abs(area)*0.5,room))
-    return min(hits,key=lambda row:row[0])[1] if hits else None
-
-
-def room_display_text(room) -> str:
-    code=str(getattr(room,"code","") or "").strip()
-    name=str(getattr(room,"name","") or "").strip()
-    return f"{code} · {name}" if code and name else (name or code or "Rum")
-
-
-def room_output_label(room, show_code: bool = False) -> str:
-    """Rumnavn til planvisning/udskrift med valgfri separat rummærkning."""
-    code=str(getattr(room,"code","") or "").strip()
-    name=str(getattr(room,"name","") or "").strip()
-    if bool(show_code) and code:
-        return f"{code} · {name}" if name else code
-    return name or "Rum"
-
-
-def _segment_edge_intersection_t(a, b, c, d, eps: float = 1e-9):
-    """Returnér t på segment a→b hvor det skærer c→d, ellers None.
-
-    Kollineære kanter behøver ikke særlige t-værdier: interval-midtpunkterne
-    bliver stadig klassificeret af ``room_for_point`` og grænsen tæller som
-    inde i et rum.
-    """
-    ax,ay=map(float,a); bx,by=map(float,b); cx,cy=map(float,c); dx,dy=map(float,d)
-    rx=bx-ax; ry=by-ay; sx=dx-cx; sy=dy-cy
-    den=rx*sy-ry*sx
-    if abs(den)<=eps:return None
-    qx=cx-ax; qy=cy-ay
-    t=(qx*sy-qy*sx)/den; u=(qx*ry-qy*rx)/den
-    if -eps<=t<=1.0+eps and -eps<=u<=1.0+eps:return min(1.0,max(0.0,t))
-    return None
-
-
-def rooms_along_polyline(rooms, points):
-    """Rum som en polyline faktisk løber igennem, i rutens rækkefølge.
-
-    Der samples mellem præcise skæringer med rumgrænser i stedet for på en
-    fast afstand. Det gør resultatet uafhængigt af tegningens målestok og
-    fanger også små rum. Kun rum som kablet har et reelt interval i medtages;
-    et enkelt tangent-berøringspunkt skaber derfor ikke en falsk rummærkning.
-    """
-    pts=[(float(x),float(y)) for x,y in (points or [])]
-    room_list=list(rooms or [])
-    if not room_list or not pts:return []
-    if len(pts)==1:
-        hit=room_for_point(room_list,*pts[0]); return [hit] if hit is not None else []
-    out=[]
-    for p0,p1 in zip(pts,pts[1:]):
-        if abs(p1[0]-p0[0])+abs(p1[1]-p0[1])<=1e-12:continue
-        cuts=[0.0,1.0]
-        for room in room_list:
-            poly=list(getattr(room,'points',[]) or [])
-            if len(poly)<3:continue
-            for i,q0 in enumerate(poly):
-                q1=poly[(i+1)%len(poly)]
-                t=_segment_edge_intersection_t(p0,p1,q0,q1)
-                if t is not None:cuts.append(float(t))
-        cuts=sorted(cuts)
-        uniq=[]
-        for t in cuts:
-            if not uniq or abs(t-uniq[-1])>1e-8:uniq.append(t)
-        for ta,tb in zip(uniq,uniq[1:]):
-            if tb-ta<=1e-8:continue
-            t=(ta+tb)*0.5
-            x=p0[0]+(p1[0]-p0[0])*t; y=p0[1]+(p1[1]-p0[1])*t
-            room=room_for_point(room_list,x,y)
-            if room is not None and (not out or getattr(out[-1],'uid',None)!=getattr(room,'uid',None)):
-                out.append(room)
-    return out
-
-
-def cable_rooms(cable, rooms):
-    return rooms_along_polyline(rooms,getattr(cable,'points',[]) or [])
-
-
-def polyline_room_lengths(points, rooms):
-    """Fordel en polylines geometriske længde på rum og areal uden rum.
-
-    Resultatet er ``{room_uid: længde, None: længde_uden_rum}`` i tegneenheder.
-    Segmenter deles ved præcise skæringer med rumgrænser, så funktionen kan
-    bruges til en rumfiltreret kabel-BOM uden at tælle et helt kabel i hvert
-    rum, det blot passerer igennem.
-    """
-    pts=[(float(x),float(y)) for x,y in (points or [])]
-    room_list=list(rooms or [])
-    totals={}
-    for p0,p1 in zip(pts,pts[1:]):
-        seg_len=math.hypot(p1[0]-p0[0],p1[1]-p0[1])
-        if seg_len<=1e-12:continue
-        cuts=[0.0,1.0]
-        for room in room_list:
-            poly=list(getattr(room,'points',[]) or [])
-            if len(poly)<3:continue
-            for i,q0 in enumerate(poly):
-                q1=poly[(i+1)%len(poly)]
-                t=_segment_edge_intersection_t(p0,p1,q0,q1)
-                if t is not None:cuts.append(float(t))
-        cuts=sorted(cuts); uniq=[]
-        for t in cuts:
-            if not uniq or abs(t-uniq[-1])>1e-8:uniq.append(t)
-        for ta,tb in zip(uniq,uniq[1:]):
-            if tb-ta<=1e-8:continue
-            tm=(ta+tb)*0.5
-            x=p0[0]+(p1[0]-p0[0])*tm; y=p0[1]+(p1[1]-p0[1])*tm
-            room=room_for_point(room_list,x,y) if room_list else None
-            key=str(getattr(room,'uid','') or '') if room is not None else None
-            totals[key]=totals.get(key,0.0)+seg_len*(tb-ta)
-    return totals
-
-
-def cable_room_length_metres(cable, rooms, room_uid: str | None, metres_per_unit: float | None, reserve_percent: float = 0.0):
-    """Kabellængde som fysisk ligger i ét valgt rum (eller uden for alle rum)."""
-    if metres_per_unit is None or float(metres_per_unit)<=0:return None
-    key=str(room_uid or '').strip() or None
-    base=float(polyline_room_lengths(getattr(cable,'points',[]) or [],rooms).get(key,0.0))*float(metres_per_unit)
-    return base*(1.0+max(0.0,float(reserve_percent))/100.0)
-
-
-def cable_length_by_spec_room_metres(cable, rooms, room_uid: str | None, metres_per_unit: float | None):
-    """Som ``cable_length_by_spec_metres``, men kun for den del der ligger i valgt rum."""
-    if metres_per_unit is None or float(metres_per_unit)<=0:return None
-    pts=[(float(x),float(y)) for x,y in (getattr(cable,'points',[]) or [])]
-    room_list=list(rooms or []); wanted=str(room_uid or '').strip() or None; factor=float(metres_per_unit)
-    default=str(getattr(cable,'cable_spec','') or '').strip() or '—'; totals={}
-    for index,(p0,p1) in enumerate(zip(pts,pts[1:])):
-        seg_len=math.hypot(p1[0]-p0[0],p1[1]-p0[1])
-        if seg_len<=1e-12:continue
-        cuts=[0.0,1.0]
-        for room in room_list:
-            poly=list(getattr(room,'points',[]) or [])
-            if len(poly)<3:continue
-            for i,q0 in enumerate(poly):
-                q1=poly[(i+1)%len(poly)]
-                t=_segment_edge_intersection_t(p0,p1,q0,q1)
-                if t is not None:cuts.append(float(t))
-        cuts=sorted(cuts); uniq=[]
-        for t in cuts:
-            if not uniq or abs(t-uniq[-1])>1e-8:uniq.append(t)
-        section=cable_spec_section_at_segment(cable,index)
-        spec=str((section or {}).get('cable_spec') or default).strip() or '—'
-        for ta,tb in zip(uniq,uniq[1:]):
-            if tb-ta<=1e-8:continue
-            tm=(ta+tb)*0.5
-            x=p0[0]+(p1[0]-p0[0])*tm; y=p0[1]+(p1[1]-p0[1])*tm
-            room=room_for_point(room_list,x,y) if room_list else None
-            key=str(getattr(room,'uid','') or '') if room is not None else None
-            if key!=wanted:continue
-            totals[spec]=totals.get(spec,0.0)+seg_len*(tb-ta)*factor
-    return totals
-
-
-def cable_room_marking(cable, rooms, style: str = 'name', separator: str = ' → ') -> str:
-    """Forslag til *ekstra kabelmærkning* baseret på gennemløbte rum.
-
-    Funktionen ændrer aldrig kabelobjektet og rører dermed hverken ``cable_id``
-    eller ``circuit_id``. Gentagne rum samles i første rute-rækkefølge, så en
-    kabelrute der kort forlader og genindtræder i samme rum ikke bliver støjende.
-    """
-    seen=set(); ordered=[]
-    for room in cable_rooms(cable,rooms):
-        uid=str(getattr(room,'uid','') or id(room))
-        if uid in seen:continue
-        seen.add(uid); ordered.append(room)
-    def caption(room):
-        name=str(getattr(room,'name','') or '').strip()
-        code=str(getattr(room,'code','') or '').strip()
-        if style=='code':return code or name or 'Rum'
-        if style=='display':return room_display_text(room)
-        return name or code or 'Rum'
-    return str(separator).join(caption(room) for room in ordered)
-
-
-def cable_light_endpoint_marking(cable, placements, separator: str = ' → ') -> str:
-    """Forslag fra *lampestedernes egne mærkninger* på et fysisk kabel.
-
-    Bruges som fallback/alternativ til rumbaserede forslag. Kun fysiske
-    ``light_connection``-endepunkter tæller, og kun ``Placement.label`` bruges;
-    gruppe/kreds indgår aldrig i resultatet. Funktionen ændrer ingen data.
-    """
-    by_uid={str(getattr(p,'uid','') or ''):p for p in (placements or [])}
-    rows=sorted(cable_symbol_connections(cable),key=lambda r:int(r.get('point_index',0) or 0))
-    if len(rows)<2:return ''
-    first=by_uid.get(str(rows[0].get('symbol_uid','') or ''))
-    last=by_uid.get(str(rows[-1].get('symbol_uid','') or ''))
-    if first is None or last is None:return ''
-    if str(getattr(first,'symbol','') or '')!='light_connection' or str(getattr(last,'symbol','') or '')!='light_connection':return ''
-    a=str(getattr(first,'label','') or '').strip()
-    b=str(getattr(last,'label','') or '').strip()
-    if a and b:
-        return a if a==b else f"{a}{separator}{b}"
-    return a or b
 
 
 COMBO_SYMBOLS = {"combo_switch_1_socket", "combo_switch_2way_socket", "combo_switch_crown_socket", "combo_switch_cross_socket", "combo_switch_double_2way_socket", "combo_pushbutton_socket", "combo_pushbutton_indicator_socket", "combo_row_2x1_socket", "combo_row_1_2way_socket", "combo_row_2way_2way_socket", "combo_row_crown_1_socket", "combo_row_3x1_socket", "combo_row_2x1_2way_socket", "combo_row_crown_2x1_socket"}
