@@ -18,15 +18,76 @@ import uuid
 from dataclasses import asdict
 from pathlib import Path
 
+from elplan_core.appearance import normalize_hex_color
+from elplan_core.cables.categories import (
+    _cable_category_id,
+    cable_category_layer_label,
+    cable_category_layer_name,
+    cable_category_record,
+    cable_category_style,
+    cable_effective_layer,
+    cable_visible_in_layers,
+    default_cable_category_records,
+    normalize_cable_category_id,
+    normalize_cable_category_records,
+    normalize_cable_line_style,
+)
+from elplan_core.cables.connections import (
+    cable_connection_at,
+    cable_is_physical_segment,
+    cable_symbol_connections,
+    normalize_cable_symbol_connections,
+    replace_cable_connection,
+    set_cable_symbol_connections,
+    shift_cable_connection_indices,
+)
+from elplan_core.cables.geometry import (
+    _axis_aligned,
+    _clean_polyline_points,
+    cable_label_point,
+    cable_route_points_to,
+    constrain_polyline_target_to_locked_neighbors,
+    convert_cable_route_mode_geometry,
+    move_polyline_endpoint,
+    move_polyline_endpoint_flexible,
+    move_polyline_endpoint_stable,
+    move_polyline_vertex,
+    move_polyline_vertex_flexible,
+    move_polyline_vertex_stable,
+    polyline_label_point,
+    polyline_length,
+    rotate_point,
+)
+from elplan_core.cables.lengths import (
+    cable_estimated_length_metres,
+    cable_length_by_spec_metres,
+    cable_length_metres,
+    cable_route_chain_estimated_length_metres,
+    cable_route_chain_key,
+    cable_route_chain_length_metres,
+    cable_route_chain_members,
+    cable_route_length,
+)
 from elplan_core.cables.sections import (
     _cable_route_section_key,
     _cable_spec_section_key,
+    attach_symbol_to_existing_cable,
     cable_connection_sections,
+    cable_effective_specs,
+    cable_route_mode_for_point_index,
+    cable_route_section_at_segment,
+    cable_route_section_mode,
+    cable_section_spec_labels,
+    cable_spec_for_leg,
     cable_spec_for_section,
     cable_spec_section_at_segment,
-    cable_symbol_connections,
+    convert_cable_route_section_geometry,
+    nearest_cable_segment,
+    normalize_cable_route_section_modes,
     normalize_cable_spec_section_overrides,
-    normalize_cable_symbol_connections,
+    set_cable_route_section_mode,
+    set_cable_spec_for_section,
+    split_cable_into_physical_segments,
 )
 from elplan_core.constants import *  # noqa: F403 - kompatibilitetsfacade
 from elplan_core.models import (
@@ -74,89 +135,15 @@ from reportlab.pdfbase.pdfmetrics import stringWidth
 from ezdxf import bbox, disassemble, path as ezpath
 from ezdxf.addons import odafc
 
-def _cable_category_id(value: str) -> str:
-    text=str(value or "").strip().lower()
-    text=re.sub(r"[^a-z0-9_\-]+","_",text).strip("_-")
-    return text or DEFAULT_CABLE_CATEGORY
 
-def normalize_cable_category_id(value: str) -> str:
-    return _cable_category_id(value)
 
-def default_cable_category_records() -> list[dict]:
-    return [dict(row) for row in DEFAULT_CABLE_CATEGORIES]
 
-def normalize_cable_category_records(records) -> list[dict]:
-    """Normalisér projektets kabelkategorier med stabile id'er og visuel stil."""
-    source=list(records or []) if isinstance(records,(list,tuple)) else []
-    out=[]; seen=set()
-    for raw in source:
-        if not isinstance(raw,dict):
-            continue
-        cid=_cable_category_id(raw.get("id") or raw.get("name"))
-        if cid in seen:
-            continue
-        seen.add(cid)
-        name=str(raw.get("name") or cid.replace("_"," ").title()).strip() or cid
-        default_row=next((row for row in DEFAULT_CABLE_CATEGORIES if row["id"]==cid),None)
-        if "description" in raw:
-            description=str(raw.get("description") or "").strip()
-        else:
-            description=str((default_row or {}).get("description","") or "").strip()
-        out.append({
-            "id":cid,
-            "name":name,
-            "description":description,
-            "color":normalize_hex_color(raw.get("color",DEFAULT_CABLE_COLOR),DEFAULT_CABLE_COLOR),
-            "line_style":normalize_cable_line_style(raw.get("line_style",DEFAULT_CABLE_LINE_STYLE)),
-        })
-    if not out:
-        out=default_cable_category_records()
-    if DEFAULT_CABLE_CATEGORY not in {x["id"] for x in out}:
-        out.append(dict(next(x for x in DEFAULT_CABLE_CATEGORIES if x["id"]==DEFAULT_CABLE_CATEGORY)))
-    return out
 
-def cable_category_record(records, category_id: str) -> dict:
-    categories=normalize_cable_category_records(records)
-    cid=_cable_category_id(category_id)
-    for row in categories:
-        if row["id"]==cid:
-            return dict(row)
-    for row in categories:
-        if row["id"]==DEFAULT_CABLE_CATEGORY:
-            return dict(row)
-    return dict(categories[0])
 
-def cable_category_style(records, category_id: str) -> tuple[str,str]:
-    row=cable_category_record(records,category_id)
-    return str(row["color"]), str(row["line_style"])
 
-def cable_category_layer_name(base_layer: str, category_id: str) -> str:
-    base=str(base_layer or CABLE_LAYER).strip() or CABLE_LAYER
-    cid=_cable_category_id(category_id).upper().replace("_","-")
-    return f"{base}-KAT-{cid}"
 
-def cable_effective_layer(cable) -> str:
-    return cable_category_layer_name(getattr(cable,"layer",CABLE_LAYER),getattr(cable,"cable_category",DEFAULT_CABLE_CATEGORY))
 
-def cable_category_layer_label(layer_name: str, records=None) -> str:
-    text=str(layer_name or "")
-    marker="-KAT-"
-    if marker not in text:
-        return text
-    base,raw_id=text.rsplit(marker,1)
-    cid=_cable_category_id(raw_id.replace("-","_"))
-    row=cable_category_record(records,cid)
-    prefix={CABLE_LAYER:"Kabel",PATCH_CABLE_LAYER:"Patchkabel",WIRE_LAYER:"Ledning"}.get(base,"Kabel")
-    return f"{prefix} · {row['name']}"
 
-def cable_visible_in_layers(cable, layer_visibility) -> bool:
-    if layer_visibility is None:
-        return True
-    base=str(getattr(cable,"layer",CABLE_LAYER) or CABLE_LAYER)
-    effective=cable_effective_layer(cable)
-    # Kategori-laget er autoritativt. Hvis et ældre projekt endnu ikke har en
-    # kategori-nøgle, bruges det gamle EL-KABLER/EL-LEDNINGER-lag som fallback.
-    return bool(layer_visibility.get(effective,layer_visibility.get(base,True)))
 
 def output_equivalent_view_scale(page_scale: float) -> float:
     """Returnér PDF-sidens skala som ca. Qt-skærmpixels pr. CAD-enhed."""
@@ -887,139 +874,12 @@ def bom_purchase_segment_key(article_no, context=None) -> str:
     ))
 
 
-def set_cable_symbol_connections(cable: CablePlacement, records) -> None:
-    """Gem tilslutninger og hold legacy start/slut-felter synkroniserede."""
-    points=list(getattr(cable,"points",[]) or [])
-    rows=normalize_cable_symbol_connections(records,len(points))
-    cable.symbol_connections=rows
-    cable.start_symbol_uid=""; cable.start_symbol_port=0
-    cable.end_symbol_uid=""; cable.end_symbol_port=0
-    if points:
-        for row in rows:
-            idx=int(row["point_index"])
-            if idx==0:
-                cable.start_symbol_uid=str(row["symbol_uid"]); cable.start_symbol_port=int(row["symbol_port"])
-            if idx==len(points)-1:
-                cable.end_symbol_uid=str(row["symbol_uid"]); cable.end_symbol_port=int(row["symbol_port"])
 
 
-def cable_connection_at(cable: CablePlacement, point_index: int):
-    index=int(point_index)
-    return next((dict(r) for r in cable_symbol_connections(cable) if int(r.get("point_index",-1))==index),None)
 
 
-def cable_is_physical_segment(cable: CablePlacement) -> bool:
-    """True when a cable has at most two physical symbol endpoints.
-
-    Since 0.55.0 a ``CablePlacement`` represents one real cable, not a whole
-    loop-through string. Waypoints may still be unlimited, but a cable can only
-    connect two installation points.
-    """
-    rows=cable_symbol_connections(cable)
-    points=list(getattr(cable,"points",[]) or [])
-    endpoints={0,max(0,len(points)-1)} if points else set()
-    return len(rows)<=2 and all(int(r.get("point_index",0) or 0) in endpoints for r in rows)
 
 
-def split_cable_into_physical_segments(cable: CablePlacement, cable_ids=None, *, return_legacy_map: bool = False):
-    """Split a legacy multi-stop cable into independent physical cables.
-
-    Geometry between neighbouring physical symbol connections becomes one
-    ``CablePlacement``. Loose geometry before the first or after the last
-    connection is preserved as its own cable, so migration never discards a
-    drawn route. Section-specific cable type and routing mode are materialised
-    onto each resulting cable.
-
-    ``return_legacy_map`` additionally returns a mapping from old PL-box leg
-    identity ``(uid, point_index, leg)`` to the new cable endpoint identity.
-    """
-    points=[(float(p[0]),float(p[1])) for p in (getattr(cable,"points",[]) or [])]
-    conns=cable_symbol_connections(cable)
-    endpoint_indices={0,max(0,len(points)-1)}
-    connection_indices={int(r.get("point_index",0) or 0) for r in conns}
-    already_physical=(len(conns)<=2 and connection_indices.issubset(endpoint_indices))
-    if len(points)<2 or already_physical:
-        if not getattr(cable,"route_chain_uid",""):
-            cable.route_chain_uid=str(getattr(cable,"uid","") or uuid.uuid4().hex)
-        # A pre-0.55 cable with exactly two endpoints could still store its only
-        # physical span as an "override". Materialise that value now so the new
-        # model has one authoritative cable type/routing mode and no section layer.
-        if len(conns)==2:
-            cable.cable_spec=cable_spec_for_section(cable,conns[0],conns[1])
-            cable.orthogonal=cable_route_section_mode(cable,conns[0],conns[1])=="orthogonal"
-        cable.route_section_modes=[]
-        cable.spec_section_overrides=[]
-        result=[cable]
-        return (result,{}) if return_legacy_map else result
-
-    boundaries=[0]
-    boundaries.extend(int(r["point_index"]) for r in conns)
-    boundaries.append(len(points)-1)
-    boundaries=sorted(set(max(0,min(i,len(points)-1)) for i in boundaries))
-    spans=[(a,b) for a,b in zip(boundaries,boundaries[1:]) if b>a]
-    if not spans:
-        result=[cable]
-        return (result,{}) if return_legacy_map else result
-
-    supplied=[str(x or "").strip() for x in (cable_ids or [])]
-    base_id=str(getattr(cable,"cable_id","") or "").strip()
-    chain_uid=str(getattr(cable,"route_chain_uid","") or getattr(cable,"uid","") or uuid.uuid4().hex)
-    old_uid=str(getattr(cable,"uid","") or "")
-    old_conn_by_index={int(r["point_index"]):dict(r) for r in conns}
-    segments=[]; legacy_map={}
-
-    for seg_no,(start,end) in enumerate(spans):
-        data=asdict(cable)
-        data["points"]=points[start:end+1]
-        # Keep the first UID for backwards references; subsequent physical cables
-        # receive fresh stable identities.
-        data["uid"]=old_uid if seg_no==0 and old_uid else uuid.uuid4().hex
-        data["route_chain_uid"]=chain_uid
-        data["route_section_modes"]=[]
-        data["spec_section_overrides"]=[]
-
-        start_conn=old_conn_by_index.get(start)
-        end_conn=old_conn_by_index.get(end)
-        local=[]
-        if start_conn is not None:
-            local.append({"point_index":0,"symbol_uid":start_conn["symbol_uid"],"symbol_port":start_conn["symbol_port"]})
-        if end_conn is not None:
-            local.append({"point_index":end-start,"symbol_uid":end_conn["symbol_uid"],"symbol_port":end_conn["symbol_port"]})
-        data["symbol_connections"]=normalize_cable_symbol_connections(local,len(data["points"]))
-
-        # A span bounded by two symbol connections may have had legacy
-        # section-specific settings. Materialise them on the real cable.
-        if start_conn is not None and end_conn is not None:
-            data["cable_spec"]=cable_spec_for_section(cable,start_conn,end_conn)
-            data["orthogonal"]=cable_route_section_mode(cable,start_conn,end_conn)=="orthogonal"
-        else:
-            # Loose head/tail spans used the cable defaults.
-            data["cable_spec"]=str(getattr(cable,"cable_spec","") or "")
-            data["orthogonal"]=bool(getattr(cable,"orthogonal",False))
-
-        if seg_no < len(supplied) and supplied[seg_no]:
-            data["cable_id"]=supplied[seg_no]
-        elif len(spans)>1 and base_id:
-            data["cable_id"]=base_id if seg_no==0 else f"{base_id}-{seg_no+1}"
-
-        segment=CablePlacement(**data)
-        set_cable_symbol_connections(segment,data["symbol_connections"])
-        segments.append(segment)
-
-        # PL legacy mapping. A middle connection had Side A/Side B; with real
-        # cables each side is simply the endpoint of its own cable.
-        if start_conn is not None:
-            old_leg="endpoint" if start==0 else "after"
-            legacy_map[(old_uid,start,old_leg)]={
-                "cable_uid":segment.uid,"point_index":0,"leg":"endpoint"
-            }
-        if end_conn is not None:
-            old_leg="endpoint" if end==len(points)-1 else "before"
-            legacy_map[(old_uid,end,old_leg)]={
-                "cable_uid":segment.uid,"point_index":len(segment.points)-1,"leg":"endpoint"
-            }
-
-    return (segments,legacy_map) if return_legacy_map else segments
 
 
 PL_BOX_ENTRY_COUNT = 6
@@ -2910,419 +2770,31 @@ def pl_box_wiring_status(records, cable_legs) -> dict:
 
 
 
-def normalize_cable_route_section_modes(records):
-    """Normalisér lokale ruteføringsvalg mellem to fysiske kabeltilslutninger.
-
-    Posterne er uafhængige af polyline-indeks og overlever derfor geometri-
-    ændringer. Et afsnit er retningsløst: A→B og B→A er samme fysiske stræk.
-    """
-    out=[]; by_key={}
-    for raw in records or []:
-        if not isinstance(raw,dict):
-            continue
-        a_uid=str(raw.get("a_symbol_uid",raw.get("from_symbol_uid","")) or "").strip()
-        b_uid=str(raw.get("b_symbol_uid",raw.get("to_symbol_uid","")) or "").strip()
-        if not a_uid or not b_uid or a_uid==b_uid:
-            continue
-        try:
-            a_port=max(0,int(raw.get("a_symbol_port",raw.get("from_symbol_port",0)) or 0))
-            b_port=max(0,int(raw.get("b_symbol_port",raw.get("to_symbol_port",0)) or 0))
-        except (TypeError,ValueError):
-            continue
-        mode=str(raw.get("mode","") or "").strip().lower()
-        if mode not in {"free","orthogonal"}:
-            continue
-        a=(a_uid,a_port); b=(b_uid,b_port)
-        if b<a:
-            a,b=b,a
-        key=(a,b)
-        by_key[key]={"a_symbol_uid":a[0],"a_symbol_port":a[1],"b_symbol_uid":b[0],"b_symbol_port":b[1],"mode":mode}
-    for key in sorted(by_key):
-        out.append(by_key[key])
-    return out
 
 
-def cable_route_section_mode(cable: CablePlacement, a, b) -> str:
-    """Effective route mode for a physical section, falling back to cable default."""
-    key=_cable_route_section_key(a,b)
-    for row in normalize_cable_route_section_modes(getattr(cable,"route_section_modes",[])):
-        if _cable_route_section_key((row["a_symbol_uid"],row["a_symbol_port"]),(row["b_symbol_uid"],row["b_symbol_port"]))==key:
-            return str(row["mode"])
-    return "orthogonal" if bool(getattr(cable,"orthogonal",False)) else "free"
 
 
-def set_cable_spec_for_section(cable: CablePlacement, a, b, cable_spec: str) -> None:
-    """Sæt eller ryd lokal kabeltype for ét tilslutning-til-tilslutning-afsnit."""
-    spec=str(cable_spec or "").strip()
-    if not spec:
-        raise ValueError("Kabeltype må ikke være tom")
-    key=_cable_spec_section_key(a,b)
-    default=str(getattr(cable,"cable_spec","") or "").strip()
-    rows=[]
-    for row in normalize_cable_spec_section_overrides(getattr(cable,"spec_section_overrides",[]),default):
-        rkey=_cable_spec_section_key(
-            (row["a_symbol_uid"],row["a_symbol_port"]),(row["b_symbol_uid"],row["b_symbol_port"])
-        )
-        if rkey!=key:
-            rows.append(row)
-    if spec!=default:
-        x,y=key
-        rows.append({
-            "a_symbol_uid":x[0],"a_symbol_port":x[1],
-            "b_symbol_uid":y[0],"b_symbol_port":y[1],
-            "cable_spec":spec,
-        })
-    cable.spec_section_overrides=normalize_cable_spec_section_overrides(rows,default)
 
 
-def cable_spec_for_leg(cable: CablePlacement, point_index: int, leg: str) -> str:
-    """Effektiv kabeltype på et bestemt fysisk kabelben ved en PL-dåse."""
-    pts=list(getattr(cable,"points",[]) or [])
-    if len(pts)<2:
-        return str(getattr(cable,"cable_spec","") or "").strip()
-    idx=max(0,min(int(point_index),len(pts)-1)); side=str(leg or "")
-    if side=="before":
-        seg=idx-1
-    elif side=="after":
-        seg=idx
-    else:  # endpoint
-        seg=0 if idx<=0 else idx-1
-    section=cable_spec_section_at_segment(cable,max(0,min(seg,len(pts)-2)))
-    return str((section or {}).get("cable_spec") or getattr(cable,"cable_spec","") or "").strip()
 
 
-def cable_effective_specs(cable: CablePlacement) -> list[str]:
-    """Unikke kabeltyper der reelt forekommer langs kabellets fysiske afsnit."""
-    values=[]
-    sections=cable_connection_sections(cable)
-    if sections:
-        for section in sections:
-            spec=cable_spec_for_section(cable,section["a"],section["b"])
-            if spec and spec not in values:
-                values.append(spec)
-    else:
-        spec=str(getattr(cable,"cable_spec","") or "").strip()
-        if spec: values.append(spec)
-    return values
 
 
-def cable_section_spec_labels(cable: CablePlacement) -> list[dict]:
-    """Labels til tegning/output når kabeltypen varierer langs samme kabel."""
-    overrides=normalize_cable_spec_section_overrides(
-        getattr(cable,"spec_section_overrides",[]),getattr(cable,"cable_spec","")
-    )
-    if not overrides:
-        return []
-    pts=list(getattr(cable,"points",[]) or [])
-    out=[]
-    for section in cable_connection_sections(cable):
-        start=int(section["start_point_index"]); end=int(section["end_point_index"])
-        if not (0<=start<end<len(pts)):
-            continue
-        section_points=pts[start:end+1]
-        x,y=polyline_label_point(section_points)
-        out.append({
-            "section":dict(section),
-            "cable_spec":cable_spec_for_section(cable,section["a"],section["b"]),
-            "point":(float(x),float(y)),
-        })
-    return out
 
 
-def set_cable_route_section_mode(cable: CablePlacement, a, b, mode: str) -> None:
-    """Set or clear one local route override.
-
-    Choosing the cable's default mode removes the explicit override, keeping the
-    project compact and making later global mode changes predictable.
-    """
-    mode=str(mode or "").strip().lower()
-    if mode not in {"free","orthogonal"}:
-        raise ValueError("Ugyldig ruteføring")
-    key=_cable_route_section_key(a,b)
-    rows=[]
-    for row in normalize_cable_route_section_modes(getattr(cable,"route_section_modes",[])):
-        rkey=_cable_route_section_key((row["a_symbol_uid"],row["a_symbol_port"]),(row["b_symbol_uid"],row["b_symbol_port"]))
-        if rkey!=key:
-            rows.append(row)
-    default="orthogonal" if bool(getattr(cable,"orthogonal",False)) else "free"
-    if mode!=default:
-        x,y=key
-        rows.append({"a_symbol_uid":x[0],"a_symbol_port":x[1],"b_symbol_uid":y[0],"b_symbol_port":y[1],"mode":mode})
-    cable.route_section_modes=normalize_cable_route_section_modes(rows)
 
 
-def cable_route_mode_for_point_index(cable: CablePlacement, point_index: int) -> str:
-    """Effective local mode around an editable polyline point."""
-    idx=int(point_index)
-    for section in cable_connection_sections(cable):
-        if int(section["start_point_index"]) < idx < int(section["end_point_index"]):
-            return cable_route_section_mode(cable,section["a"],section["b"])
-    return "orthogonal" if bool(getattr(cable,"orthogonal",False)) else "free"
 
 
-def cable_route_section_at_segment(cable: CablePlacement, segment_index: int) -> dict | None:
-    """Find the connection-to-connection section containing a polyline segment."""
-    seg=int(segment_index)
-    for section in cable_connection_sections(cable):
-        if int(section["start_point_index"]) <= seg < int(section["end_point_index"]):
-            rec=dict(section)
-            rec["mode"]=cable_route_section_mode(cable,section["a"],section["b"])
-            return rec
-    return None
 
 
-def convert_cable_route_section_geometry(points, connections, start_point_index: int, end_point_index: int, *, from_orthogonal: bool, to_orthogonal: bool):
-    """Convert only one connection-bounded part of a cable polyline.
-
-    Points and physical connection indices before/after the section are retained
-    and remapped. This is the core of mixed 90°/diagonal routing on one cable.
-    """
-    pts=[(float(p[0]),float(p[1])) for p in (points or []) if isinstance(p,(list,tuple)) and len(p)>=2]
-    rows=normalize_cable_symbol_connections(connections or [],len(pts))
-    if len(pts)<2:
-        return pts,rows
-    start=max(0,min(int(start_point_index),len(pts)-1)); end=max(0,min(int(end_point_index),len(pts)-1))
-    if end<start:
-        start,end=end,start
-    if end-start<1 or bool(from_orthogonal)==bool(to_orthogonal):
-        return pts,rows
-    sub=pts[start:end+1]
-    sub_rows=[]
-    outside=[]
-    for row in rows:
-        idx=int(row.get("point_index",0) or 0)
-        if start<=idx<=end:
-            rec=dict(row); rec["point_index"]=idx-start; sub_rows.append(rec)
-        else:
-            outside.append(dict(row))
-    new_sub,new_sub_rows=convert_cable_route_mode_geometry(sub,sub_rows,from_orthogonal=from_orthogonal,to_orthogonal=to_orthogonal)
-    new_pts=pts[:start]+new_sub+pts[end+1:]
-    delta=len(new_sub)-len(sub)
-    remapped=[]
-    for row in outside:
-        rec=dict(row); idx=int(rec.get("point_index",0) or 0)
-        if idx>end:
-            rec["point_index"]=idx+delta
-        remapped.append(rec)
-    for row in new_sub_rows:
-        rec=dict(row); rec["point_index"]=start+int(rec.get("point_index",0) or 0); remapped.append(rec)
-    return new_pts,normalize_cable_symbol_connections(remapped,len(new_pts))
-
-def replace_cable_connection(cable: CablePlacement, point_index: int, symbol_uid: str = "", symbol_port: int = 0) -> None:
-    """Tilføj, opdatér eller fjern en forbindelse ved ét rutepunkt."""
-    index=int(point_index)
-    rows=[dict(r) for r in cable_symbol_connections(cable) if int(r.get("point_index",-1))!=index]
-    uid=str(symbol_uid or "").strip()
-    if uid:
-        rows.append({"point_index":index,"symbol_uid":uid,"symbol_port":max(0,int(symbol_port or 0))})
-    set_cable_symbol_connections(cable,rows)
 
 
-def nearest_cable_segment(points, point) -> dict | None:
-    """Find nærmeste segment/projektion på en kabelpolyline.
-
-    Returnerer segmentindeks, projektion, afstand og parameter ``t``. Funktionen
-    er bevidst GUI-uafhængig, så både klik-værktøjer og senere projektkontrol kan
-    bruge samme geometri.
-    """
-    pts=[(float(x),float(y)) for x,y in (points or [])]
-    if len(pts)<2:
-        return None
-    x,y=float(point[0]),float(point[1])
-    best=None
-    for i,(a,b) in enumerate(zip(pts,pts[1:])):
-        ax,ay=a; bx,by=b
-        dx=bx-ax; dy=by-ay; den=dx*dx+dy*dy
-        if den<=1e-18:
-            t=0.0; px,py=ax,ay
-        else:
-            t=max(0.0,min(1.0,((x-ax)*dx+(y-ay)*dy)/den))
-            px,py=ax+t*dx,ay+t*dy
-        dist=math.hypot(px-x,py-y)
-        if best is None or dist<float(best["distance"]):
-            best={"segment_index":i,"point":(px,py),"distance":dist,"t":t}
-    return best
 
 
-def attach_symbol_to_existing_cable(cable: CablePlacement, symbol_uid: str, symbol_port: int,
-                                    target_point, segment_index: int | None = None) -> dict:
-    """Kobl et eksisterende symbol fysisk på en allerede tegnet kabelrute.
-
-    ``target_point`` er symbolportens faktiske CAD-position. Hvis porten ligger
-    på et eksisterende knæk/endepunkt, genbruges punktet. Ellers indsættes et
-    nyt fysisk anker på det valgte segment. Fri/diagonal føring går direkte via
-    symbolet; ortogonal føring får lokale 90°-knæk, så hele ruten forbliver
-    ortogonal. Eksisterende symboltilslutninger remappes altid.
-
-    Resultatet indeholder ``status`` (``attached``, ``already_attached`` eller
-    ``occupied``), det nye ``point_index`` og afstanden fra symbolporten til det
-    oprindelige segment.
-    """
-    uid=str(symbol_uid or "").strip()
-    if not uid:
-        raise ValueError("symbol_uid mangler")
-    pts=[(float(x),float(y)) for x,y in (getattr(cable,"points",[]) or [])]
-    if len(pts)<2:
-        raise ValueError("Kablet har ikke en gyldig rute")
-    target=(float(target_point[0]),float(target_point[1]))
-    rows=[dict(r) for r in cable_symbol_connections(cable)]
-    for row in rows:
-        if str(row.get("symbol_uid","") or "")==uid:
-            return {"status":"already_attached","point_index":int(row.get("point_index",0) or 0),"distance":0.0}
-
-    nearest=nearest_cable_segment(pts,target)
-    if nearest is None:
-        raise ValueError("Kablet har ikke et segment")
-    if segment_index is None:
-        seg=int(nearest["segment_index"])
-    else:
-        seg=max(0,min(int(segment_index),len(pts)-2))
-        local=nearest_cable_segment(pts[seg:seg+2],target)
-        nearest={
-            "segment_index":seg,
-            "point":local["point"] if local else pts[seg],
-            "distance":local["distance"] if local else math.hypot(target[0]-pts[seg][0],target[1]-pts[seg][1]),
-            "t":local["t"] if local else 0.0,
-        }
-
-    section_before=cable_route_section_at_segment(cable,seg)
-    section_spec_before=cable_spec_section_at_segment(cable,seg)
-    local_orthogonal=(str(section_before.get("mode",""))=="orthogonal") if section_before else bool(getattr(cable,"orthogonal",False))
-
-    def preserve_section_overrides_for_new_connection(point_index: int):
-        new_rec={"point_index":int(point_index),"symbol_uid":uid,"symbol_port":max(0,int(symbol_port or 0))}
-        if section_before:
-            mode=str(section_before.get("mode","") or "")
-            default="orthogonal" if bool(getattr(cable,"orthogonal",False)) else "free"
-            if mode!=default:
-                set_cable_route_section_mode(cable,section_before["a"],section_before["b"],default)
-                set_cable_route_section_mode(cable,section_before["a"],new_rec,mode)
-                set_cable_route_section_mode(cable,new_rec,section_before["b"],mode)
-        if section_spec_before:
-            spec=str(section_spec_before.get("cable_spec","") or "")
-            default_spec=str(getattr(cable,"cable_spec","") or "")
-            if spec and spec!=default_spec:
-                set_cable_spec_for_section(cable,section_spec_before["a"],section_spec_before["b"],default_spec)
-                set_cable_spec_for_section(cable,section_spec_before["a"],new_rec,spec)
-                set_cable_spec_for_section(cable,new_rec,section_spec_before["b"],spec)
-
-    eps=1e-7
-    # Genbrug et eksisterende rutepunkt, hvis symbolporten allerede ligger der.
-    candidate_indices=[seg,seg+1]
-    for idx in candidate_indices:
-        if math.hypot(pts[idx][0]-target[0],pts[idx][1]-target[1])<=eps:
-            existing=cable_connection_at(cable,idx)
-            if existing and str(existing.get("symbol_uid","") or "")!=uid:
-                return {"status":"occupied","point_index":idx,"distance":float(nearest["distance"]),"occupied_by":str(existing.get("symbol_uid","") or "")}
-            replace_cable_connection(cable,idx,uid,symbol_port)
-            preserve_section_overrides_for_new_connection(idx)
-            return {"status":"attached","point_index":idx,"distance":float(nearest["distance"]),"inserted_points":0,"endpoint":idx in (0,len(pts)-1)}
-
-    # Hvis lampestedet tydeligt ligger ved en fri kabelende, er den intuitive
-    # betydning "kablet starter/slutter her" – ikke en kunstig gennemsløjfning
-    # med to PL-ben. Flyt derfor den frie ende til symbolporten og indsæt kun
-    # det nødvendige 90°-knæk.
-    t=float(nearest.get("t",0.5) or 0.0)
-    endpoint_index=None
-    if seg==0 and t<=0.12 and cable_connection_at(cable,0) is None:
-        endpoint_index=0
-    elif seg==len(pts)-2 and t>=0.88 and cable_connection_at(cable,len(pts)-1) is None:
-        endpoint_index=len(pts)-1
-    if endpoint_index is not None:
-        moved,new_index,delta=move_polyline_endpoint_flexible(pts,endpoint_index,target,local_orthogonal)
-        remapped=[]
-        for row in rows:
-            rec=dict(row); old_idx=int(rec.get("point_index",0) or 0)
-            if endpoint_index==0 and old_idx>0:
-                rec["point_index"]=old_idx+int(delta)
-            remapped.append(rec)
-        cable.points=moved
-        remapped.append({"point_index":int(new_index),"symbol_uid":uid,"symbol_port":max(0,int(symbol_port or 0))})
-        set_cable_symbol_connections(cable,remapped)
-        preserve_section_overrides_for_new_connection(int(new_index))
-        return {"status":"attached","point_index":int(new_index),"distance":float(nearest["distance"]),"inserted_points":max(0,int(delta)),"endpoint":True}
-
-    a=pts[seg]; b=pts[seg+1]
-    inserted=[]
-    if local_orthogonal:
-        horizontal=math.isclose(a[1],b[1],abs_tol=eps)
-        vertical=math.isclose(a[0],b[0],abs_tol=eps)
-        if horizontal and math.isclose(target[1],a[1],abs_tol=eps):
-            inserted=[target]
-        elif vertical and math.isclose(target[0],a[0],abs_tol=eps):
-            inserted=[target]
-        elif horizontal:
-            inserted=[(target[0],a[1]),target,(b[0],target[1])]
-        elif vertical:
-            inserted=[(a[0],target[1]),target,(target[0],b[1])]
-        else:
-            # Defensiv håndtering af et gammelt kabel markeret som ortogonalt,
-            # men som indeholder et diagonalt segment. To 90°-knæk fra A via
-            # symbolporten og videre til B retter lokalt geometrien op.
-            inserted=[(target[0],a[1]),target,(b[0],target[1])]
-    else:
-        inserted=[target]
-
-    # Fjern kun sekventielle dubletter. Et hjælpeknæk må godt være identisk
-    # med segmentets B-punkt, hvis ruten bagefter går ud til symbolporten og
-    # tilbage til B; ellers ville et ortogonalt endesegment blive diagonalt.
-    clean=[]
-    for pos,point in enumerate(inserted):
-        p=(float(point[0]),float(point[1]))
-        if pos==0 and math.hypot(p[0]-a[0],p[1]-a[1])<=eps:
-            continue
-        if clean and math.hypot(p[0]-clean[-1][0],p[1]-clean[-1][1])<=eps:
-            continue
-        clean.append(p)
-    if clean and math.hypot(clean[-1][0]-b[0],clean[-1][1]-b[1])<=eps:
-        clean.pop()
-    if not clean:
-        # Burde kun kunne ske ved numeriske randtilfælde; genbrug nærmeste ende.
-        idx=seg if math.hypot(target[0]-a[0],target[1]-a[1])<=math.hypot(target[0]-b[0],target[1]-b[1]) else seg+1
-        existing=cable_connection_at(cable,idx)
-        if existing and str(existing.get("symbol_uid","") or "")!=uid:
-            return {"status":"occupied","point_index":idx,"distance":float(nearest["distance"]),"occupied_by":str(existing.get("symbol_uid","") or "")}
-        replace_cable_connection(cable,idx,uid,symbol_port)
-        preserve_section_overrides_for_new_connection(idx)
-        return {"status":"attached","point_index":idx,"distance":float(nearest["distance"]),"inserted_points":0}
-
-    # Find targetens plads i den rensede indsættelse. Hvis et hjælpeknæk faldt
-    # sammen med target, er det den pågældende position, der bliver ankeret.
-    target_local=min(range(len(clean)),key=lambda j:math.hypot(clean[j][0]-target[0],clean[j][1]-target[1]))
-    if math.hypot(clean[target_local][0]-target[0],clean[target_local][1]-target[1])>eps:
-        clean.insert(target_local+1,target); target_local+=1
-
-    shift=len(clean)
-    new_rows=[]
-    for row in rows:
-        rec=dict(row); old_idx=int(rec.get("point_index",0) or 0)
-        if old_idx>seg:
-            rec["point_index"]=old_idx+shift
-        new_rows.append(rec)
-    new_index=seg+1+target_local
-    occupied=next((r for r in new_rows if int(r.get("point_index",-1))==new_index and str(r.get("symbol_uid","") or "")!=uid),None)
-    if occupied:
-        return {"status":"occupied","point_index":new_index,"distance":float(nearest["distance"]),"occupied_by":str(occupied.get("symbol_uid","") or "")}
-    cable.points=pts[:seg+1]+clean+pts[seg+1:]
-    new_rows.append({"point_index":new_index,"symbol_uid":uid,"symbol_port":max(0,int(symbol_port or 0))})
-    set_cable_symbol_connections(cable,new_rows)
-    preserve_section_overrides_for_new_connection(new_index)
-    return {"status":"attached","point_index":new_index,"distance":float(nearest["distance"]),"inserted_points":shift}
 
 
-def shift_cable_connection_indices(cable: CablePlacement, start_index: int, delta: int) -> None:
-    """Forskyd forbindelsesindeks efter indsættelse/fjernelse af geometripunkter."""
-    if not delta:return
-    source=normalize_cable_symbol_connections(getattr(cable,"symbol_connections",[]),None)
-    if not source:
-        source=cable_symbol_connections(cable)
-    rows=[]
-    for row in source:
-        rec=dict(row); idx=int(rec["point_index"])
-        if idx>=int(start_index): idx+=int(delta)
-        if idx>=0:
-            rec["point_index"]=idx; rows.append(rec)
-    set_cable_symbol_connections(cable,rows)
+
 
 
 COMBO_SYMBOLS = {"combo_switch_1_socket", "combo_switch_2way_socket", "combo_switch_crown_socket", "combo_switch_cross_socket", "combo_switch_double_2way_socket", "combo_pushbutton_socket", "combo_pushbutton_indicator_socket", "combo_row_2x1_socket", "combo_row_1_2way_socket", "combo_row_2way_2way_socket", "combo_row_crown_1_socket", "combo_row_3x1_socket", "combo_row_2x1_2way_socket", "combo_row_crown_2x1_socket"}
@@ -5066,30 +4538,10 @@ def _screen_line_width(width_mm: float, selected: bool = False) -> int:
     return px + (1 if selected else 0)
 
 
-def normalize_hex_color(value: str, fallback: str = DEFAULT_SYMBOL_COLOR) -> str:
-    """Returnér en gyldig #RRGGBB-farve."""
-    txt = str(value or "").strip()
-    if len(txt) == 7 and txt.startswith("#"):
-        try:
-            int(txt[1:], 16)
-            return txt.lower()
-        except ValueError:
-            pass
-    return fallback.lower()
 
 
 
 
-def normalize_cable_line_style(value: str) -> str:
-    """Return stable internal cable line-style key."""
-    key=str(value or "").strip().casefold().replace("_", "").replace("-", "")
-    aliases={
-        "solid":"solid", "fuldt optrukket":"solid", "fuldtoptrukket":"solid",
-        "dash":"dash", "dashed":"dash", "stiplet":"dash",
-        "dot":"dot", "dotted":"dot", "prikket":"dot",
-        "dashdot":"dashdot", "stregprik":"dashdot", "streg prik":"dashdot",
-    }
-    return aliases.get(key, DEFAULT_CABLE_LINE_STYLE)
 def _true_color_int(hex_color: str) -> int:
     c = normalize_hex_color(hex_color)
     return int(c[1:], 16)
@@ -5123,186 +4575,27 @@ def drawing_unit_info(doc) -> tuple[int, str, float | None]:
     return code, label, factor
 
 
-def cable_route_points_to(start, end, orthogonal: bool = False) -> list[tuple[float, float]]:
-    """Return points to append from ``start`` to ``end`` for the chosen route mode.
-
-    Free/diagonal routing is a direct segment. Orthogonal routing keeps the
-    legacy dominant-axis-first L shape. The helper is GUI-independent so the
-    exact drawing behaviour can be regression-tested without Qt.
-    """
-    end=(float(end[0]),float(end[1]))
-    if start is None or not orthogonal:
-        return [end]
-    start=(float(start[0]),float(start[1]))
-    dx=abs(end[0]-start[0]); dy=abs(end[1]-start[1])
-    if dx < 1e-9 or dy < 1e-9:
-        return [end]
-    if dx >= dy:
-        return [(end[0],start[1]),end]
-    return [(start[0],end[1]),end]
 
 
 
-def convert_cable_route_mode_geometry(points, connections=None, *, from_orthogonal: bool, to_orthogonal: bool):
-    """Convert an existing cable centreline when its routing mode changes.
-
-    The editor historically stored only the rendered polyline, not which
-    orthogonal vertices were inserted automatically.  For old 90° cables we
-    therefore reconstruct the most likely user waypoints segment-by-segment:
-    an unconnected L-corner between two points is treated as the automatic
-    elbow, while endpoints and physical symbol connections are always kept.
-
-    Returning remapped ``symbol_connections`` keeps PL boxes and other physical
-    cable endpoints attached to the same logical waypoint after conversion.
-    The function is intentionally Qt-independent so route conversion is fully
-    regression-testable.
-    """
-    pts=[(float(p[0]),float(p[1])) for p in (points or []) if isinstance(p,(list,tuple)) and len(p)>=2]
-    records=normalize_cable_symbol_connections(connections or [],len(pts))
-    if len(pts)<2 or bool(from_orthogonal)==bool(to_orthogonal):
-        return pts, records
-
-    protected={0,len(pts)-1}
-    protected.update(int(r.get("point_index",0) or 0) for r in records)
-
-    def axis(a,b):
-        return math.isclose(a[0],b[0],abs_tol=1e-9) or math.isclose(a[1],b[1],abs_tol=1e-9)
-
-    if from_orthogonal and not to_orthogonal:
-        # Rebuild likely click/connection waypoints. The legacy orthogonal
-        # generator emitted [auto elbow, clicked target] for diagonal spans,
-        # and [clicked target] for already-axis-aligned spans.
-        kept=[0]
-        i=0
-        while i < len(pts)-1:
-            if i+1 in protected:
-                kept.append(i+1); i+=1; continue
-            if i+2 < len(pts):
-                a,b,c=pts[i],pts[i+1],pts[i+2]
-                is_l=(axis(a,b) and axis(b,c) and not axis(a,c))
-                if is_l and (i+1 not in protected):
-                    kept.append(i+2); i+=2; continue
-            kept.append(i+1); i+=1
-        # Deduplicate while preserving order; protected connection points are
-        # never discarded by the loop above.
-        ordered=[]; seen=set()
-        for idx in kept:
-            if idx not in seen:
-                ordered.append(idx); seen.add(idx)
-        new_pts=[pts[idx] for idx in ordered]
-        index_map={old:new for new,old in enumerate(ordered)}
-    else:
-        # Free -> 90°: every existing vertex is an intentional waypoint. Insert
-        # at most one elbow between each pair and keep an exact old->new map.
-        new_pts=[pts[0]]
-        index_map={0:0}
-        for old_idx,target in enumerate(pts[1:],start=1):
-            for point in cable_route_points_to(new_pts[-1],target,True):
-                if math.hypot(point[0]-new_pts[-1][0],point[1]-new_pts[-1][1])>1e-9:
-                    new_pts.append(point)
-            index_map[old_idx]=len(new_pts)-1
-
-    remapped=[]
-    for row in records:
-        old_idx=int(row.get("point_index",0) or 0)
-        if old_idx not in index_map:
-            # Defensive fallback. Protected connection points should always be
-            # present, but nearest coordinate keeps corrupted legacy data safe.
-            target=pts[max(0,min(old_idx,len(pts)-1))]
-            new_idx=min(range(len(new_pts)),key=lambda j:math.hypot(new_pts[j][0]-target[0],new_pts[j][1]-target[1]))
-        else:
-            new_idx=index_map[old_idx]
-        rec=dict(row); rec["point_index"]=int(new_idx); remapped.append(rec)
-    return new_pts, normalize_cable_symbol_connections(remapped,len(new_pts))
 
 
-def polyline_length(points) -> float:
-    """Geometric length of a CAD polyline in drawing units."""
-    total = 0.0
-    pts = [(float(p[0]), float(p[1])) for p in (points or [])]
-    for a, b in zip(pts, pts[1:]):
-        total += math.hypot(b[0] - a[0], b[1] - a[1])
-    return total
 
 
-def cable_route_length(cable: CablePlacement) -> float:
-    return polyline_length(getattr(cable, "points", []))
 
 
-def cable_length_metres(cable: CablePlacement, metres_per_unit: float | None) -> float | None:
-    if metres_per_unit is None or float(metres_per_unit) <= 0:
-        return None
-    return cable_route_length(cable) * float(metres_per_unit)
 
 
-def cable_length_by_spec_metres(cable: CablePlacement, metres_per_unit: float | None) -> dict[str,float] | None:
-    """Fordel kabelrutelængden på de effektive kabeltyper langs ruten.
-
-    Hvert polyline-segment arver kabeltypen fra det fysiske afsnit mellem to
-    nabotilslutninger. Segmenter uden en sådan afgrænsning bruger kabellets
-    globale ``cable_spec``. Summen er derfor identisk med ``cable_length_metres``.
-    """
-    if metres_per_unit is None or float(metres_per_unit) <= 0:
-        return None
-    pts=[(float(x),float(y)) for x,y in (getattr(cable,"points",[]) or [])]
-    factor=float(metres_per_unit)
-    default=str(getattr(cable,"cable_spec","") or "").strip() or "—"
-    totals: dict[str,float]={}
-    for index,(a,b) in enumerate(zip(pts,pts[1:])):
-        section=cable_spec_section_at_segment(cable,index)
-        spec=str((section or {}).get("cable_spec") or default).strip() or "—"
-        length=math.hypot(b[0]-a[0],b[1]-a[1])*factor
-        totals[spec]=totals.get(spec,0.0)+length
-    return totals
 
 
-def cable_estimated_length_metres(cable: CablePlacement, metres_per_unit: float | None, reserve_percent: float = 0.0) -> float | None:
-    base = cable_length_metres(cable, metres_per_unit)
-    if base is None:
-        return None
-    return base * (1.0 + max(0.0, float(reserve_percent)) / 100.0)
 
 
-def cable_route_chain_key(cable: CablePlacement) -> str:
-    """Stable identity for one drawn cable pull/string.
-
-    ``route_chain_uid`` links the physical cable pieces that were created in
-    the same drawing gesture. Legacy/single cables fall back to their own UID
-    so blank chain ids never accidentally join unrelated cables.
-    """
-    return str(getattr(cable, "route_chain_uid", "") or getattr(cable, "uid", "") or "").strip()
 
 
-def cable_route_chain_members(cable: CablePlacement, cables) -> list[CablePlacement]:
-    """Return all physical cable pieces belonging to ``cable``'s cable pull."""
-    key = cable_route_chain_key(cable)
-    if not key:
-        return [cable]
-    members = [row for row in (cables or []) if cable_route_chain_key(row) == key]
-    if not members:
-        return [cable]
-    return members
 
 
-def cable_route_chain_length_metres(cable: CablePlacement, cables, metres_per_unit: float | None) -> float | None:
-    """Total route length for the complete cable pull containing ``cable``."""
-    if metres_per_unit is None:
-        return None
-    total = 0.0
-    for member in cable_route_chain_members(cable, cables):
-        value = cable_length_metres(member, metres_per_unit)
-        if value is None:
-            return None
-        total += float(value)
-    return total
 
 
-def cable_route_chain_estimated_length_metres(cable: CablePlacement, cables, metres_per_unit: float | None, reserve_percent: float = 0.0) -> float | None:
-    """Total cable-pull length including the project's reserve percentage."""
-    base = cable_route_chain_length_metres(cable, cables, metres_per_unit)
-    if base is None:
-        return None
-    return base * (1.0 + max(0.0, float(reserve_percent)) / 100.0)
 
 
 def cable_display_label(cable: CablePlacement) -> str:
@@ -5337,158 +4630,24 @@ def cable_plan_label(cable: CablePlacement) -> str:
     return " · ".join(x for x in parts if x)
 
 
-def _clean_polyline_points(points, tol=1e-9):
-    """Fjern dubletter og rent kollineære mellemknæk fra en polyline."""
-    pts=[]
-    for q in points:
-        q=(float(q[0]),float(q[1]))
-        if not pts or math.hypot(q[0]-pts[-1][0],q[1]-pts[-1][1])>tol:
-            pts.append(q)
-    changed=True
-    while changed and len(pts)>=3:
-        changed=False; out=[pts[0]]
-        for i in range(1,len(pts)-1):
-            a=out[-1]; b=pts[i]; c=pts[i+1]
-            same_x=abs(a[0]-b[0])<=tol and abs(b[0]-c[0])<=tol
-            same_y=abs(a[1]-b[1])<=tol and abs(b[1]-c[1])<=tol
-            if same_x or same_y:
-                changed=True; continue
-            out.append(b)
-        out.append(pts[-1]); pts=out
-    return pts
-
-
-def move_polyline_vertex(points, index: int, target, orthogonal=False):
-    """Flyt et knækpunkt. Ortogonal routing bevarer 90° ved at lave et lille dogleg."""
-    pts=[(float(x),float(y)) for x,y in points]
-    if not (0 < index < len(pts)-1): return pts
-    q=(float(target[0]),float(target[1]))
-    if not orthogonal:
-        pts[index]=q; return _clean_polyline_points(pts)
-    a=pts[index-1]; old=pts[index]; c=pts[index+1]
-    prev_h=abs(old[0]-a[0]) >= abs(old[1]-a[1])
-    if prev_h:
-        p1=(q[0],a[1]); p2=(c[0],q[1])
-    else:
-        p1=(a[0],q[1]); p2=(q[0],c[1])
-    return _clean_polyline_points(pts[:index] + [p1,q,p2] + pts[index+1:])
 
 
 
-def constrain_polyline_target_to_locked_neighbors(points, index: int, target, locked_indices=None, orthogonal=False):
-    """Legacy-kompatibel målbegrænsning.
-
-    Fra 0.43.3 låses frie kabelknæk ikke længere til en akse blot fordi deres
-    nabo er en fysisk symboltilslutning. I stedet bevarer redigeringsalgoritmen
-    ankeret og indsætter om nødvendigt et ekstra 90°-knæk. Funktionen returnerer
-    derfor målet uændret og beholdes kun for ældre kald/tests.
-    """
-    return (float(target[0]), float(target[1]))
 
 
-def _axis_aligned(a, b, tol=1e-9):
-    return abs(float(a[0])-float(b[0])) <= tol or abs(float(a[1])-float(b[1])) <= tol
 
 
-def move_polyline_vertex_flexible(points, index: int, target, orthogonal=False):
-    """Flyt ét frit ruteknæk uden at flytte naboerne.
-
-    I 90°-tilstand kan et knæk ligge mellem to fysiske symbolankre. I stedet for
-    at fryse knækket indsættes automatisk ét eller to lokale dogleg-punkter, så
-    brugeren kan trække ruten frit mens nabopunkterne bliver stående.
-
-    Returnerer ``(nye_punkter, nyt_indeks_for_det_trukne_punkt, delta)`` hvor
-    ``delta`` er ændringen i antal punkter efter det oprindelige indeks. Det gør
-    det muligt at forskyde gemte symbolforbindelsesindeks sikkert.
-    """
-    pts=[(float(x),float(y)) for x,y in points]
-    index=int(index)
-    if not (0 < index < len(pts)-1):
-        return pts, index, 0
-    q=(float(target[0]),float(target[1]))
-    if not orthogonal:
-        pts[index]=q
-        return pts,index,0
-
-    prev=pts[index-1]; old=pts[index]; nxt=pts[index+1]
-    prev_h=abs(old[0]-prev[0]) >= abs(old[1]-prev[1])
-    next_h=abs(nxt[0]-old[0]) >= abs(nxt[1]-old[1])
-    replacement=[]
-
-    # Bevar retningen på segmentet ind mod knækket, men lad selve målet følge
-    # musen. Hvis prev allerede ligger på samme X/Y som målet, er ekstra knæk
-    # unødvendigt.
-    if not _axis_aligned(prev,q):
-        replacement.append((q[0],prev[1]) if prev_h else (prev[0],q[1]))
-    q_offset=len(replacement)
-    replacement.append(q)
-    if not _axis_aligned(q,nxt):
-        replacement.append((q[0],nxt[1]) if next_h else (nxt[0],q[1]))
-
-    moved=pts[:index] + replacement + pts[index+1:]
-    q_index=index+q_offset
-    return moved,q_index,len(replacement)-1
 
 
-def move_polyline_endpoint_flexible(points, index: int, target, orthogonal=False):
-    """Flyt et frit kabelendepunkt og bevar nabopunktet som fast geometri.
-
-    Hvis 90°-føring kræver det, indsættes ét lokalt hjørne i stedet for at
-    begrænse endepunktet til samme X/Y som nabopunktet.
-    """
-    pts=[(float(x),float(y)) for x,y in points]
-    index=int(index)
-    if len(pts)<2 or index not in (0,len(pts)-1):
-        return pts,index,0
-    q=(float(target[0]),float(target[1]))
-    if not orthogonal:
-        pts[index]=q
-        return pts,index,0
-
-    if index==0:
-        old=pts[0]; nxt=pts[1]
-        if _axis_aligned(q,nxt):
-            return [q]+pts[1:],0,0
-        was_h=abs(nxt[0]-old[0]) >= abs(nxt[1]-old[1])
-        # q -> elbow -> nxt. Retningen ind mod nxt følger det oprindelige segment.
-        elbow=(q[0],nxt[1]) if was_h else (nxt[0],q[1])
-        return [q,elbow]+pts[1:],0,1
-
-    old=pts[-1]; prev=pts[-2]
-    if _axis_aligned(prev,q):
-        return pts[:-1]+[q],len(pts)-1,0
-    was_h=abs(old[0]-prev[0]) >= abs(old[1]-prev[1])
-    elbow=(q[0],prev[1]) if was_h else (prev[0],q[1])
-    moved=pts[:-1]+[elbow,q]
-    return moved,len(moved)-1,1
 
 
-def move_polyline_vertex_stable(points, index: int, target, orthogonal=False, locked_indices=None):
-    """Kompatibilitetswrapper for ældre kode.
-
-    Funktionen tillader nu fri redigering og kan derfor ændre antallet af lokale
-    geometripunkter. Nye GUI-kald bruger ``move_polyline_vertex_flexible``
-    direkte for også at remappe symbolforbindelsesindeks.
-    """
-    moved,_q_index,_delta=move_polyline_vertex_flexible(points,index,target,orthogonal)
-    return moved
 
 
-def move_polyline_endpoint(points, index: int, target, orthogonal=False, locked_indices=None):
-    """Flyt et frit kabelendepunkt; 90°-føring opretter om nødvendigt et dogleg."""
-    moved,_q_index,_delta=move_polyline_endpoint_flexible(points,index,target,orthogonal)
-    return _clean_polyline_points(moved) if not locked_indices else moved
 
 
-def move_polyline_endpoint_stable(points, index: int, target, orthogonal=False, locked_indices=None):
-    """Kompatibilitetswrapper for fri endpoint-redigering med faste ankre."""
-    moved,_q_index,_delta=move_polyline_endpoint_flexible(points,index,target,orthogonal)
-    return moved
 
-def rotate_point(x: float, y: float, deg: float) -> tuple[float, float]:
-    a = math.radians(deg)
-    ca, sa = math.cos(a), math.sin(a)
-    return x * ca - y * sa, x * sa + y * ca
+
+
 
 
 @lru_cache(maxsize=1024)
@@ -6124,21 +5283,8 @@ def wall_device_rotation_for_wall(symbol: str, current_rotation: float, wall_ang
     cur=float(current_rotation)%360.0
     return min(candidates,key=lambda q:_angular_distance_deg(q,cur))
 
-def polyline_label_point(points) -> tuple[float,float]:
-    """Placér en mærkning midt på det længste segment i en vilkårlig polyline."""
-    pts=[(float(p[0]),float(p[1])) for p in (points or [])]
-    if not pts:return (0.0,0.0)
-    if len(pts)==1:return pts[0]
-    best=(pts[0],pts[1]); best_len=-1.0
-    for a,b in zip(pts,pts[1:]):
-        d=math.hypot(b[0]-a[0],b[1]-a[1])
-        if d>best_len:best=(a,b);best_len=d
-    a,b=best; return ((a[0]+b[0])/2,(a[1]+b[1])/2)
 
 
-def cable_label_point(cable: CablePlacement) -> tuple[float,float]:
-    """Placér mærkning midt på det længste logiske kabelsegment."""
-    return polyline_label_point(cable.points)
 
 
 def _visual_segment_info(a, b):

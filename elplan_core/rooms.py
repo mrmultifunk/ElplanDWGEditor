@@ -4,10 +4,8 @@ from __future__ import annotations
 
 import math
 
-from elplan_core.cables.sections import (
-    cable_spec_section_at_segment,
-    cable_symbol_connections,
-)
+from elplan_core.cables.connections import cable_symbol_connections
+from elplan_core.cables.sections import cable_spec_section_at_segment
 
 
 def room_polygon_centroid(points) -> tuple[float, float]:

@@ -112,3 +112,18 @@ Gennemført 17. november 2026 uden ændring af programadfærd:
 - lagkontrakten beskriver nu den faktiske retning `rooms → cables → models → constants`
 - `core_logic.py` reduceret videre til 7.828 linjer og 263 definitioner
 - den resterende modulplan har fortsat 0 kendte cykler
+
+### Fase 2.4 – cables
+
+Gennemført 17. november 2026 uden ændring af programadfærd:
+
+- 53 uændrede kabeldefinitioner flyttet ud af `core_logic.py`
+- kabeldomænet opdelt i `categories`, `connections`, `geometry`, `sections` og `lengths`
+- `normalize_hex_color` flyttet til det lille fællesmodul `elplan_core/appearance.py`, så kabelkategorier ikke afhænger af facaden
+- basale tilslutninger ligger under både geometri og sektioner, mens længder ligger over dem; opdelingen fjerner den ellers skjulte cykel mellem geometri og sektionsberegning
+- alle tidligere navne re-eksporteres fortsat fra `core_logic.py`
+- 61 flyttede eller omplacerede definitioner er verificeret AST-identiske med udgangspunktet
+- 875 tests og alle tre importkontrakter består
+- `core_logic.py` reduceret videre til 6.974 linjer og 210 definitioner
+- den resterende modulplan har fortsat 0 kendte cykler
+- syv Linux-målinger gav en median på 335 ms mod 319 ms efter fase 2.3; Windows-målingen forbliver den autoritative reference
