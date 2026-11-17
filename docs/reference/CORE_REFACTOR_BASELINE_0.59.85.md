@@ -127,3 +127,18 @@ Gennemført 17. november 2026 uden ændring af programadfærd:
 - `core_logic.py` reduceret videre til 6.974 linjer og 210 definitioner
 - den resterende modulplan har fortsat 0 kendte cykler
 - syv Linux-målinger gav en median på 335 ms mod 319 ms efter fase 2.3; Windows-målingen forbliver den autoritative reference
+
+### Fase 2.5 – symbols
+
+Gennemført 17. november 2026 uden ændring af programadfærd:
+
+- symbolregister og kombisymboler flyttet til `elplan_core/symbols/registry.py`
+- al ren symbolvektorgeometri, porte, montagepunkter og vægsnap flyttet til `elplan_core/symbols/geometry.py`
+- symbolmærkning og clipboard-serialisering flyttet til `elplan_core/symbols/clipboard.py`
+- fem rene relationsnormaliseringer og to PL-dåsenormaliseringer flyttet som nødvendige, nedadgående forudsætninger; den resterende logik bliver fortsat flyttet i fase 2.6 og 2.7
+- 43 funktioner og 9 modulkonstanter er verificeret AST-identiske med udgangspunktet
+- alle tidligere navne re-eksporteres fortsat fra `core_logic.py`
+- 878 tests og alle tre importkontrakter består
+- `core_logic.py` reduceret videre til 6.075 linjer og 167 definitioner
+- den resterende modulplan har fortsat 0 kendte cykler
+- syv Linux-målinger gav en median på 303 ms, svarende til den oprindelige Linux-reference

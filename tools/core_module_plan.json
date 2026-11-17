@@ -1,24 +1,10 @@
 {
-  "completed_modules": ["appearance", "cables.categories", "cables.connections", "cables.geometry", "cables.lengths", "cables.sections", "constants", "models", "platform.oda", "rooms", "settings"],
+  "completed_modules": ["appearance", "cables.categories", "cables.connections", "cables.geometry", "cables.lengths", "cables.sections", "constants", "models", "platform.oda", "rooms", "settings", "symbols.clipboard", "symbols.geometry", "symbols.registry"],
   "modules": [
-    {
-      "name": "symbols.registry",
-      "patterns": ["custom_symbol_.*", "normalize_combo_template_records"],
-      "names": ["parse_custom_combo_symbol", "make_custom_combo_code", "is_combo_symbol", "combo_modules", "register_custom_symbol", "symbol_display_name"]
-    },
-    {
-      "name": "symbols.geometry",
-      "patterns": ["placement_.*_points"],
-      "names": ["symbol_primitives", "symbol_connection_points", "symbol_mount_points", "symbol_local_bbox", "symbol_mating_sites", "wall_device_snap_origins", "wall_device_rotation_for_wall"]
-    },
-    {
-      "name": "symbols.clipboard",
-      "names": ["symbol_clipboard_payload", "placement_from_clipboard_payload", "symbols_clipboard_payload", "placements_from_clipboard_payload", "symbol_layer", "symbol_annotation_lines"]
-    },
     {
       "name": "associations",
       "patterns": ["association_.*", "light_output_.*"],
-      "names": ["normalize_associations", "normalize_light_associations", "normalize_light_outputs", "sync_light_outputs", "set_light_output_association", "light_can_share_switch_group", "set_lights_shared_association", "normalize_association_channels", "sync_association_channels", "set_association_channel", "next_association_letter"]
+      "names": ["sync_light_outputs", "set_light_output_association", "light_can_share_switch_group", "set_lights_shared_association", "normalize_association_channels", "sync_association_channels", "set_association_channel", "next_association_letter"]
     },
     {
       "name": "pl_box.model",
