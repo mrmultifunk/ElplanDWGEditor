@@ -1,11 +1,6 @@
 {
-  "completed_modules": ["appearance", "cables.categories", "cables.connections", "cables.geometry", "cables.lengths", "cables.sections", "constants", "models", "platform.oda", "rooms", "settings", "symbols.clipboard", "symbols.geometry", "symbols.registry"],
+  "completed_modules": ["appearance", "associations", "cables.categories", "cables.connections", "cables.geometry", "cables.lengths", "cables.sections", "constants", "models", "platform.oda", "rooms", "settings", "symbols.clipboard", "symbols.geometry", "symbols.registry"],
   "modules": [
-    {
-      "name": "associations",
-      "patterns": ["association_.*", "light_output_.*"],
-      "names": ["sync_light_outputs", "set_light_output_association", "light_can_share_switch_group", "set_lights_shared_association", "normalize_association_channels", "sync_association_channels", "set_association_channel", "next_association_letter"]
-    },
     {
       "name": "pl_box.model",
       "patterns": ["normalize_pl_.*", "pl_field_.*"],

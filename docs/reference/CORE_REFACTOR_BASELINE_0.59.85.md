@@ -142,3 +142,17 @@ Gennemført 17. november 2026 uden ændring af programadfærd:
 - `core_logic.py` reduceret videre til 6.075 linjer og 167 definitioner
 - den resterende modulplan har fortsat 0 kendte cykler
 - syv Linux-målinger gav en median på 303 ms, svarende til den oprindelige Linux-reference
+
+### Fase 2.6 – associations
+
+Gennemført 17. november 2026 uden ændring af programadfærd:
+
+- 25 funktioner til afbryderkanaler, lysudgange, bogstaver, visning og fælles lystilknytning flyttet til `elplan_core/associations.py`
+- de fem normaliseringsfunktioner, som blev flyttet som clipboard-forudsætning i fase 2.5, ligger nu sammen med resten af relationsdomænet
+- alle 30 funktioner i modulet er verificeret AST-identiske med udgangspunktet
+- modulet afhænger kun nedad mod symbolregister/geometri, kabelrotation, modeller og konstanter
+- alle tidligere navne re-eksporteres fortsat fra `core_logic.py`
+- 881 tests og alle tre importkontrakter består
+- `core_logic.py` reduceret videre til 5.741 linjer og 142 definitioner
+- den resterende modulplan har fortsat 0 kendte cykler
+- elleve Linux-målinger gav en median på 290 ms, uden importtidsregression
