@@ -17,8 +17,17 @@ from datetime import datetime
 from functools import lru_cache
 from collections import defaultdict
 import uuid
-from dataclasses import dataclass, asdict, field
+from dataclasses import asdict
 from pathlib import Path
+
+from elplan_core.constants import *  # noqa: F403 - kompatibilitetsfacade
+from elplan_core.models import (
+    CADPrimitive,
+    CablePlacement,
+    Placement,
+    RoomPlacement,
+    TextPlacement,
+)
 
 import article_intelligence
 from annotation_layout import choose_label_origin, expand_rect
@@ -30,100 +39,6 @@ from reportlab.pdfgen import canvas as pdfcanvas
 from reportlab.pdfbase.pdfmetrics import stringWidth
 from ezdxf import bbox, disassemble, path as ezpath
 from ezdxf.addons import odafc
-
-APP_NAME = "Elplan DWG Editor"
-APP_VERSION = "0.59.85"
-ODA_DOWNLOAD_URL = "https://www.opendesign.com/guestfiles/oda_file_converter"
-# Programmet bruger separate lag til forskellige typer el-installationer.
-# EL-SYMBOLER beholdes kun som navn af hensyn til ældre eksporter, men nye
-# symboler placeres på de mere specifikke lag nedenfor.
-ELECTRICAL_LAYER = "EL-SYMBOLER"
-LEGACY_SWITCH_LAYER = "EL-KONTAKTER"
-SWITCH_LAYER = "EL-AFBRYDERE"
-COMBO_LAYER = "EL-KOMBI"
-SOCKET_LAYER = "EL-STIKKONTAKTER"
-DATA_LAYER = "EL-TELE-DATA"
-LIGHT_OUTLET_LAYER = "EL-LYSUDTAG"
-LIGHTING_LAYER = "EL-BELYSNING"
-APPLIANCE_LAYER = "EL-BRUGSGENSTANDE"
-SOLAR_LAYER = "EL-SOLCELLER"
-BOARD_LAYER = "EL-TAVLER"
-EARTHING_LAYER = "EL-JORDING"
-DETECTOR_LAYER = "EL-DETEKTORER"
-MISC_LAYER = "EL-DIVERSE"
-CABLE_LAYER = "EL-KABLER"
-PATCH_CABLE_LAYER = "EL-PATCHKABLER"
-WIRE_LAYER = "EL-LEDNINGER"
-META_LAYER = "EL-TEKST"
-FREE_TEXT_LAYER = "EL-FRITEKST"
-ROOM_LAYER = "EL-RUM"
-
-GENERATED_LAYER_COLORS = {
-    SWITCH_LAYER: 1,
-    COMBO_LAYER: 1,
-    SOCKET_LAYER: 1,
-    DATA_LAYER: 1,
-    LIGHT_OUTLET_LAYER: 1,
-    LIGHTING_LAYER: 1,
-    APPLIANCE_LAYER: 1,
-    SOLAR_LAYER: 3,
-    BOARD_LAYER: 1,
-    EARTHING_LAYER: 3,
-    DETECTOR_LAYER: 1,
-    MISC_LAYER: 1,
-    CABLE_LAYER: 1,
-    PATCH_CABLE_LAYER: 5,
-    WIRE_LAYER: 1,
-    META_LAYER: 3,
-    FREE_TEXT_LAYER: 7,
-    ROOM_LAYER: 4,
-}
-
-CABLE_TYPES = {
-    "Kabel": CABLE_LAYER,
-    "Patchkabel": PATCH_CABLE_LAYER,
-    "Ledning": WIRE_LAYER,
-}
-
-# Almindelige installationskabler. Feltet er frit redigerbart i GUI'en, så
-# andre betegnelser kan stadig anvendes.
-CABLE_SPEC_PRESETS = (
-    "1G2,5", "1G6", "1G10",
-    "3G1,5", "3G2,5", "5G1,5", "5G2,5", "5G4", "5G6", "7G1,5",
-    "4X10", "4x1,5",
-)
-
-# Kabelvisning gemmes pr. kabel. Interne værdier holdes stabile, mens GUI'en
-# kan vise danske navne. De samme værdier bruges af Qt, PDF/print og DXF.
-CABLE_LINE_STYLES = {
-    "solid": "Fuldt optrukket",
-    "dash": "Stiplet",
-    "dot": "Prikket",
-    "dashdot": "Streg-prik",
-}
-DEFAULT_CABLE_COLOR = "#d00000"
-DEFAULT_CABLE_LINE_STYLE = "solid"
-
-# 0.50.19: kabelkategorier er egentlige visuelle underlag/lag. Kablets
-# ``layer`` beskriver stadig den tekniske type (kabel, patchkabel, ledning),
-# mens ``cable_category`` beskriver anvendelsen. Den kombinerede kategori-layer
-# bruges til lagvisning og DXF-output, uden at eksisterende BOM-nøgler brydes.
-DEFAULT_CABLE_CATEGORY = "other"
-DEFAULT_CABLE_CATEGORIES = (
-    {"id":"sockets", "name":"Stikkontakter", "description":"Kabel til indendørs stikkontakter.", "color":"#d00000", "line_style":"solid"},
-    {"id":"outdoor_sockets", "name":"Udendørs stikkontakter", "description":"Kabel til udendørs stikkontakter.", "color":"#b45309", "line_style":"dash"},
-    {"id":"outdoor_lighting", "name":"Udendørs lys", "description":"Kabel til udendørs belysning.", "color":"#15803d", "line_style":"dashdot"},
-    {"id":"light_points", "name":"Lampesteder", "description":"Forsynings- og installationskabel til lampesteder.", "color":"#2563eb", "line_style":"solid"},
-    {"id":"interconnect", "name":"Mellemkabel", "description":"Kabel mellem lampesteder på forskellige grupper.", "color":"#0e7490", "line_style":"dash"},
-    {"id":"switch_cable", "name":"Tændkabel", "description":"Kabel fra afbryder til lampested.", "color":"#ea580c", "line_style":"dashdot"},
-    {"id":"spots", "name":"Spots", "description":"Kabel til spots og downlights.", "color":"#7c3aed", "line_style":"dot"},
-    {"id":"ev_charger", "name":"Ladeboks", "description":"Kabel til ladeboks.", "color":"#0f766e", "line_style":"dash"},
-    {"id":"appliances", "name":"Hvidevarer / faste forbrugere", "description":"Kabel til hvidevarer og andre faste elektriske forbrugere.", "color":"#be123c", "line_style":"dashdot"},
-    {"id":"data", "name":"Data / netværk", "description":"Kabel til data- og netværksinstallationer.", "color":"#0369a1", "line_style":"dot"},
-    {"id":"earthing_bonding", "name":"Udligning / beskyttelsesleder", "description":"Beskyttelsesleder og potentialudligning, herunder hovedjordforbindelse.", "color":"#16a34a", "line_style":"solid"},
-    {"id":"service_main", "name":"Stikledning / hovedledning", "description":"Forsyningskabel mellem tilslutningspunkt, måler- og fordelingstavle.", "color":"#7f1d1d", "line_style":"solid"},
-    {"id":"other", "name":"Øvrige", "description":"Kabler som ikke passer i en af de øvrige kategorier.", "color":"#d00000", "line_style":"solid"},
-)
 
 def _cable_category_id(value: str) -> str:
     text=str(value or "").strip().lower()
@@ -208,28 +123,6 @@ def cable_visible_in_layers(cable, layer_visibility) -> bool:
     # Kategori-laget er autoritativt. Hvis et ældre projekt endnu ikke har en
     # kategori-nøgle, bruges det gamle EL-KABLER/EL-LEDNINGER-lag som fallback.
     return bool(layer_visibility.get(effective,layer_visibility.get(base,True)))
-
-DEFAULT_SYMBOL_COLOR = "#d00000"
-SNAP_TOLERANCE_PX = 18
-# Snap skal føles som screen-space magnetisme og derfor være uafhængigt af CAD-enheder/zoom.
-SNAP_WALL_TOLERANCE_PX = 36
-SNAP_SYMBOL_PORT_TOLERANCE_PX = 34
-SNAP_SYMBOL_BODY_PAD_PX = 12
-SNAP_DEVICE_TOLERANCE_PX = 28
-# Alignment bruges kun som visuel hjælpelinje - ikke som fysisk snapmål.
-SNAP_ALIGN_TOLERANCE_PX = 6
-GENERATED_LAYERS = set(GENERATED_LAYER_COLORS) | {ELECTRICAL_LAYER, LEGACY_SWITCH_LAYER}
-
-ANNOTATION_STYLES = ("Kompakt", "Detaljeret")
-DEFAULT_ANNOTATION_STYLE = "Kompakt"
-DEFAULT_ANNOTATION_FONT_SIZE = 8
-PRINT_SCOPES = ("Aktuel visning", "Hele tegningen")
-DEFAULT_PRINT_SCOPE = "Aktuel visning"
-PRINT_MARGIN_MM = 5.0
-# Qt-editoren bruger 96 DPI som reference for skærmbaserede labels. PDF-output
-# arbejder i points (72/inch), så denne faktor bruges til at oversætte den
-# fysiske PDF-skala til samme semantiske zoomniveau som editoren.
-OUTPUT_SCREEN_DPI = 96.0
 
 def output_equivalent_view_scale(page_scale: float) -> float:
     """Returnér PDF-sidens skala som ca. Qt-skærmpixels pr. CAD-enhed."""
@@ -337,46 +230,6 @@ def output_switch_association_tag_origin(anchor_x: float, anchor_y: float,
     return right+margin, float(anchor_y)-float(tag_height)*.5, "right"
 
 
-THEME_MODES = ("Lys",)
-DEFAULT_THEME = "Lys"
-THEMES = {
-    "Lys": {
-        "root": "#eef1f5", "panel": "#f7f9fb", "surface": "#ffffff", "surface_alt": "#eef2f7",
-        "canvas": "#ffffff", "cad": "#17191c", "text": "#1f2937", "muted": "#667085",
-        "border": "#c7cfdb", "button": "#e7ecf3", "button_hover": "#dce7f8", "button_pressed": "#d1def2",
-        "accent": "#2563eb", "accent_soft": "#eaf1ff",
-        "success": "#1d7a45", "annotation_bg": "#ffffff", "annotation_text": "#176b3a",
-        "association": "#285d9b", "snap": "#008b8b", "snap_text": "#176b6b",
-        "preview_bg": "#dfe3e8", "page_border": "#9aa0a6", "shadow": "#aeb4bc",
-    },
-}
-AUTOSAVE_INTERVAL_MS = 90_000
-MAX_RECENT_PROJECTS = 6
-SYMBOL_CLIPBOARD_PREFIX = "ELPLAN_SYMBOL_V1\n"
-SYMBOLS_CLIPBOARD_PREFIX = "ELPLAN_SYMBOLS_V1\n"
-CUSTOM_COMBO_PREFIX = "custom_combo|"
-CUSTOM_COMBO_MAX_MODULES = 6
-CUSTOM_SWITCH_TYPES = {
-    "1-polet afbryder": "switch_1",
-    "Korrespondanceafbryder": "switch_2way",
-    "Kroneafbryder": "switch_crown",
-    "Krydsningsafbryder": "switch_cross",
-    "Dobbelt korrespondanceafbryder": "switch_double_2way",
-    "Trykkontakt": "pushbutton",
-    "Trykkontakt med indikeringslampe": "pushbutton_indicator",
-}
-CUSTOM_SOCKET_TYPES = {
-    "Ingen stikkontakt": "none",
-    "Stikkontakt": "socket",
-    "Stikkontakt med jordtilslutning": "socket_earth",
-}
-CUSTOM_SWITCH_SHORT = {
-    "switch_1": "1P", "switch_2way": "Korr.", "switch_crown": "Krone",
-    "switch_cross": "Kryds", "switch_double_2way": "Dobb. korr.",
-    "pushbutton": "Tryk", "pushbutton_indicator": "Tryk+lampe",
-}
-
-
 def custom_combo_auto_name(modules, socket_kind="none") -> str:
     """Kort, læsbart navn til symbolpaletten baseret på den aktuelle modulrække."""
     mods=[str(x) for x in (modules or [])]
@@ -411,93 +264,6 @@ def normalize_combo_template_records(records):
     return out
 
 
-# Symbolnavne og geometri er genskabt som vektorer med Cubus' oversigt over
-# installationstegningssymboler som visuel reference. Bitmapfilerne distribueres
-# ikke med programmet.
-SYMBOL_GROUPS = {
-    "Afbrydere": {
-        "Enpolet afbryder": "switch_1",
-        "Kroneafbryder": "switch_crown",
-        "Korrespondanceafbryder": "switch_2way",
-        "Krydsningsafbryder": "switch_cross",
-        "Dobbelt korrespondanceafbryder": "switch_double_2way",
-        "Trykkontakt": "pushbutton",
-        "Trykkontakt med indikeringslampe": "pushbutton_indicator",
-        "4 trykkontakter": "pushbutton_4",
-    },
-    "Kombi": {
-        "1-polet afbryder + stikkontakt": "combo_switch_1_socket",
-        "Korrespondance + stikkontakt": "combo_switch_2way_socket",
-        "Kroneafbryder + stikkontakt": "combo_switch_crown_socket",
-        "Krydsningsafbryder + stikkontakt": "combo_switch_cross_socket",
-        "Dobbelt korrespondanceafbryder + stikkontakt": "combo_switch_double_2way_socket",
-        "Trykkontakt + stikkontakt": "combo_pushbutton_socket",
-        "Trykkontakt med indikeringslampe + stikkontakt": "combo_pushbutton_indicator_socket",
-        "1-polet + 1-polet + stikkontakt": "combo_row_2x1_socket",
-        "1-polet + korrespondance + stikkontakt": "combo_row_1_2way_socket",
-        "Korrespondance + korrespondance + stikkontakt": "combo_row_2way_2way_socket",
-        "Kroneafbryder + 1-polet + stikkontakt": "combo_row_crown_1_socket",
-        "1-polet + 1-polet + 1-polet + stikkontakt": "combo_row_3x1_socket",
-        "1-polet + 1-polet + korrespondance + stikkontakt": "combo_row_2x1_2way_socket",
-        "Kroneafbryder + 1-polet + 1-polet + stikkontakt": "combo_row_crown_2x1_socket",
-    },
-    "Stikkontakter": {
-        "Stikkontakt": "socket",
-        "Stikkontakt med jordtilslutning": "socket_earth",
-        "Pillesikker stikkontakt": "socket_childsafe",
-        "Stikkontakt med enpolet afbryder": "socket_switch",
-        "Stikkontakt 3F+N+PE": "socket_3fn",
-        "Shaverstikkontakt / skilletransformer": "socket_shaver",
-        "2 stikkontakter i samme dåse (forenklet)": "socket_double_box",
-        "3 stikkontakter i samme dåse (forenklet)": "socket_triple_box",
-        "2 stikkontakter med jordtilslutning i samme dåse (forenklet)": "socket_double_box_earth",
-        "3 stikkontakter med jordtilslutning i samme dåse (forenklet)": "socket_triple_box_earth",
-        "2 stikkontakter": "socket_double",
-        "3 stikkontakter": "socket_triple",
-        "2 stikkontakter med jordtilslutning": "socket_double_earth",
-        "3 stikkontakter med jordtilslutning": "socket_triple_earth",
-    },
-    "Data / netværk": {
-        "Tele/Data-stik": "socket_tele",
-        "Patchpanel / datacentral (12 porte)": "patch_panel",
-    },
-    "Belysning": {
-        "Tilslutningssted for belysning": "light_connection",
-        "Lampeudtag på væg (alm. dåse)": "wall_light_outlet",
-        "Belysningsarmatur": "light_fixture",
-        "Armatur for lysstofrør": "fluorescent",
-        "Lysstofarmatur med fast tilslutning": "fluorescent_fixed",
-        "Nød-/panikbelysning": "emergency_light",
-        "Spot / downlight": "spot",
-    },
-    "Brugsgenstande": {
-        "Vandvarmer": "water_heater",
-        "Varmeapparat / elradiator": "heater",
-        "Ventilator": "fan",
-        "Elbilslader / ladeboks": "ev_charger",
-    },
-    "Solceller / energi": {
-        "Solcellepanel(er)": "solar_panel",
-        "Solcelleinverter": "solar_inverter",
-        "Solcellebatteri": "solar_battery",
-    },
-    "Tavler / forsyning": {
-        "Fordelingsanlæg / tavle": "distribution_board",
-        "Gruppetavle": "group_board",
-        "Målertavle": "meter_board",
-        "Hovedjordforbindelse": "main_earthing_connection",
-    },
-    "Diverse": {
-        "Elektrisk lås": "electric_lock",
-        "Tilslutningssted, ikke belysning": "connection",
-        "Bevægelsesdetektor / PIR": "pir",
-        "Røgdetektor": "smoke",
-    },
-}
-SYMBOLS = {name: code for group in SYMBOL_GROUPS.values() for name, code in group.items()}
-SYMBOL_NAMES_BY_CODE = {code: name for name, code in SYMBOLS.items()}
-
-
 def symbol_display_name(code: str) -> str:
     if code in SYMBOL_NAMES_BY_CODE:
         return SYMBOL_NAMES_BY_CODE[code]
@@ -506,13 +272,6 @@ def symbol_display_name(code: str) -> str:
         modules,socket_kind=parsed
         return "Kombi: " + custom_combo_auto_name(modules,socket_kind)
     return code
-
-
-SWITCH_ASSOCIATION_SYMBOLS = {code for code in SYMBOL_GROUPS["Afbrydere"].values()} | {code for code in SYMBOL_GROUPS["Kombi"].values()}
-LIGHT_ASSOCIATION_SYMBOLS = {
-    "light_connection", "wall_light_outlet", "light_fixture", "fluorescent",
-    "fluorescent_fixed", "emergency_light", "spot",
-}
 
 
 def association_role(symbol: str) -> str | None:
@@ -1279,132 +1038,6 @@ def bom_purchase_segment_key(article_no, context=None) -> str:
         normalize_material_color(row.get("material_color")).casefold(),
         "1" if normalize_already_purchased(row.get("already_purchased",False)) else "0",
     ))
-
-
-@dataclass
-class Placement:
-    symbol: str
-    x: float
-    y: float
-    rotation: float = 0.0
-    size: float = 500.0
-    label: str = ""
-    group: str = ""
-    # Kombisymboler kan enten bruge den fælles mærkning ovenfor eller separate
-    # felter for afbryder- og stikkontaktdelen. Felterne er harmløse for andre symboler.
-    label_mode: str = "Fælles"
-    switch_label: str = ""
-    switch_group: str = ""
-    socket_label: str = ""
-    socket_group: str = ""
-    # Fysisk linjetykkelse ved PDF/DXF/DWG-eksport, angivet i mm.
-    line_width: float = 0.25
-    # Individuel symbolfarve som #RRGGBB.
-    color: str = DEFAULT_SYMBOL_COLOR
-    # Visuelle tilhørsforhold mellem kontakter og lys. Afbrydere kan have ét
-    # bogstav pr. kanal; et lampested har højst ét bogstav.
-    associations: list[str] = field(default_factory=list)
-    # For afbrydere gemmes den fysiske kanal -> tilhørsbogstav separat.
-    # Det er vigtigt for kombisymboler, fordi alfabetisk sorterede bogstaver ikke
-    # nødvendigvis følger modulrækkefølgen (fx 1P=b, 1P=c, korrespondance=a).
-    # Tom streng betyder, at den pågældende betjening endnu ikke er tilknyttet.
-    association_channels: list[str] = field(default_factory=list)
-    # Ét fysisk lampeudtag kan have flere uafhængige tændte udgange. Hver
-    # udgang har stabilt id, navn og højst ét tilhørsbogstav. PL-dåse, position
-    # og BOM tilhører fortsat det ene fysiske Placement-objekt.
-    light_outputs: list[dict] = field(default_factory=list)
-    # Låste symboler kan stadig vælges/kopieres, men kan ikke flyttes, roteres,
-    # slettes eller redigeres før de låses op igen.
-    locked: bool = False
-    # Montage- og indkøbskontekst gemmes pr. fysisk symbolforekomst. Profilen
-    # bruges til robust gruppering, mens den præcise højde og materialefarven
-    # gør Excel/BOM egnet som indkøbsgrundlag uden at ændre symboltypen.
-    mounting_zone: str = ""
-    mounting_height_mm: float | None = None
-    material_color: str = ""
-    already_purchased: bool = False
-    # Spots kan samles i en vedvarende logisk gruppe. Gruppen er uafhængig af
-    # gruppe/kreds-feltet og bruges til samlet valg, redigering og kobling til
-    # et lampested. Et tomt id betyder, at spottet ikke er grupperet.
-    spot_group_id: str = ""
-    spot_group_name: str = ""
-    # Spots kan knyttes logisk til et lampested. Når lampestedet senere får
-    # tilhørsbogstav fra en afbryder, synkroniseres bogstavet til spottene.
-    parent_light_uid: str = ""
-    # Et spot følger en bestemt logisk udgang på et flerudgangs-lampested.
-    parent_light_output_id: str = ""
-    # PL-loftdåser ved lampesteder kan dokumenteres med seks fysiske
-    # kabelindføringer. Nøglerne er "1".."6" og værdierne peger på et
-    # bestemt kabelben (kabel-id + side ved lampestedet).
-    pl_box_entries: dict[str, dict] = field(default_factory=dict)
-    # Lederplanen gemmer funktion/samling pr. fysisk leder på hvert kabelben.
-    # Referencerne følger samme kabelben som PL-indføringerne og overlever derfor
-    # flytning af selve indføringen mellem port 1..6.
-    pl_box_wiring: list[dict] = field(default_factory=list)
-    # Manuelle Wago-samlinger i PL-dåsen. Hver samling gemmer funktion og de
-    # konkrete ledere, som samles før en kort bro går videre til lampeudtaget.
-    pl_box_splices: list[dict] = field(default_factory=list)
-    # Fysisk orientering af selve PL-dåsen relativt til plantegningens top.
-    # Indføringernes numre roteres med dåsen; kabeltilknytningerne ændres ikke.
-    pl_box_orientation: int = 0
-    # 0.50.12: den grafiske ledereditor kan vise terminalerne som et generisk
-    # PL-punkt, et klassisk LK-lampeudtag eller et Wiser/dæmpbart udtag.
-    lamp_outlet_type: str = "generic"
-    # Read-only feltdokumentation importeret fra PL-dåse-PWA'en. Posten
-    # indeholder kun fysisk indføring, kabeltekst, noter og fotoreferencer.
-    # Lederfunktioner og Wago-data ligger fortsat udelukkende i felterne ovenfor.
-    pl_field_record: dict = field(default_factory=dict)
-    # Stabilt id bruges til egentlige kabeltilslutninger, også efter gem/åbn.
-    uid: str = field(default_factory=lambda: uuid.uuid4().hex)
-
-
-@dataclass
-class CablePlacement:
-    points: list[tuple[float, float]]
-    layer: str = CABLE_LAYER
-    line_width: float = 0.35
-    # Visuel kabelstil. Farve/linjetype påvirker visning og output, men ikke
-    # kabelgeometri, længde eller artikel/BOM-data.
-    color: str = DEFAULT_CABLE_COLOR
-    line_style: str = DEFAULT_CABLE_LINE_STYLE
-    # Anvendelseskategori styrer visuel stil og et separat lag-niveau.
-    cable_category: str = DEFAULT_CABLE_CATEGORY
-    # Manuel ekstra tekst. Den automatiske mærkning bygges af cable_id + cable_spec.
-    label: str = ""
-    cable_spec: str = ""
-    cable_id: str = ""
-    # Gruppe/kreds er den logiske elektriske sammenhæng. Flere selvstændige
-    # fysiske kabler kan høre til samme gruppe uden at blive ét kabelobjekt.
-    circuit_id: str = ""
-    # Kabler der blev tegnet i samme sammenhængende arbejdsgang deler dette id.
-    # Feltet er kun metadata til navigation/markering; BOM arbejder altid pr. kabel-UID.
-    route_chain_uid: str = ""
-    auto_label: bool = False
-    start_symbol_uid: str = ""
-    end_symbol_uid: str = ""
-    # Portindeks gør forbindelsen stabil på symboler med flere tilslutningspunkter.
-    # Ældre projekter mangler felterne og får derfor automatisk port 0.
-    start_symbol_port: int = 0
-    end_symbol_port: int = 0
-    orthogonal: bool = False
-    # Valgfri ruteførings-overrides mellem to nabotilslutninger på samme kabel.
-    # Kabellets ``orthogonal``-flag er stadig standarden for hele ruten, mens
-    # poster her gør det muligt fx kun at føre strækket mellem to lampesteder
-    # frit/diagonalt. Identiteten ligger på symbol-uid/port og er derfor stabil,
-    # selv når polyline-punkter indsættes eller remappes.
-    route_section_modes: list[dict] = field(default_factory=list)
-    # Valgfri kabeltype pr. fysisk afsnit mellem to nabotilslutninger.
-    # ``cable_spec`` er stadig kabellets globale/default type, mens poster her
-    # gør det muligt fx at gå fra 3G1,5 til 5G1,5 kun mellem to lampesteder.
-    # Identiteten ligger på symbol-uid/port og er derfor robust over for
-    # indsatte/fjernede knækpunkter i selve polyline-geometrien.
-    spec_section_overrides: list[dict] = field(default_factory=list)
-    # Alle fysiske tilslutningssteder langs samme kabel. Hvert element peger på
-    # et punkt i polyline-ruten: {point_index, symbol_uid, symbol_port}. Start-/
-    # slutfelterne ovenfor beholdes som kompatibilitet med ældre projekter.
-    symbol_connections: list[dict] = field(default_factory=list)
-    # Stabilt id gør det muligt at tilknytte BOM-artikler til ét bestemt kabelstræk.
-    uid: str = field(default_factory=lambda: uuid.uuid4().hex)
 
 
 def normalize_cable_symbol_connections(records, point_count: int | None = None):
@@ -3986,33 +3619,6 @@ def shift_cable_connection_indices(cable: CablePlacement, start_index: int, delt
     set_cable_symbol_connections(cable,rows)
 
 
-@dataclass
-class TextPlacement:
-    text: str
-    x: float
-    y: float
-    height: float = 250.0
-    rotation: float = 0.0
-    color: str = "#202020"
-    uid: str = field(default_factory=lambda: uuid.uuid4().hex)
-
-
-@dataclass
-class RoomPlacement:
-    """Brugerdefineret rumområde oven på plantegningen.
-
-    Polygonen gemmes i CAD-koordinater. Rumteksten har sin egen position, så
-    brugeren frit kan flytte den væk fra symboler uden at ændre selve rummet.
-    """
-    name: str
-    points: list[tuple[float, float]]
-    code: str = ""
-    label_x: float = 0.0
-    label_y: float = 0.0
-    color: str = "#0f766e"
-    uid: str = field(default_factory=lambda: uuid.uuid4().hex)
-
-
 def room_polygon_centroid(points) -> tuple[float, float]:
     pts=[(float(x),float(y)) for x,y in (points or [])]
     if not pts:
@@ -4252,14 +3858,6 @@ def cable_light_endpoint_marking(cable, placements, separator: str = ' → ') ->
     if a and b:
         return a if a==b else f"{a}{separator}{b}"
     return a or b
-
-
-@dataclass
-class CADPrimitive:
-    kind: str
-    layer: str
-    data: tuple
-
 
 
 COMBO_SYMBOLS = {"combo_switch_1_socket", "combo_switch_2way_socket", "combo_switch_crown_socket", "combo_switch_cross_socket", "combo_switch_double_2way_socket", "combo_pushbutton_socket", "combo_pushbutton_indicator_socket", "combo_row_2x1_socket", "combo_row_1_2way_socket", "combo_row_2way_2way_socket", "combo_row_crown_1_socket", "combo_row_3x1_socket", "combo_row_2x1_2way_socket", "combo_row_crown_2x1_socket"}

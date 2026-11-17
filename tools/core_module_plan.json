@@ -1,9 +1,6 @@
 {
+  "completed_modules": ["constants", "models"],
   "modules": [
-    {
-      "name": "models",
-      "names": ["Placement", "CablePlacement", "TextPlacement", "RoomPlacement", "CADPrimitive"]
-    },
     {
       "name": "settings",
       "names": ["load_app_settings", "save_app_settings", "_settings_file", "_recovery_file", "normalize_appearance_mode", "normalize_dark_canvas", "normalize_recent_project_paths", "normalize_cable_visual_settings"]

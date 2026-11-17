@@ -78,3 +78,15 @@ operativsystemer.
 - Én samlet sikkerhedsnetændring og derefter højst én PR pr. flyttetrin
 - Undermoduler kan være separate commits i samme PR
 - Ingen mellem-pushes alene for at afprøve tests
+
+## Fremdrift
+
+### Fase 2.1 – constants og models
+
+Gennemført 17. november 2026 uden ændring af programadfærd:
+
+- øverste fælleskonstanter flyttet til `elplan_core/constants.py`
+- de fem dataklasser flyttet til `elplan_core/models.py`
+- alle tidligere navne re-eksporteres fortsat fra `core_logic.py`
+- `core_logic.py` reduceret fra 8.765 til 8.363 linjer og fra 299 til 294 definitioner
+- den resterende modulplan har fortsat 0 kendte cykler

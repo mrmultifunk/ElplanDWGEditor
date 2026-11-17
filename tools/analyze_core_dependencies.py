@@ -75,8 +75,13 @@ def _strong_components(graph: dict[str, set[str]]) -> list[list[str]]:
 
 def _module_assignment(definitions: dict[str, ast.AST], plan_path: Path | None):
     if plan_path is None or not plan_path.exists():
-        return {}, [], []
+        return {}, [], [], []
     plan = json.loads(plan_path.read_text(encoding="utf-8"))
+    completed_modules = sorted(
+        str(name).strip()
+        for name in plan.get("completed_modules", [])
+        if str(name).strip()
+    )
     assignment: dict[str, str] = {}
     duplicates = []
     for module in plan.get("modules", []):
@@ -96,7 +101,7 @@ def _module_assignment(definitions: dict[str, ast.AST], plan_path: Path | None):
         for name in module.get("names", [])
         if name not in definitions
     )
-    return assignment, duplicates, unknown
+    return assignment, duplicates, unknown, completed_modules
 
 
 def build_report(path: Path, plan_path: Path | None = None) -> dict:
@@ -106,7 +111,12 @@ def build_report(path: Path, plan_path: Path | None = None) -> dict:
     graph = _dependency_graph(definitions)
     components = _strong_components(graph)
     cycles = [row for row in components if len(row) > 1]
-    assignment, duplicate_assignments, unknown_planned_names = _module_assignment(definitions, plan_path)
+    (
+        assignment,
+        duplicate_assignments,
+        unknown_planned_names,
+        completed_modules,
+    ) = _module_assignment(definitions, plan_path)
     module_graph: dict[str, set[str]] = {
         module: set() for module in sorted(set(assignment.values()))
     }
@@ -132,6 +142,7 @@ def build_report(path: Path, plan_path: Path | None = None) -> dict:
             for module in sorted(set(assignment.values()))
         },
         "planned_definition_count": len(assignment),
+        "completed_modules": completed_modules,
         "unassigned_definitions": sorted(set(definitions) - set(assignment)),
         "duplicate_assignments": duplicate_assignments,
         "unknown_planned_names": unknown_planned_names,
@@ -173,6 +184,8 @@ def main() -> int:
     for component in cycles:
         print("  - " + ", ".join(component))
     print(f"Planlagte definitioner: {report['planned_definition_count']}")
+    if report["completed_modules"]:
+        print("Gennemførte moduler: " + ", ".join(report["completed_modules"]))
     print(f"Ikke fordelt endnu: {len(report['unassigned_definitions'])}")
     print(f"Modulcykler i den foreløbige plan: {len(report['module_cycles'])}")
     for component in report["module_cycles"]:
