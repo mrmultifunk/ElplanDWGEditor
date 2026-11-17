@@ -90,3 +90,14 @@ Gennemført 17. november 2026 uden ændring af programadfærd:
 - alle tidligere navne re-eksporteres fortsat fra `core_logic.py`
 - `core_logic.py` reduceret fra 8.765 til 8.363 linjer og fra 299 til 294 definitioner
 - den resterende modulplan har fortsat 0 kendte cykler
+
+### Fase 2.2 – settings og platform/oda
+
+Gennemført 17. november 2026 uden ændring af programadfærd:
+
+- maskinlokal indlæsning, atomisk lagring og normalisering flyttet til `elplan_core/settings.py`
+- ODA File Converter-detektion og opsætning flyttet til `elplan_core/platform/oda.py`
+- alle tidligere navne re-eksporteres fortsat fra `core_logic.py`
+- artikelbibliotekets direkte indstillingskald og monkeypatch-test peger på det nye modul
+- `core_logic.py` reduceret videre til 8.185 linjer og 284 definitioner
+- den resterende modulplan har fortsat 0 kendte cykler

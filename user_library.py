@@ -9,6 +9,7 @@ from copy import deepcopy
 from datetime import datetime
 
 import core_logic as core
+from elplan_core import settings as app_settings
 from storage_utils import atomic_write_json, read_json
 
 BOM_LIBRARY_VERSION = 5
@@ -68,7 +69,7 @@ def configured_core_data(settings: Mapping | None = None) -> tuple[str, Path]:
     local = user_data_dir()
     if str(os.environ.get(_ENV_DIR, "") or "").strip():
         return CORE_DATA_MODE_LOCAL, local
-    data = settings if isinstance(settings, Mapping) else core.load_app_settings()
+    data = settings if isinstance(settings, Mapping) else app_settings.load_app_settings()
     mode = normalize_core_data_mode(data.get("core_data_storage_mode"))
     raw = str(data.get("core_data_root", "") or "").strip()
     if mode == CORE_DATA_MODE_SYNCED and raw:
@@ -551,7 +552,7 @@ def migrate_legacy_project_core_data(project_raw: dict) -> dict:
 
     legacy_custom=list(project_raw.get("custom_symbols",[]) or []) if isinstance(project_raw.get("custom_symbols",[]),list) else []
     if legacy_custom:
-        settings=core.load_app_settings()
+        settings=app_settings.load_app_settings()
         existing={str(r.get("code","") or ""):deepcopy(r) for r in settings.get("custom_symbols",[]) if isinstance(r,dict) and str(r.get("code","") or "")}
         count=0
         for row in legacy_custom:
@@ -560,7 +561,7 @@ def migrate_legacy_project_core_data(project_raw: dict) -> dict:
             if not code:continue
             existing[code]=deepcopy(row); count+=1
         settings["custom_symbols"]=list(existing.values())
-        core.save_app_settings(settings)
+        app_settings.save_app_settings(settings)
         core.register_custom_symbol_records(settings["custom_symbols"])
         project_raw.pop("custom_symbols",None)
         result["custom_symbols"]=count; result["changed"]=True

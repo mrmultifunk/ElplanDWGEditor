@@ -11,8 +11,6 @@ import json
 import math
 import os
 import re
-import shutil
-import tempfile
 from datetime import datetime
 from functools import lru_cache
 from collections import defaultdict
@@ -27,6 +25,17 @@ from elplan_core.models import (
     Placement,
     RoomPlacement,
     TextPlacement,
+)
+from elplan_core.platform.oda import detect_oda_exec_path, set_oda_exec_path
+from elplan_core.settings import (
+    _recovery_file,
+    _settings_file,
+    load_app_settings,
+    normalize_appearance_mode,
+    normalize_cable_visual_settings,
+    normalize_dark_canvas,
+    normalize_recent_project_paths,
+    save_app_settings,
 )
 
 import article_intelligence
@@ -773,194 +782,7 @@ def association_world_point(placement: Placement) -> tuple[float, float]:
     return placement.x + lx, placement.y + ly
 
 
-def _settings_file() -> Path:
-    override = str(os.environ.get("ELPLAN_USER_DATA_DIR", "") or "").strip()
-    if override:
-        return Path(override).expanduser() / "settings.json"
-    root = os.environ.get("APPDATA") or str(Path.home())
-    return Path(root) / "ElplanDWGEditor" / "settings.json"
-
-
-def _recovery_file() -> Path:
-    return _settings_file().parent / "recovery.elplan.json"
-
-
-def load_app_settings() -> dict:
-    path = _settings_file()
-    try:
-        if path.is_file():
-            data = json.loads(path.read_text(encoding="utf-8"))
-            return data if isinstance(data, dict) else {}
-    except Exception:
-        pass
-    return {}
-
-
-def save_app_settings(data: dict) -> None:
-    """Gem brugerindstillinger atomisk, så en afbrudt skrivning ikke ødelægger filen."""
-    path = _settings_file()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    payload = json.dumps(data, indent=2, ensure_ascii=False, allow_nan=False)
-    fd, tmp_name = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=str(path.parent))
-    tmp = Path(tmp_name)
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as handle:
-            handle.write(payload)
-            handle.flush()
-            os.fsync(handle.fileno())
-        os.replace(tmp, path)
-    except Exception:
-        try:
-            tmp.unlink(missing_ok=True)
-        except OSError:
-            pass
-        raise
-
-
 APPEARANCE_MODES = {"light": "Lys", "dark": "Mørk", "system": "Følg Windows"}
-
-
-def normalize_appearance_mode(value) -> str:
-    """Normalize the machine-local UI appearance preference.
-
-    Existing installations remain light until the user explicitly chooses dark
-    or system mode; this preserves the historical behaviour of the application.
-    """
-    mode=str(value or "light").strip().lower()
-    aliases={
-        "lys":"light", "light":"light",
-        "mørk":"dark", "mork":"dark", "dark":"dark",
-        "system":"system", "windows":"system", "auto":"system", "følg windows":"system", "folg windows":"system",
-    }
-    return aliases.get(mode,"light")
-
-
-def normalize_dark_canvas(value, default: bool = True) -> bool:
-    """Normalize whether dark appearance should also use a dark CAD canvas."""
-    if value is None:
-        return bool(default)
-    if isinstance(value,str):
-        text=value.strip().lower()
-        if text in {"0","false","nej","no","off"}: return False
-        if text in {"1","true","ja","yes","on"}: return True
-    return bool(value)
-
-
-def normalize_recent_project_paths(records, limit: int = 8, existing_only: bool = False) -> list[str]:
-    """Normalisér listen over senest anvendte projektfiler.
-
-    Listen er maskinlokal og må derfor gerne indeholde absolutte stier. Dubletter
-    fjernes uden at ændre rækkefølgen, og manglende filer kan filtreres fra, når
-    menuen vises.
-    """
-    try:
-        max_items=max(1,int(limit))
-    except (TypeError,ValueError):
-        max_items=8
-    source=records if isinstance(records,(list,tuple)) else []
-    out=[]; seen=set()
-    for raw in source:
-        value=str(raw or "").strip()
-        if not value:
-            continue
-        p=Path(value).expanduser()
-        try:
-            p=p.resolve(strict=False)
-        except (OSError,RuntimeError):
-            p=Path(os.path.abspath(str(p)))
-        key=os.path.normcase(str(p))
-        if key in seen:
-            continue
-        if existing_only and not p.is_file():
-            continue
-        seen.add(key); out.append(str(p))
-        if len(out)>=max_items:
-            break
-    return out
-
-
-
-def normalize_cable_visual_settings(data: dict | None) -> dict:
-    """Normalize and one-time repair 0.44.0-0.44.3 cable view settings.
-
-    Those versions connected the cable-route checkbox before restoring the
-    parallel-lane controls.  Restoring ``cable_snap_routes=True`` therefore
-    emitted a signal while ``cable_parallel_lanes`` still had Qt's default
-    ``False`` value, and that false value was immediately persisted.  The
-    visual lane engine then correctly calculated nothing because its gap was
-    intentionally set to zero.
-
-    The marker makes the repair one-shot.  From 0.44.5 onward the controls are
-    restored with signals blocked, so subsequent user choices are preserved.
-    """
-    out=dict(data or {})
-    marker='cable_visual_settings_init_fixed_0444'
-    if not bool(out.get(marker,False)):
-        out['cable_parallel_lanes']=True
-        out['cable_lane_gap_px']=10
-        out['cable_bundle_badges']=True
-        out['cable_focus_related']=True
-        out[marker]=True
-    try:
-        out['cable_lane_gap_px']=max(5,min(18,int(out.get('cable_lane_gap_px',10))))
-    except Exception:
-        out['cable_lane_gap_px']=10
-    out['cable_parallel_lanes']=bool(out.get('cable_parallel_lanes',True))
-    out['cable_bundle_badges']=bool(out.get('cable_bundle_badges',True))
-    out['cable_focus_related']=bool(out.get('cable_focus_related',True))
-    return out
-
-def set_oda_exec_path(path: str | Path) -> bool:
-    p = Path(path)
-    if not p.is_file() or p.name.lower() != "odafileconverter.exe":
-        return False
-    ezdxf.options.set("odafc-addon", "win_exec_path", str(p))
-    settings = load_app_settings()
-    settings["oda_exec_path"] = str(p)
-    save_app_settings(settings)
-    return True
-
-
-def detect_oda_exec_path() -> str | None:
-    if os.name != "nt":
-        return None
-    candidates: list[Path] = []
-    saved = load_app_settings().get("oda_exec_path")
-    if saved:
-        candidates.append(Path(saved))
-    try:
-        current = odafc.get_win_exec_path()
-        if current:
-            candidates.append(Path(current))
-    except Exception:
-        pass
-    found_on_path = shutil.which("ODAFileConverter")
-    if found_on_path:
-        candidates.append(Path(found_on_path))
-    roots = []
-    for env_name in ("ProgramFiles", "ProgramFiles(x86)", "LOCALAPPDATA"):
-        val = os.environ.get(env_name)
-        if val:
-            roots.append(Path(val))
-    for root in roots:
-        oda_root = root / "ODA"
-        if oda_root.is_dir():
-            try:
-                candidates.extend(oda_root.glob("**/ODAFileConverter.exe"))
-            except OSError:
-                pass
-        candidates.append(root / "ODAFileConverter" / "ODAFileConverter.exe")
-        candidates.append(root / "ODA File Converter" / "ODAFileConverter.exe")
-    seen = set()
-    for c in candidates:
-        key = str(c).lower()
-        if key in seen:
-            continue
-        seen.add(key)
-        if c.is_file():
-            set_oda_exec_path(c)
-            return str(c)
-    return None
 
 
 MOUNTING_ZONE_OPTIONS = (

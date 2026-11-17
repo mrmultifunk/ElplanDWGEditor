@@ -1,14 +1,6 @@
 {
-  "completed_modules": ["constants", "models"],
+  "completed_modules": ["constants", "models", "platform.oda", "settings"],
   "modules": [
-    {
-      "name": "settings",
-      "names": ["load_app_settings", "save_app_settings", "_settings_file", "_recovery_file", "normalize_appearance_mode", "normalize_dark_canvas", "normalize_recent_project_paths", "normalize_cable_visual_settings"]
-    },
-    {
-      "name": "platform.oda",
-      "names": ["set_oda_exec_path", "detect_oda_exec_path"]
-    },
     {
       "name": "rooms",
       "names": ["room_polygon_centroid", "room_contains_point", "room_for_point", "room_display_text", "room_output_label", "_segment_edge_intersection_t", "rooms_along_polyline", "cable_rooms", "polyline_room_lengths", "cable_room_length_metres", "cable_length_by_spec_room_metres", "cable_room_marking", "cable_light_endpoint_marking"]

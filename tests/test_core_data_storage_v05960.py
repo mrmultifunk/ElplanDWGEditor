@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-import core_logic as core
+from elplan_core import settings as app_settings
 import portability
 import user_library
 
@@ -20,7 +20,7 @@ def test_synced_article_data_is_separate_from_local_machine_data(tmp_path, monke
     settings = {"core_data_storage_mode": "synced", "core_data_root": str(synced)}
     monkeypatch.delenv("ELPLAN_USER_DATA_DIR", raising=False)
     monkeypatch.setattr(user_library, "user_data_dir", lambda: local)
-    monkeypatch.setattr(core, "load_app_settings", lambda: settings)
+    monkeypatch.setattr(app_settings, "load_app_settings", lambda: settings)
 
     assert user_library.core_data_dir() == synced
     assert user_library.article_catalog_path() == synced / "articles.json"

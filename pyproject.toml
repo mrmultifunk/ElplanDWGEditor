@@ -21,6 +21,7 @@ forbidden_modules = ["win32api", "win32con", "win32gui", "win32print"]
 name = "Lagdeling i elplan_core"
 type = "layers"
 layers = [
+  "elplan_core.platform",
   "elplan_core.export",
   "elplan_core.bom",
   "elplan_core.clipboard | elplan_core.associations | elplan_core.pl_box",
