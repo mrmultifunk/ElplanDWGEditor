@@ -1,8 +1,8 @@
 from pathlib import Path
 
 import core_logic as core
-from bom_pdf_export import BOM_PRINT_COLUMN_TITLES, prepare_bom_print_data, write_bom_pdf
-from project_model import APP_VERSION
+from elplan_catalog.bom_pdf_export import BOM_PRINT_COLUMN_TITLES, prepare_bom_print_data, write_bom_pdf
+from elplan_project.project_model import APP_VERSION
 
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -41,7 +41,7 @@ def test_bom_pdf_writer_creates_a_pdf(tmp_path):
 
 
 def test_bom_ui_always_opens_preview_before_pdf_or_print():
-    source=(ROOT / "qt_articles.py").read_text(encoding="utf-8")
+    source=(ROOT / "elplan_qt/qt_articles.py").read_text(encoding="utf-8")
     assert 'QPushButton("Udskriv / PDF…")' in source
     assert "class BomPrintPreviewDialog" in source
     assert "write_bom_pdf(" in source

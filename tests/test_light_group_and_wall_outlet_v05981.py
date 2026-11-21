@@ -4,7 +4,7 @@ import ast
 from pathlib import Path
 
 import core_logic as core
-from project_model import APP_VERSION, placement_from_raw
+from elplan_project.project_model import APP_VERSION, placement_from_raw
 
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -54,9 +54,9 @@ def test_multi_output_light_is_not_silently_grouped_without_output_choice():
 
 
 def test_context_toolbar_exposes_same_switch_action_for_multi_selection():
-    app=(ROOT/"qt_app.py").read_text(encoding="utf-8")
-    workspace=(ROOT/"qt_workspace.py").read_text(encoding="utf-8")
-    cable_attach=(ROOT/"qt_cable_attach.py").read_text(encoding="utf-8")
+    app=(ROOT/"elplan_qt/qt_app.py").read_text(encoding="utf-8")
+    workspace=(ROOT/"elplan_qt/qt_workspace.py").read_text(encoding="utf-8")
+    cable_attach=(ROOT/"elplan_qt/qt_cable_attach.py").read_text(encoding="utf-8")
     ast.parse(app); ast.parse(workspace); ast.parse(cable_attach)
     assert APP_VERSION==core.APP_VERSION=="0.59.85"
     assert "group_selected_lights_same_switch" in app

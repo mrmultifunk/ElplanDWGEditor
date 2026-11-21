@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import core_logic as core
-from project_model import APP_VERSION
+from elplan_project.project_model import APP_VERSION
 
 
 def test_version_05925():
@@ -9,7 +9,7 @@ def test_version_05925():
 
 
 def test_price_scope_dialog_uses_responsive_grid_instead_of_messagebox_button_row():
-    source = (Path(__file__).parents[1] / "qt_articles.py").read_text(encoding="utf-8")
+    source = (Path(__file__).parents[1] / "elplan_qt/qt_articles.py").read_text(encoding="utf-8")
     assert "class _RetailPriceScopeDialog(QDialog):" in source
     assert 'add_choice("Kun artikler i BOM", "bom", 0, 0, True)' in source
     assert 'add_choice("Kun uden pris", "missing", 0, 1)' in source

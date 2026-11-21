@@ -2,7 +2,7 @@ from dataclasses import asdict
 from pathlib import Path
 
 import core_logic as core
-from project_model import ProjectDocument, cable_from_raw, APP_VERSION
+from elplan_project.project_model import ProjectDocument, cable_from_raw, APP_VERSION
 
 
 def test_same_cable_can_have_many_symbol_connections():
@@ -98,8 +98,8 @@ def test_connection_indices_survive_geometry_point_removal():
 
 
 def test_gui_source_exposes_loopthrough_workflow():
-    source=(Path(__file__).resolve().parents[1] / "qt_app.py").read_text(encoding="utf-8") + (Path(__file__).resolve().parents[1] / "qt_cable_panel.py").read_text(encoding="utf-8")
-    graphics=(Path(__file__).resolve().parents[1] / "qt_graphics.py").read_text(encoding="utf-8")
+    source=(Path(__file__).resolve().parents[1] / "elplan_qt/qt_app.py").read_text(encoding="utf-8") + (Path(__file__).resolve().parents[1] / "elplan_qt/qt_cable_panel.py").read_text(encoding="utf-8")
+    graphics=(Path(__file__).resolve().parents[1] / "elplan_qt/qt_graphics.py").read_text(encoding="utf-8")
     assert "Kabler ved symbol" in source
     assert "Forløb:" in source
     assert "Start automatisk et nyt kabel efter afslutning" in source

@@ -1,8 +1,8 @@
 from pathlib import Path
 
 import core_logic as core
-import portability
-from project_model import APP_VERSION
+from elplan_project import portability
+from elplan_project.project_model import APP_VERSION
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -37,8 +37,8 @@ def test_dark_mode_is_machine_local_not_portable_core_data():
 
 
 def test_dark_mode_ui_contract_is_present():
-    app = (ROOT / "qt_app.py").read_text(encoding="utf-8")
-    theme = (ROOT / "qt_theme.py").read_text(encoding="utf-8")
+    app = (ROOT / "elplan_qt/qt_app.py").read_text(encoding="utf-8")
+    theme = (ROOT / "elplan_qt/qt_theme.py").read_text(encoding="utf-8")
     assert 'view_menu.addMenu("Udseende")' in app
     assert 'QAction("Lys"' in app
     assert 'QAction("Mørk"' in app
@@ -51,13 +51,13 @@ def test_dark_mode_ui_contract_is_present():
     assert "_application_stylesheet" in theme
     assert "_refresh_action_icons" in app
     # PL cable entry and conductor-distribution diagrams have explicit dark-aware painters.
-    pl = (ROOT / "qt_pl_box.py").read_text(encoding="utf-8")
+    pl = (ROOT / "elplan_qt/qt_pl_box.py").read_text(encoding="utf-8")
     assert 'dark=_application_dark()' in pl[pl.index("class PLBoxDiagramWidget"):pl.index("class PLBoxDialog")]
 
 
 def test_dark_canvas_is_screen_only_and_exports_stay_paper_based():
-    app = (ROOT / "qt_app.py").read_text(encoding="utf-8")
-    graphics = (ROOT / "qt_graphics.py").read_text(encoding="utf-8")
+    app = (ROOT / "elplan_qt/qt_app.py").read_text(encoding="utf-8")
+    graphics = (ROOT / "elplan_qt/qt_graphics.py").read_text(encoding="utf-8")
     export_block = app[app.index("    def export_pdf("):app.index("    def _rebuild_layer_list(")]
     assert "elplanDarkMode" not in export_block
     assert "elplanCanvasDark" not in export_block

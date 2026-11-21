@@ -3,8 +3,8 @@ from pathlib import Path
 import pytest
 
 import core_logic as core
-from bom_pdf_export import write_bom_pdf
-from project_model import APP_VERSION
+from elplan_catalog.bom_pdf_export import write_bom_pdf
+from elplan_project.project_model import APP_VERSION
 
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -41,7 +41,7 @@ def test_pdf_contains_separate_room_boms_and_subtotals(tmp_path):
 
 
 def test_room_breakdown_is_an_explicit_preview_choice_enabled_by_default():
-    source=(ROOT / "qt_articles.py").read_text(encoding="utf-8")
+    source=(ROOT / "elplan_qt/qt_articles.py").read_text(encoding="utf-8")
     assert 'QCheckBox("Medtag BOM pr. rum")' in source
     assert "self.include_room_breakdown.setChecked(True)" in source
     assert "self.include_room_breakdown.toggled.connect(self._regenerate_preview)" in source

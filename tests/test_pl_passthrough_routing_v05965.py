@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import core_logic as core
-from project_model import APP_VERSION
+from elplan_project.project_model import APP_VERSION
 
 
 def _cable():
@@ -81,7 +81,7 @@ def test_locally_empty_core_reports_allocation_at_other_cable_end():
 
 
 def test_qt_uses_separate_route_lanes_destination_picker_and_link_marker():
-    source=Path("qt_pl_box.py").read_text(encoding="utf-8")
+    source=Path("elplan_qt/qt_pl_box.py").read_text(encoding="utf-8")
     assert "center_y-18.0" in source and "center_y+18.0" in source
     assert "_choose_passthrough_identity" in source
     assert "Tilhører lampested" in source

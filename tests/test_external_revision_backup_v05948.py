@@ -2,8 +2,8 @@ import json
 from datetime import datetime
 from pathlib import Path
 
-import project_storage
-from project_revision_backup import create_pre_external_project_backup
+from elplan_project import project_storage
+from elplan_project.project_revision_backup import create_pre_external_project_backup
 
 
 def test_external_revision_backup_preserves_project_and_cad(tmp_path):

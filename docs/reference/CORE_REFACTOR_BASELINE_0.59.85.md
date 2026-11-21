@@ -201,3 +201,10 @@ Gennemført 17. november 2026 uden ændring af programadfærd:
 - Importtidsmedian på Linux: 276 ms mod 275 ms for fase 2.9 (11 målinger pr. version i samme miljø).
 - `core_logic.py` er nu 433 linjer med fire hjælpefunktioner. Flyttefasen er afsluttet; de resterende hjælpere og facadeimporter hører til oprydningen.
 - Fuld pytest-suite og `lint-imports` afventer fortsat projektets udviklingsafhængigheder.
+
+### Fase 3 – projektstruktur
+
+- Rodmappen er reduceret fra 61 til 3 Python-filer: `main.py` og de to kompatibilitetsmoduler `core_logic.py` og `legacy_core.py`.
+- Implementationen er samlet i `elplan_qt/`, `elplan_catalog/`, `elplan_project/`, `elplan_shared/` og `elplan_legacy/`. `elplan_core/` er fortsat den GUI-uafhængige kerne.
+- Start- og byggekommandoer, projektformat, placeringen af grafik og katalogdata samt det eksisterende core-API er bevaret.
+- 819 tests er kørt direkte via Python, inklusive projektrundtur, referenceoutput og API-manifest. Hele koden kunne kompileres. Qt-runtime, Windows-build og den fulde pytest-kørsel er ikke verificeret i dette miljø.

@@ -15,5 +15,5 @@ def test_helukabel_patch_cable_meterware_is_bundled():
 
 
 def test_cat7_patch_cable_matches_existing_network_preset():
-    source=open("qt_app.py",encoding="utf-8").read()+open("qt_cable_panel.py",encoding="utf-8").read()
+    source=open("elplan_qt/qt_app.py",encoding="utf-8").read()+open("elplan_qt/qt_cable_panel.py",encoding="utf-8").read()
     assert '"CAT7 S/FTP"' in source

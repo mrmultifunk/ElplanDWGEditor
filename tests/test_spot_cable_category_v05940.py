@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 import core_logic as core
-from project_model import APP_VERSION, ProjectDocument
+from elplan_project.project_model import APP_VERSION, ProjectDocument
 
 
 def test_spots_is_standard_cable_category():

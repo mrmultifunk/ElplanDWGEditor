@@ -1,7 +1,7 @@
 from pathlib import Path
 import core_logic as core
-from project_model import APP_VERSION
-from interaction_math import room_nearest_edge_insert
+from elplan_project.project_model import APP_VERSION
+from elplan_shared.interaction_math import room_nearest_edge_insert
 
 def test_v05957_room_can_insert_vertex_on_nearest_edge():
     assert APP_VERSION == core.APP_VERSION == '0.59.85'
@@ -15,7 +15,7 @@ def test_v05957_closing_edge_is_insertable():
     assert index==4 and point==(0.0,5.0)
 
 def test_v05957_ui_exposes_add_breakpoint_and_undo_path():
-    source=Path(__file__).resolve().parents[1].joinpath('qt_rooms.py').read_text(encoding='utf-8')
+    source=Path(__file__).resolve().parents[1].joinpath('elplan_qt/qt_rooms.py').read_text(encoding='utf-8')
     assert 'Tilføj knækpunkt her' in source
     assert 'dobbeltklik på en side for nyt knækpunkt' in source
     assert 'self.vertex_callback(self.room,before,deepcopy(after))' in source

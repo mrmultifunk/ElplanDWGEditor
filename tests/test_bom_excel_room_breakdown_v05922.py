@@ -4,8 +4,8 @@ from zipfile import ZipFile
 import xml.etree.ElementTree as ET
 
 import core_logic as core
-from project_model import APP_VERSION
-from bom_xlsx_export import write_bom_xlsx
+from elplan_project.project_model import APP_VERSION
+from elplan_catalog.bom_xlsx_export import write_bom_xlsx
 
 
 def _row(article_no="A1", room="Alle rum", qty=1.0):
@@ -79,7 +79,7 @@ def test_selected_room_export_does_not_need_extra_room_sheet():
 
 
 def test_qt_excel_export_builds_concrete_room_rows_for_all_rooms():
-    source=(Path(__file__).resolve().parents[1]/"qt_articles.py").read_text(encoding="utf-8")
+    source=(Path(__file__).resolve().parents[1]/"elplan_qt/qt_articles.py").read_text(encoding="utf-8")
     assert "def _bom_rows_by_room_for_export" in source
     assert 'scopes.append("__outside__")' in source
     assert "room_rows=self._bom_rows_by_room_for_export() if not selected_room else []" in source

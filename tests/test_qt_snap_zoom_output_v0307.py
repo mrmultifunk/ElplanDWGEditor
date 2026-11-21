@@ -9,8 +9,8 @@ from PySide6.QtCore import QPointF
 from PySide6.QtWidgets import QApplication
 
 import core_logic as core
-from qt_app import MainWindow
-from qt_graphics import CadGraphicsView, QtSnapEngine
+from elplan_qt.qt_app import MainWindow
+from elplan_qt.qt_graphics import CadGraphicsView, QtSnapEngine
 
 
 def _app():

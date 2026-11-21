@@ -1,8 +1,8 @@
 import json
 from datetime import datetime, timedelta, timezone
 
-import project_collaboration as collab
-import project_storage
+from elplan_project import project_collaboration as collab
+from elplan_project import project_storage
 
 
 def _structured(tmp_path):

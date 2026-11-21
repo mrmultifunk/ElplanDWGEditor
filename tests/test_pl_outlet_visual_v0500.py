@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import core_logic as core
-from project_model import ProjectDocument, APP_VERSION
+from elplan_project.project_model import ProjectDocument, APP_VERSION
 
 
 def test_lk_classic_profile_uses_n_l_pe_m1_m2_and_flags_third_switch():
@@ -63,7 +63,7 @@ def test_copy_keeps_product_type_but_not_physical_wiring():
 
 
 def test_qt_source_uses_terminal_based_editor_and_wago_support():
-    source = (Path(__file__).resolve().parents[1] / "qt_pl_box.py").read_text(encoding="utf-8")
+    source = (Path(__file__).resolve().parents[1] / "elplan_qt/qt_pl_box.py").read_text(encoding="utf-8")
     assert 'QLabel("Lampeudtag:")' in source
     assert 'QPushButton("Vis tabel / avanceret")' in source
     assert 'core.pl_outlet_profile(self._outlet_type,self._associations)' in source

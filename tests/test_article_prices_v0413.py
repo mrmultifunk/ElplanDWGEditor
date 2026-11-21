@@ -3,7 +3,7 @@ import tempfile
 from pathlib import Path
 
 import core_logic as core
-import user_library
+from elplan_catalog import user_library
 
 
 def test_article_price_normalization_and_overlay():

@@ -2,7 +2,7 @@ from pathlib import Path
 import tempfile
 
 import core_logic as core
-from project_model import ProjectDocument, APP_VERSION
+from elplan_project.project_model import ProjectDocument, APP_VERSION
 
 
 def placement(symbol, uid=None):

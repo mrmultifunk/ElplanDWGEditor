@@ -2,7 +2,7 @@ from pathlib import Path
 import json
 
 import core_logic as core
-from project_model import ProjectDocument, APP_VERSION
+from elplan_project.project_model import ProjectDocument, APP_VERSION
 
 
 def _lamp(uid="lamp1", associations=None):
@@ -139,7 +139,7 @@ def test_clipboard_does_not_copy_pl_wiring():
 
 
 def test_qt_source_contains_wiring_tab_and_graphic():
-    source=Path("qt_pl_box.py").read_text(encoding="utf-8") + Path("qt_app.py").read_text(encoding="utf-8")
+    source=Path("elplan_qt/qt_pl_box.py").read_text(encoding="utf-8") + Path("elplan_qt/qt_app.py").read_text(encoding="utf-8")
     assert "class PLWiringDiagramWidget" in source
     assert 'self.tabs.addTab(wiring_tab,"Lederfordeling")' in source
     assert "Sæt standard PE/N" not in source

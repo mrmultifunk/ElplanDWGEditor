@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import core_logic as core
-from project_model import APP_VERSION
+from elplan_project.project_model import APP_VERSION
 
 
 def _member(uid, core_id="blue"):
@@ -26,7 +26,7 @@ def test_wago_position_is_normalized_and_preserved():
 
 
 def test_qt_source_has_hover_context_menu_and_draggable_wago():
-    source=Path("qt_pl_box.py").read_text(encoding="utf-8")
+    source=Path("elplan_qt/qt_pl_box.py").read_text(encoding="utf-8")
     assert "QPainterPathStroker" in source
     assert "def _hover_connection_function" in source
     assert "Flyt til {label}" in source

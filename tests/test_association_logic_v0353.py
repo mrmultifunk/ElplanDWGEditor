@@ -1,7 +1,7 @@
 import json
 
 import core_logic as core
-from project_model import ProjectDocument
+from elplan_project.project_model import ProjectDocument
 
 
 def test_combo_keeps_physical_channel_order_when_correspondence_reuses_older_letter():

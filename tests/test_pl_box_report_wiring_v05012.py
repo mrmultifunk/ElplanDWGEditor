@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import core_logic as core
-from project_model import APP_VERSION
+from elplan_project.project_model import APP_VERSION
 
 
 def _cable(uid, lamp_uid, cable_id, spec="5G1,5"):

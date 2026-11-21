@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import core_logic as core
-from project_model import ProjectDocument
+from elplan_project.project_model import ProjectDocument
 
 
 def test_one_explicit_socket_binding_does_not_spread_to_same_symbol_type():
@@ -35,7 +35,7 @@ def test_cable_uid_is_added_to_legacy_project_and_roundtrips(tmp_path):
 
 
 def test_qt_bom_manager_uses_instance_fields_not_legacy_type_fields():
-    source=Path('qt_articles.py').read_text(encoding='utf-8')
+    source=Path('elplan_qt/qt_articles.py').read_text(encoding='utf-8')
     manager=source[source.index('class BomManagerDialog'):]
     assert 'window.project.raw.get("placement_articles",{})' in manager
     assert 'window.project.raw.get("placement_assemblies",{})' in manager

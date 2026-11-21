@@ -4,8 +4,8 @@ import pytest
 pytest.importorskip("PySide6")
 
 import core_logic as core
-from qt_graphics import QtSnapEngine
-from qt_rooms import RoomBoundaryItem
+from elplan_qt.qt_graphics import QtSnapEngine
+from elplan_qt.qt_rooms import RoomBoundaryItem
 from PySide6.QtWidgets import QApplication, QGraphicsScene
 
 

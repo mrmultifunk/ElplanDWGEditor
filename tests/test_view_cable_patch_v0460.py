@@ -6,7 +6,7 @@ from pathlib import Path
 import ezdxf
 
 import core_logic as core
-from project_model import ProjectDocument, cable_from_raw, APP_VERSION
+from elplan_project.project_model import ProjectDocument, cable_from_raw, APP_VERSION
 
 
 def test_patch_panel_is_data_symbol_with_twelve_ports():
@@ -76,8 +76,8 @@ def test_cable_style_aliases_and_dxf_output():
 
 
 def test_qt_source_exposes_fast_view_and_cable_visual_controls():
-    app = Path("qt_app.py").read_text(encoding="utf-8") + Path("qt_cable_panel.py").read_text(encoding="utf-8")
-    graphics = Path("qt_graphics.py").read_text(encoding="utf-8")
+    app = Path("elplan_qt/qt_app.py").read_text(encoding="utf-8") + Path("elplan_qt/qt_cable_panel.py").read_text(encoding="utf-8")
+    graphics = Path("elplan_qt/qt_graphics.py").read_text(encoding="utf-8")
     for token in ("act_quick_cad", "act_quick_symbols", "act_quick_cables", "act_quick_text", "_apply_quick_visibility"):
         assert token in app
     assert 'advanced_form.addRow("Farve", self.cable_color)' in app

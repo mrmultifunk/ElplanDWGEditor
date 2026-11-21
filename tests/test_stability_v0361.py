@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 import core_logic as core
-from project_model import ProjectDocument, placement_from_raw, cable_from_raw, text_from_raw
+from elplan_project.project_model import ProjectDocument, placement_from_raw, cable_from_raw, text_from_raw
 
 
 def test_old_records_without_uid_get_stable_new_uid():
@@ -51,7 +51,7 @@ def test_project_save_is_atomic_and_leaves_no_tmp(tmp_path: Path):
 
 
 def test_qt_source_contains_unsaved_guard_and_layer_visibility_sync():
-    source = (Path(__file__).resolve().parents[1] / "qt_app.py").read_text(encoding="utf-8")
+    source = (Path(__file__).resolve().parents[1] / "elplan_qt/qt_app.py").read_text(encoding="utf-8")
     assert "def _confirm_discard_changes" in source
     assert 'QMessageBox.StandardButton.Save | QMessageBox.StandardButton.Discard | QMessageBox.StandardButton.Cancel' in source
     assert "def _sync_symbol_annotation_visibility" in source
@@ -59,7 +59,7 @@ def test_qt_source_contains_unsaved_guard_and_layer_visibility_sync():
 
 
 def test_delete_command_restores_reference_snapshot():
-    source = (Path(__file__).resolve().parents[1] / "qt_commands.py").read_text(encoding="utf-8")
+    source = (Path(__file__).resolve().parents[1] / "elplan_qt/qt_commands.py").read_text(encoding="utf-8")
     assert "_symbol_reference_snapshot" in source
     assert "_cleanup_after_symbol_removed" in source
     assert "_restore_symbol_reference_snapshot" in source
@@ -78,7 +78,7 @@ def test_saved_state_snapshot_distinguishes_non_undo_changes(tmp_path: Path):
 
 def test_rejected_project_does_not_register_custom_symbols(tmp_path):
     import core_logic as core
-    from project_model import ProjectDocument
+    from elplan_project.project_model import ProjectDocument
 
     code = core.make_custom_combo_code(["switch_1", "switch_2way"], "socket")
     before = {row["code"] for row in core.custom_symbol_records()}
@@ -105,7 +105,7 @@ def test_rejected_project_does_not_register_custom_symbols(tmp_path):
 
 
 def test_qt_save_as_rebases_relative_cad_link_statically():
-    source = Path('qt_app.py').read_text(encoding='utf-8')
+    source = Path('elplan_qt/qt_app.py').read_text(encoding='utf-8')
     assert 'os.path.relpath(str(resolved_source), str(target.parent))' in source
     assert 'self.project.source_file = old_source' in source
 

@@ -37,7 +37,7 @@ def test_bundled_catalog_reads_repo_json_once_and_returns_fresh_rows():
 
 
 def test_bundled_catalog_uses_python_fallback_without_json():
-    from predefined_articles_data import ARTICLES
+    from elplan_catalog.predefined_articles_data import ARTICLES
 
     cache = articles._predefined_article_catalog_cached
     cache.cache_clear()

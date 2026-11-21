@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import core_logic as core
-from project_model import APP_VERSION
+from elplan_project.project_model import APP_VERSION
 
 
 def _member(uid, core_id="blue"):
@@ -67,7 +67,7 @@ def test_wago_without_article_is_reported_as_missing_bom_part():
 
 
 def test_delete_key_soft_curve_and_removed_cable_sheath_are_in_qt_source():
-    source=Path("qt_pl_box.py").read_text(encoding="utf-8")
+    source=Path("elplan_qt/qt_pl_box.py").read_text(encoding="utf-8")
     assert "Qt.Key.Key_Delete,Qt.Key.Key_Backspace" in source
     assert 'self.functionAssigned.emit(tuple(self._selected_key),"")' in source
     assert "path.cubicTo(cp1,cp2,end)" in source

@@ -44,7 +44,7 @@ def test_free_endpoint_can_move_off_axis_while_neighbor_stays_fixed():
 
 
 def test_qt_editor_uses_flexible_dogleg_helpers_and_keeps_green_anchors_locked():
-    source=(Path(__file__).resolve().parents[1] / 'qt_graphics.py').read_text(encoding='utf-8')
+    source=(Path(__file__).resolve().parents[1] / 'elplan_qt/qt_graphics.py').read_text(encoding='utf-8')
     block=source[source.index('def handle_moved'):source.index('def insert_breakpoint')]
     assert 'move_polyline_vertex_flexible' in block
     assert 'move_polyline_endpoint_flexible' in block

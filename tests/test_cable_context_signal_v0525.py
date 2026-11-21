@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import core_logic as core
-from project_model import APP_VERSION, ProjectDocument
+from elplan_project.project_model import APP_VERSION, ProjectDocument
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -17,7 +17,7 @@ def test_version_v0525():
 
 
 def test_cable_context_signal_is_declared_on_cable_signals_only():
-    source = (ROOT / "qt_graphics.py").read_text(encoding="utf-8")
+    source = (ROOT / "elplan_qt/qt_graphics.py").read_text(encoding="utf-8")
     item_block = _class_block(source, "ItemSignals", "ElectricalSymbolItem")
     cable_block = _class_block(source, "CableSignals", "CablePointHandle")
 
@@ -27,8 +27,8 @@ def test_cable_context_signal_is_declared_on_cable_signals_only():
 
 
 def test_cable_context_event_and_main_window_use_same_signal():
-    graphics = (ROOT / "qt_graphics.py").read_text(encoding="utf-8")
-    app = (ROOT / "qt_app.py").read_text(encoding="utf-8")
+    graphics = (ROOT / "elplan_qt/qt_graphics.py").read_text(encoding="utf-8")
+    app = (ROOT / "elplan_qt/qt_app.py").read_text(encoding="utf-8")
     assert "self.signals.contextRequested.emit(self,event.scenePos(),event.screenPos())" in graphics
     assert "item.signals.contextRequested.connect(self._cable_context_menu)" in app
 

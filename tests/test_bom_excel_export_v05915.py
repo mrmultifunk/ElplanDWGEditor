@@ -4,8 +4,8 @@ from zipfile import ZipFile
 import xml.etree.ElementTree as ET
 
 import core_logic as core
-from project_model import APP_VERSION
-from bom_xlsx_export import write_bom_xlsx
+from elplan_project.project_model import APP_VERSION
+from elplan_catalog.bom_xlsx_export import write_bom_xlsx
 
 
 def test_version_05915():
@@ -86,7 +86,7 @@ def test_bom_xlsx_without_missing_items_only_contains_bom_sheet():
 
 
 def test_bom_ui_keeps_csv_and_adds_excel_export():
-    source=(Path(__file__).resolve().parents[1]/"qt_articles.py").read_text(encoding="utf-8")
+    source=(Path(__file__).resolve().parents[1]/"elplan_qt/qt_articles.py").read_text(encoding="utf-8")
     assert 'Eksportér Excel…' in source
     assert 'Eksportér CSV…' in source
     assert 'def _export_bom_xlsx' in source

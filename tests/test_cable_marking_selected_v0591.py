@@ -4,9 +4,9 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_selected_cable_gets_direct_marking_panel_in_inspector():
-    app = (ROOT / "qt_app.py").read_text(encoding="utf-8")
-    panel = (ROOT / "qt_cable_panel.py").read_text(encoding="utf-8")
-    marking = (ROOT / "qt_cable_marking.py").read_text(encoding="utf-8")
+    app = (ROOT / "elplan_qt/qt_app.py").read_text(encoding="utf-8")
+    panel = (ROOT / "elplan_qt/qt_cable_panel.py").read_text(encoding="utf-8")
+    marking = (ROOT / "elplan_qt/qt_cable_marking.py").read_text(encoding="utf-8")
     assert "_create_selected_cable_marking_panel" in panel
     assert 'QGroupBox("Mærkning")' in marking
     assert 'QPushButton("Anvend mærkning")' in marking
@@ -15,7 +15,7 @@ def test_selected_cable_gets_direct_marking_panel_in_inspector():
 
 
 def test_selected_cable_marking_apply_only_uses_explicit_label_helper():
-    source = (ROOT / "qt_cable_marking.py").read_text(encoding="utf-8")
+    source = (ROOT / "elplan_qt/qt_cable_marking.py").read_text(encoding="utf-8")
     block = source[
         source.index("    def _apply_selected_cable_marking_from_inspector"):
         source.index("    def _open_selected_cable_marking_workflow")
@@ -27,7 +27,7 @@ def test_selected_cable_marking_apply_only_uses_explicit_label_helper():
 
 
 def test_selected_cable_suggestions_only_fill_field_until_apply():
-    source = (ROOT / "qt_cable_marking.py").read_text(encoding="utf-8")
+    source = (ROOT / "elplan_qt/qt_cable_marking.py").read_text(encoding="utf-8")
     block = source[
         source.index("    def _fill_selected_cable_marking"):
         source.index("    def _apply_selected_cable_marking_from_inspector")
@@ -38,8 +38,8 @@ def test_selected_cable_suggestions_only_fill_field_until_apply():
 
 
 def test_existing_graphical_mode_and_route_list_remain_available():
-    marking = (ROOT / "qt_cable_marking.py").read_text(encoding="utf-8")
-    routes = (ROOT / "qt_cable_routes.py").read_text(encoding="utf-8")
+    marking = (ROOT / "elplan_qt/qt_cable_marking.py").read_text(encoding="utf-8")
+    routes = (ROOT / "elplan_qt/qt_cable_routes.py").read_text(encoding="utf-8")
     assert 'QAction("Mærk kabler"' in marking
     assert 'self.tabs.addTab(marking_page, "Mærkning")' in routes
     assert "Mærk valgt på plantegningen" in routes

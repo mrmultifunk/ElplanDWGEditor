@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-import lk_catalog_sync as sync
+from elplan_catalog import lk_catalog_sync as sync
 
 
 def _index(article_nos):
@@ -157,7 +157,7 @@ def test_v2_cache_is_migrated_without_throwing_away_product_cache(tmp_path):
 
 
 def test_qt_text_explains_rate_limit_and_single_connection():
-    source = (Path(__file__).resolve().parents[1] / 'qt_articles.py').read_text(encoding='utf-8')
+    source = (Path(__file__).resolve().parents[1] / 'elplan_qt/qt_articles.py').read_text(encoding='utf-8')
     assert 'kun én forbindelse til LK.dk' in source
     assert '0,8–1,5 sek.' in source
     assert 'HTTP 403/429' in source

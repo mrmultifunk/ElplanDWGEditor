@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import core_logic as core
-from project_model import APP_VERSION
+from elplan_project.project_model import APP_VERSION
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -9,8 +9,8 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def test_version_and_visible_session_actions():
     assert APP_VERSION == core.APP_VERSION == "0.59.85"
-    app = (ROOT / "qt_app.py").read_text(encoding="utf-8")
-    workspace = (ROOT / "qt_visual_workspace.py").read_text(encoding="utf-8")
+    app = (ROOT / "elplan_qt/qt_app.py").read_text(encoding="utf-8")
+    workspace = (ROOT / "elplan_qt/qt_visual_workspace.py").read_text(encoding="utf-8")
     assert 'QPushButton("Gem tilknytning")' in app
     assert 'QPushButton("Annuller")' in app
     assert 'QKeySequence("Ctrl+Return")' in app
@@ -20,7 +20,7 @@ def test_version_and_visible_session_actions():
 
 
 def test_target_clicks_do_not_reselect_or_drag_symbols():
-    graphics = (ROOT / "qt_graphics.py").read_text(encoding="utf-8")
+    graphics = (ROOT / "elplan_qt/qt_graphics.py").read_text(encoding="utf-8")
     click = graphics[graphics.index("    def mousePressEvent(self, event) -> None:", graphics.index("class ElectricalSymbolItem")):]
     click = click[:click.index("    def mouseMoveEvent")]
     assert "self.signals.clicked.emit(self)" in click
@@ -29,7 +29,7 @@ def test_target_clicks_do_not_reselect_or_drag_symbols():
 
 
 def test_relation_click_refresh_is_targeted_and_panel_refresh_is_coalesced():
-    app = (ROOT / "qt_app.py").read_text(encoding="utf-8")
+    app = (ROOT / "elplan_qt/qt_app.py").read_text(encoding="utf-8")
     symbol_click = app[app.index("        if not self.association_source_uid:return",app.index("    def _symbol_clicked")):app.index("    def _reselect_uid")]
     reselect = app[app.index("    def _reselect_uid"):app.index("    def clear_selected_associations")]
     assert "self._refresh_association_annotations(*affected)" in symbol_click

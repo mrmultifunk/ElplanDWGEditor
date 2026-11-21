@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import core_logic as core
-from project_model import APP_VERSION
+from elplan_project.project_model import APP_VERSION
 
 
 def ref(uid, core_id="blue", function="n"):
@@ -100,7 +100,7 @@ def test_reconcile_loop_wago_keeps_only_explicit_members():
 
 
 def test_qt_exposes_direct_loop_wago_mode_and_drop_target():
-    source = Path("qt_pl_box.py").read_text(encoding="utf-8")
+    source = Path("elplan_qt/qt_pl_box.py").read_text(encoding="utf-8")
     assert "Forbind samlingen videre til {short_function}-klemmen med én bro" in source
     assert "Samlemuffe / sløjfe for {short_function}" in source
     assert "Sløjf leder i Wago uden lampested" in source
@@ -126,7 +126,7 @@ def test_loop_only_switch_conductor_does_not_satisfy_lamp_terminal_requirement()
 
 
 def test_project_roundtrip_preserves_loop_only_mode(tmp_path):
-    from project_model import ProjectDocument
+    from elplan_project.project_model import ProjectDocument
     lamp = core.Placement(
         "light_connection", 0, 0, uid="lamp-loop",
         pl_box_splices=[{

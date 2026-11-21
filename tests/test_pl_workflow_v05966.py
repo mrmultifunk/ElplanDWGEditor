@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import core_logic as core
-from project_model import APP_VERSION
+from elplan_project.project_model import APP_VERSION
 
 
 def _leg(spec="5G1,5"):
@@ -83,7 +83,7 @@ def test_external_conflict_becomes_clickable_error_not_automatic_suggestion():
 
 
 def test_qt_has_compact_problem_navigation_preview_and_cached_hover_state():
-    source=Path("qt_pl_box.py").read_text(encoding="utf-8")
+    source=Path("elplan_qt/qt_pl_box.py").read_text(encoding="utf-8")
     assert "Næste uløste" in source and 'QKeySequence("F8")' in source
     assert "Forslag til lederfordeling · forhåndsvisning" in source
     assert "Sikre forslag er valgt på forhånd" in source

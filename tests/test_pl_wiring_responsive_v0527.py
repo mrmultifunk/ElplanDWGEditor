@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import core_logic as core
-from project_model import APP_VERSION
+from elplan_project.project_model import APP_VERSION
 
 
 def test_version_is_0527():
@@ -9,7 +9,7 @@ def test_version_is_0527():
 
 
 def test_pl_wiring_diagram_geometry_uses_actual_available_height():
-    source = Path("qt_pl_box.py").read_text(encoding="utf-8")
+    source = Path("elplan_qt/qt_pl_box.py").read_text(encoding="utf-8")
     start = source.index("class PLWiringDiagramWidget")
     end = source.index("class PLBoxDialog", start)
     block = source[start:end]
@@ -21,7 +21,7 @@ def test_pl_wiring_diagram_geometry_uses_actual_available_height():
 
 
 def test_pl_dialog_keeps_footer_outside_wiring_scroll_area():
-    source = Path("qt_pl_box.py").read_text(encoding="utf-8")
+    source = Path("elplan_qt/qt_pl_box.py").read_text(encoding="utf-8")
     start = source.index("class PLBoxDialog")
     block = source[start:source.index("    @staticmethod\n    def _identity", start)]
     assert "wiring_tab=QScrollArea()" in block

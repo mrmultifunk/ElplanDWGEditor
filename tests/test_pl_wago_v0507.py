@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import core_logic as core
-from project_model import APP_VERSION
+from elplan_project.project_model import APP_VERSION
 
 
 def ref(uid, core_id="blue", function="n"):
@@ -47,7 +47,7 @@ def test_montage_status_reports_terminal_and_wago_capacity():
 
 
 def test_qt_source_has_manual_planned_wago_routing_and_montage_status():
-    source=Path("qt_pl_box.py").read_text(encoding="utf-8")
+    source=Path("elplan_qt/qt_pl_box.py").read_text(encoding="utf-8")
     assert "def _show_function_context_menu" in source
     assert "def _show_drop_function_menu" in source
     assert "én fysisk bro går videre til lampeudtaget" in source

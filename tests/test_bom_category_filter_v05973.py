@@ -3,8 +3,8 @@ from tempfile import TemporaryDirectory
 from zipfile import ZipFile
 
 import core_logic as core
-from bom_xlsx_export import write_bom_xlsx
-from project_model import APP_VERSION
+from elplan_catalog.bom_xlsx_export import write_bom_xlsx
+from elplan_project.project_model import APP_VERSION
 
 
 def test_version():
@@ -59,7 +59,7 @@ def test_excel_contains_filterable_category_column():
 
 
 def test_bom_ui_has_dynamic_category_filter_grouping_and_sorting():
-    source=Path(__file__).resolve().parents[1].joinpath("qt_articles.py").read_text(encoding="utf-8")
+    source=Path(__file__).resolve().parents[1].joinpath("elplan_qt/qt_articles.py").read_text(encoding="utf-8")
     assert "self.bom_category_filter" in source
     assert 'self.bom_group_by.addItem("Artikeltype","bom_category")' in source
     assert 'self.bom_sort.addItem("Artikeltype","bom_category")' in source

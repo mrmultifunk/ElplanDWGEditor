@@ -76,7 +76,7 @@ def normalize_bom_assemblies(records):
         # Strukturerede navneparametre er metadata for styklistebiblioteket.
         # De påvirker aldrig BOM-beregningen eller det frie brugernavn.
         try:
-            import assembly_naming as _assembly_naming
+            from elplan_catalog import assembly_naming as _assembly_naming
             naming=_assembly_naming.normalize_naming_fields(raw.get("naming",{}))
         except Exception:
             naming={}

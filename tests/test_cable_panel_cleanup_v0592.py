@@ -4,8 +4,8 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_cable_panel_is_responsive_and_never_requires_horizontal_panning():
-    panel = (ROOT / "qt_cable_panel.py").read_text(encoding="utf-8")
-    marking = (ROOT / "qt_cable_marking.py").read_text(encoding="utf-8")
+    panel = (ROOT / "elplan_qt/qt_cable_panel.py").read_text(encoding="utf-8")
+    marking = (ROOT / "elplan_qt/qt_cable_marking.py").read_text(encoding="utf-8")
     assert "ScrollBarAlwaysOff" in panel
     assert panel.count("WrapLongRows") >= 2
     assert "QGridLayout" in marking
@@ -13,7 +13,7 @@ def test_cable_panel_is_responsive_and_never_requires_horizontal_panning():
 
 
 def test_selected_cable_hides_new_drawing_controls_and_prioritizes_marking():
-    panel = (ROOT / "qt_cable_panel.py").read_text(encoding="utf-8")
+    panel = (ROOT / "elplan_qt/qt_cable_panel.py").read_text(encoding="utf-8")
     # Marking is created before the generic cable-data group.
     assert panel.index("_create_selected_cable_marking_panel") < panel.index('QGroupBox("Kabeldata")')
     context = panel[panel.index("    def _set_cable_panel_context"):]
@@ -24,7 +24,7 @@ def test_selected_cable_hides_new_drawing_controls_and_prioritizes_marking():
 
 
 def test_start_id_is_advanced_and_explained_instead_of_first_cable_id():
-    panel = (ROOT / "qt_cable_panel.py").read_text(encoding="utf-8")
+    panel = (ROOT / "elplan_qt/qt_cable_panel.py").read_text(encoding="utf-8")
     assert "Første kabel-ID" not in panel
     assert 'self.cable_id_field_label = QLabel("Start-ID")' in panel
     assert "ID vælges automatisk" in panel
@@ -32,8 +32,8 @@ def test_start_id_is_advanced_and_explained_instead_of_first_cable_id():
 
 
 def test_extra_marking_is_never_an_implicit_default_for_new_cables():
-    app = (ROOT / "qt_app.py").read_text(encoding="utf-8")
-    panel = (ROOT / "qt_cable_panel.py").read_text(encoding="utf-8")
+    app = (ROOT / "elplan_qt/qt_app.py").read_text(encoding="utf-8")
+    panel = (ROOT / "elplan_qt/qt_cable_panel.py").read_text(encoding="utf-8")
     start = app[app.index("    def _start_cable_from_panel"):app.index("    def _cancel_current_cable")]
     apply_block = app[app.index("    def apply_selected_cable_properties"):app.index("    def _remove_cable")]
     assert 'label=""' in start

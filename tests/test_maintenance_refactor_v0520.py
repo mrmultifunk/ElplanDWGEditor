@@ -1,17 +1,17 @@
 import ast
 from pathlib import Path
 
-import user_library
+from elplan_catalog import user_library
 
 ROOT=Path(__file__).resolve().parents[1]
 
 
 def test_theme_and_hover_are_split_out_of_monolithic_qt_app():
-    app=(ROOT/"qt_app.py").read_text(encoding="utf-8")
-    theme=(ROOT/"qt_theme.py").read_text(encoding="utf-8")
-    hover=(ROOT/"qt_hover.py").read_text(encoding="utf-8")
-    assert "from qt_theme import" in app
-    assert "from qt_hover import HoverInfoMixin, _HoverInfoPopup" in app
+    app=(ROOT/"elplan_qt/qt_app.py").read_text(encoding="utf-8")
+    theme=(ROOT/"elplan_qt/qt_theme.py").read_text(encoding="utf-8")
+    hover=(ROOT/"elplan_qt/qt_hover.py").read_text(encoding="utf-8")
+    assert "from elplan_qt.qt_theme import" in app
+    assert "from elplan_qt.qt_hover import HoverInfoMixin, _HoverInfoPopup" in app
     assert "class ElplanProxyStyle" in theme
     assert "def _application_stylesheet" in theme
     assert "class _HoverPreviewWidget" in hover
@@ -20,7 +20,7 @@ def test_theme_and_hover_are_split_out_of_monolithic_qt_app():
 
 
 def test_mainwindow_has_no_duplicate_method_definitions():
-    tree=ast.parse((ROOT/"qt_app.py").read_text(encoding="utf-8"))
+    tree=ast.parse((ROOT/"elplan_qt/qt_app.py").read_text(encoding="utf-8"))
     main=next(n for n in tree.body if isinstance(n,ast.ClassDef) and n.name=="MainWindow")
     names=[]
     for node in main.body:
@@ -45,7 +45,7 @@ def test_article_catalog_cache_returns_defensive_copy(tmp_path, monkeypatch):
 
 
 def test_zoom_refresh_is_coalesced_and_gui_audit_is_documented():
-    app=(ROOT/"qt_app.py").read_text(encoding="utf-8")
+    app=(ROOT/"elplan_qt/qt_app.py").read_text(encoding="utf-8")
     assert "self._zoom_visual_refresh_timer.setInterval(80)" in app
     assert "def _refresh_zoom_dependent_visuals" in app
     assert "self._zoom_visual_refresh_timer.start()" in app

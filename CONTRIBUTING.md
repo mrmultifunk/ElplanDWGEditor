@@ -12,6 +12,21 @@ Projektets primære mål er at være et enkelt visualiseringsværktøj til elpla
 
 DWG-import kræver ODA File Converter. DXF kan bruges uden ODA.
 
+## Projektstruktur
+
+| Mappe | Ansvar |
+| --- | --- |
+| `elplan_core/` | Datamodeller, CAD, kabler, symboler, PL-dåser og eksportmotor |
+| `elplan_qt/` | Qt-brugerflade og dialoger; hovedvinduet ligger i `qt_app.py` |
+| `elplan_catalog/` | Artikeldata, priser, katalogsynkronisering og BOM-rapporter |
+| `elplan_project/` | Projektmodel, projekter på disk, revisioner, samarbejde og PL-integration |
+| `elplan_shared/` | Fælles hjælpefunktioner som filskrivning, logning og placering af ressourcer |
+| `elplan_legacy/` | Historisk Tk-brugerflade og eksisterende re-eksporter |
+
+`main.py` er stadig startpunktet for `start_windows.bat` og Windows-buildet.
+`core_logic.py` og `legacy_core.py` bliver i roden af hensyn til eksisterende
+importer. Nye moduler skal som udgangspunkt i en af pakkerne ovenfor.
+
 ## Principper
 
 - Bevar en enkel standardarbejdsgang.
@@ -22,7 +37,7 @@ DWG-import kræver ODA File Converter. DXF kan bruges uden ODA.
 
 ## Qt-modulgrænser fra 0.53.0
 
-`qt_app.py` er fortsat hovedcontrolleren, men nyt kode bør ikke automatisk placeres dér:
+`elplan_qt/qt_app.py` er fortsat hovedcontrolleren, men ny kode bør ikke automatisk placeres dér:
 
 - `qt_ui.py`: fælles GUI-metrics og små layout-/dock-primitiver. Hardcodede marginer og standardpanelmål bør som udgangspunkt ikke spredes i featurekode.
 - `qt_workspace.py`: hovedvinduets chrome, samlet inspector, kontekstværktøjslinje og maskinlokal workspace-layout.
@@ -34,9 +49,9 @@ DWG-import kræver ODA File Converter. DXF kan bruges uden ODA.
 - `qt_graphics.py`: scene-items, CAD-view, snap og interaktiv geometri.
 - `qt_commands.py`: Undo/Redo-kommandoer.
 - `qt_table_utils.py`: fælles tabelmodel/kolonneadfærd.
-- `core_logic.py`: Qt-uafhængig domænelogik som skal kunne enhedstestes uden GUI.
+- `elplan_core/`: Qt-uafhængig domænelogik som skal kunne enhedstestes uden GUI.
 
-Hvis en ny funktion kan udtrykkes uden Qt, skal den som udgangspunkt ligge i `core_logic.py` eller et andet rent domænemodul. Store nye dialogfamilier bør få eget Qt-modul i stedet for at udvide `MainWindow` yderligere.
+Hvis en ny funktion kan udtrykkes uden Qt, skal den som udgangspunkt ligge i den relevante domænepakke. Store nye dialogfamilier bør få eget Qt-modul i stedet for at udvide `MainWindow` yderligere.
 
 ## 0.54.x GUI-moduler
 

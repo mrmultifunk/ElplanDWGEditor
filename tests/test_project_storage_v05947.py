@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-import project_storage
+from elplan_project import project_storage
 
 
 def test_onedrive_detection_and_mode_normalization(tmp_path):

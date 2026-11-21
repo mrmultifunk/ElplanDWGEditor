@@ -39,7 +39,7 @@ def test_one_available_light_label_is_still_a_safe_suggestion():
 
 
 def test_central_marking_workflow_uses_light_endpoint_fallback_and_keeps_apply_explicit():
-    source = Path("qt_cable_marking.py").read_text(encoding="utf-8")
+    source = Path("elplan_qt/qt_cable_marking.py").read_text(encoding="utf-8")
     block = source[source.index("    def _cable_marking_suggestions"):source.index("    def _focus_cable_for_marking")]
     assert "core.cable_light_endpoint_marking" in block
     assert 'f"Lampeudtag · {light_marking}"' in block

@@ -3,8 +3,8 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from zipfile import ZipFile
 
-import price_display
-from bom_xlsx_export import write_bom_xlsx
+from elplan_catalog import price_display
+from elplan_catalog.bom_xlsx_export import write_bom_xlsx
 
 
 def _observations():
@@ -91,9 +91,9 @@ def test_excel_including_vat_has_matching_headers_and_numeric_values():
 
 def test_price_ui_wires_comparison_persistence_and_net_storage():
     root=Path(__file__).resolve().parents[1]
-    source=(root/"qt_articles.py").read_text(encoding="utf-8")
-    dialog=(root/"qt_price_comparison.py").read_text(encoding="utf-8")
-    portability=(root/"portability.py").read_text(encoding="utf-8")
+    source=(root/"elplan_qt/qt_articles.py").read_text(encoding="utf-8")
+    dialog=(root/"elplan_qt/qt_price_comparison.py").read_text(encoding="utf-8")
+    portability=(root/"elplan_project/portability.py").read_text(encoding="utf-8")
     assert 'QPushButton("Sammenlign forhandlere…")' in source
     assert 'self.price_vat_combo.addItem("Inkl. moms",price_display.VAT_MODE_INCL)' in source
     assert "price_display.from_display_amount(self.manual_amount.value(),self._vat_mode)" in source

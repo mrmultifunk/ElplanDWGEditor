@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import core_logic as core
-from project_model import APP_VERSION
+from elplan_project.project_model import APP_VERSION
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -70,11 +70,11 @@ def test_free_diagonal_route_can_be_pulled_through_existing_light():
 
 
 def test_gui_exposes_intuitive_attach_button_context_menu_and_click_mode():
-    app = (ROOT / "qt_app.py").read_text(encoding="utf-8")
-    attach = (ROOT / "qt_cable_attach.py").read_text(encoding="utf-8")
-    graphics = (ROOT / "qt_graphics.py").read_text(encoding="utf-8")
+    app = (ROOT / "elplan_qt/qt_app.py").read_text(encoding="utf-8")
+    attach = (ROOT / "elplan_qt/qt_cable_attach.py").read_text(encoding="utf-8")
+    graphics = (ROOT / "elplan_qt/qt_graphics.py").read_text(encoding="utf-8")
     assert 'QPushButton("Tilknyt eksisterende kabel…")' in app
-    assert 'from qt_cable_attach import CableAttachMixin' in app
+    assert 'from elplan_qt.qt_cable_attach import CableAttachMixin' in app
     assert 'CableAttachMixin' in app and 'class MainWindow(' in app
     assert 'def start_cable_attach_for_selection' in attach
     assert 'def _start_cable_attach_mode' in attach

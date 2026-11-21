@@ -15,8 +15,8 @@ def test_direct_cable_binding_remains_instance_specific():
 
 
 def test_cable_dock_has_direct_article_workflow_and_scroll_area():
-    panel=Path('qt_cable_panel.py').read_text(encoding='utf-8')
-    main=Path('qt_app.py').read_text(encoding='utf-8')
+    panel=Path('elplan_qt/qt_cable_panel.py').read_text(encoding='utf-8')
+    main=Path('elplan_qt/qt_app.py').read_text(encoding='utf-8')
     assert 'scroll = QScrollArea()' in panel
     assert 'QGroupBox("Artikel / BOM")' in panel
     assert 'def choose_cable_article(self)' in main
@@ -26,7 +26,7 @@ def test_cable_dock_has_direct_article_workflow_and_scroll_area():
 
 
 def test_symbol_selection_raises_properties_and_leaves_cable_tool():
-    source=Path('qt_app.py').read_text(encoding='utf-8')
+    source=Path('elplan_qt/qt_app.py').read_text(encoding='utf-8')
     selection=source[source.index('    def _selection_changed(self) -> None:'):source.index('    def _selected_symbol_item', source.index('    def _selection_changed(self) -> None:'))]
     assert 'self.close_cable_tool()' in selection
     assert 'self._show_inspector_page(' in selection
@@ -34,7 +34,7 @@ def test_symbol_selection_raises_properties_and_leaves_cable_tool():
 
 
 def test_other_drawing_tools_close_cable_workspace_first():
-    source=Path('qt_app.py').read_text(encoding='utf-8')
+    source=Path('elplan_qt/qt_app.py').read_text(encoding='utf-8')
     assert 'if self._cable_tool_is_open(): self.close_cable_tool()\n        self.view.start_symbol_placement' in source
     assert 'if self._cable_tool_is_open(): self.close_cable_tool()\n        self.view.start_text_tool' in source
     assert 'if self._cable_tool_is_open(): self.close_cable_tool()\n        self.view.start_spot_pattern("line",config)' in source

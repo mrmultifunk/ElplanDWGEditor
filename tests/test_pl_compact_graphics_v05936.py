@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import core_logic as core
-from project_model import APP_VERSION
+from elplan_project.project_model import APP_VERSION
 
 
 def test_version_05936():
@@ -9,7 +9,7 @@ def test_version_05936():
 
 
 def test_pl_graphics_has_compact_and_detailed_modes():
-    source = Path("qt_pl_box.py").read_text(encoding="utf-8")
+    source = Path("elplan_qt/qt_pl_box.py").read_text(encoding="utf-8")
     start = source.index("class PLWiringDiagramWidget")
     end = source.index("class PLBoxDialog", start)
     block = source[start:end]
@@ -23,7 +23,7 @@ def test_pl_graphics_has_compact_and_detailed_modes():
 
 
 def test_pl_dialog_defaults_to_compact_and_offers_detail_toggle():
-    source = Path("qt_pl_box.py").read_text(encoding="utf-8")
+    source = Path("elplan_qt/qt_pl_box.py").read_text(encoding="utf-8")
     start = source.index("class PLBoxDialog")
     block = source[start:]
     assert 'QPushButton("Kompakt")' in block
@@ -33,7 +33,7 @@ def test_pl_dialog_defaults_to_compact_and_offers_detail_toggle():
 
 
 def test_compact_mode_hides_secondary_wago_and_terminal_text():
-    source = Path("qt_pl_box.py").read_text(encoding="utf-8")
+    source = Path("elplan_qt/qt_pl_box.py").read_text(encoding="utf-8")
     assert 'compact_meta=f"{member_count}+bro"' in source
     assert 'if detailed and fid.startswith("switch:")' in source
     assert "if detailed and uses_wago" in source

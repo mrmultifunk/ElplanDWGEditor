@@ -1,7 +1,7 @@
 from pathlib import Path
 import json
 
-from project_model import ProjectDocument
+from elplan_project.project_model import ProjectDocument
 
 
 def test_load_and_roundtrip(tmp_path: Path):

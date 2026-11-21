@@ -1,7 +1,7 @@
 from pathlib import Path
 from types import SimpleNamespace
 
-from hover_bom import build_hover_bom_html, build_hover_bom_model
+from elplan_catalog.hover_bom import build_hover_bom_html, build_hover_bom_model
 
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -73,10 +73,10 @@ def test_hover_totals_keep_currencies_separate_and_report_missing_price():
 
 
 def test_shared_settings_panel_and_hover_cache_are_wired_to_one_global_vat_key():
-    app=(ROOT/"qt_app.py").read_text(encoding="utf-8")
-    hover=(ROOT/"qt_hover.py").read_text(encoding="utf-8")
-    settings=(ROOT/"qt_settings.py").read_text(encoding="utf-8")
-    articles=(ROOT/"qt_articles.py").read_text(encoding="utf-8")
+    app=(ROOT/"elplan_qt/qt_app.py").read_text(encoding="utf-8")
+    hover=(ROOT/"elplan_qt/qt_hover.py").read_text(encoding="utf-8")
+    settings=(ROOT/"elplan_qt/qt_settings.py").read_text(encoding="utf-8")
+    articles=(ROOT/"elplan_qt/qt_articles.py").read_text(encoding="utf-8")
     assert "ApplicationSettingsMixin" in app
     assert 'QAction("Indstillinger…"' in app
     assert 'tools_menu.addAction(self.act_settings)' in app

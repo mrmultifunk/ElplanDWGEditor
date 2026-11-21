@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 import core_logic as core
-from predefined_articles_data import ARTICLES as FALLBACK
+from elplan_catalog.predefined_articles_data import ARTICLES as FALLBACK
 
 
 def test_library_is_unique_normalized_and_has_product_links():
@@ -70,7 +70,7 @@ def test_json_and_python_fallback_are_kept_in_sync():
 
 
 def test_assembly_article_picker_is_faceted_sortable_and_link_aware_without_importing_qt():
-    source=Path('qt_articles.py').read_text(encoding='utf-8')
+    source=Path('elplan_qt/qt_articles.py').read_text(encoding='utf-8')
     assert 'class ArticlePickerDialog' in source
     for token in ('self.manufacturer','self.product_type','self.design','self.module','self.color','self.status','self.only_ean'):
         assert token in source

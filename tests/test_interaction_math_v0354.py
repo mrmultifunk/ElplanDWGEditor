@@ -1,4 +1,4 @@
-from interaction_math import wheel_zoom_factor
+from elplan_shared.interaction_math import wheel_zoom_factor
 
 
 def test_zero_vertical_delta_never_zooms():

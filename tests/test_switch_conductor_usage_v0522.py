@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import core_logic as core
-from project_model import APP_VERSION
+from elplan_project.project_model import APP_VERSION
 
 
 def _wire(cable, placement, core_id, function):
@@ -90,8 +90,8 @@ def test_switch_assignment_advice_prefers_non_supply_colors_and_warns_on_reuse()
 
 
 def test_pl_gui_contains_visual_switch_conductor_overview():
-    source = Path("qt_pl_box.py").read_text(encoding="utf-8")
-    helper = Path("qt_pl_usage.py").read_text(encoding="utf-8")
+    source = Path("elplan_qt/qt_pl_box.py").read_text(encoding="utf-8")
+    helper = Path("elplan_qt/qt_pl_usage.py").read_text(encoding="utf-8")
     assert "SwitchConductorUsageCard" in source
     assert "Tændleder-overblik" in helper
     assert "Næste ledige:" in helper

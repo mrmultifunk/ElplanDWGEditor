@@ -2,7 +2,7 @@ import json
 from datetime import datetime
 from pathlib import Path
 
-from project_revision_backup import create_pre_cad_update_backup
+from elplan_project.project_revision_backup import create_pre_cad_update_backup
 
 ROOT=Path(__file__).resolve().parents[1]
 
@@ -42,7 +42,7 @@ def test_same_path_reload_uses_loaded_original_not_overwritten_disk_file(tmp_pat
 
 
 def test_update_flow_requires_backup_before_active_doc_replacement():
-    source=(ROOT/'qt_project_open.py').read_text(encoding='utf-8')
+    source=(ROOT/'elplan_qt/qt_project_open.py').read_text(encoding='utf-8')
     backup=source.index('revision_backup=create_pre_cad_update_backup')
     replace=source.index('self.doc=new_doc')
     assert backup < replace

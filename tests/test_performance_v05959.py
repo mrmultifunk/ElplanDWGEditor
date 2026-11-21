@@ -2,8 +2,8 @@ from pathlib import Path
 import time
 
 import core_logic as core
-from annotation_layout import RectSpatialIndex, choose_label_origin
-from project_model import APP_VERSION
+from elplan_shared.annotation_layout import RectSpatialIndex, choose_label_origin
+from elplan_project.project_model import APP_VERSION
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -53,11 +53,11 @@ def test_spatial_collision_index_preserves_exact_label_choice():
 
 
 def test_zoom_render_items_are_reused_within_same_semantic_profile():
-    graphics = (ROOT / "qt_graphics.py").read_text(encoding="utf-8")
+    graphics = (ROOT / "elplan_qt/qt_graphics.py").read_text(encoding="utf-8")
     cable_visual = (ROOT / "elplan_core" / "cables" / "visual.py").read_text(encoding="utf-8")
 
     assert APP_VERSION == core.APP_VERSION == "0.59.85"
     assert "render_signature==self._render_signature" in graphics
-    annotation_qt = (ROOT / "qt_annotation_layout.py").read_text(encoding="utf-8")
+    annotation_qt = (ROOT / "elplan_qt/qt_annotation_layout.py").read_text(encoding="utf-8")
     assert "signature==window._switch_badge_render_signature" in annotation_qt
     assert "for other_row in sweep[pos+1:]" not in cable_visual

@@ -1,8 +1,8 @@
 from pathlib import Path
 
-import assembly_naming
+from elplan_catalog import assembly_naming
 import core_logic as core
-from project_model import APP_VERSION
+from elplan_project.project_model import APP_VERSION
 
 
 def test_version_and_name_builder_uses_canonical_verified_system_name():
@@ -65,7 +65,7 @@ def test_component_metadata_is_only_a_suggestion_source():
 
 
 def test_editor_keeps_name_field_manual_and_assistant_is_opt_in():
-    source = Path("qt_articles.py").read_text(encoding="utf-8")
+    source = Path("elplan_qt/qt_articles.py").read_text(encoding="utf-8")
     assert 'QPushButton("Navneassistent…")' in source
     assert 'self.name.setText(generated)' in source
     assert 'self.name.setReadOnly(True)' not in source

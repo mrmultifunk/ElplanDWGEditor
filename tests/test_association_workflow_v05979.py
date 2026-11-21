@@ -4,7 +4,7 @@ import ast
 from pathlib import Path
 
 import core_logic as core
-from project_model import APP_VERSION, ProjectDocument, placement_from_raw
+from elplan_project.project_model import APP_VERSION, ProjectDocument, placement_from_raw
 
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -50,8 +50,8 @@ def test_project_control_reports_unlinked_lights_and_empty_switch_relations():
 
 
 def test_gui_source_contains_channel_table_and_transactional_finish():
-    source=(ROOT/"qt_app.py").read_text(encoding="utf-8")
-    graphics=(ROOT/"qt_graphics.py").read_text(encoding="utf-8")
+    source=(ROOT/"elplan_qt/qt_app.py").read_text(encoding="utf-8")
+    graphics=(ROOT/"elplan_qt/qt_graphics.py").read_text(encoding="utf-8")
     ast.parse(source); ast.parse(graphics)
     assert APP_VERSION==core.APP_VERSION=="0.59.85"
     assert "assoc_channels_table" in source

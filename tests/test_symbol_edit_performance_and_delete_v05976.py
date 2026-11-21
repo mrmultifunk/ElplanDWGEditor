@@ -4,9 +4,9 @@ import inspect
 from pathlib import Path
 
 import core_logic as core
-from project_model import APP_VERSION
-from qt_app import MainWindow
-from qt_cable_attach import CableAttachMixin
+from elplan_project.project_model import APP_VERSION
+from elplan_qt.qt_app import MainWindow
+from elplan_qt.qt_cable_attach import CableAttachMixin
 
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -57,5 +57,5 @@ def test_symbol_delete_is_visible_and_locked_state_is_explained():
 
 
 def test_silent_pose_updates_do_not_reenter_move_handler():
-    source=(ROOT/"qt_graphics.py").read_text(encoding="utf-8")
+    source=(ROOT/"elplan_qt/qt_graphics.py").read_text(encoding="utf-8")
     assert "ItemPositionHasChanged and self.scene() is not None and not self._suppress_snap" in source

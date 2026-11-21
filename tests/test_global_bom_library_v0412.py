@@ -6,7 +6,7 @@ import tempfile
 from pathlib import Path
 
 import core_logic as core
-import user_library
+from elplan_catalog import user_library
 
 
 def test_global_bom_library_is_user_scoped_and_self_contained():
@@ -75,7 +75,7 @@ def test_global_assembly_can_drive_bom_in_another_project():
 
 
 def test_article_picker_uses_debounce_and_model_population():
-    source=Path('qt_articles.py').read_text(encoding='utf-8')
+    source=Path('elplan_qt/qt_articles.py').read_text(encoding='utf-8')
     assert 'self._search_timer.setInterval(180)' in source
     assert 'self._search_timer.timeout.connect(self._refresh)' in source
     assert 'self.table_model.set_rows(visible)' in source

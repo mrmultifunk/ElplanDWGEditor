@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import core_logic as core
-from project_model import APP_VERSION
+from elplan_project.project_model import APP_VERSION
 
 
 def _rooms():
@@ -34,8 +34,8 @@ def test_room_cable_marking_one_room_and_no_room():
 
 def test_room_ui_separates_text_and_boundary_visibility_and_drops_symbol_automarking():
     assert APP_VERSION == core.APP_VERSION == '0.59.85'
-    src=Path('qt_rooms.py').read_text(encoding='utf-8')
-    app=Path('qt_app.py').read_text(encoding='utf-8')
+    src=Path('elplan_qt/qt_rooms.py').read_text(encoding='utf-8')
+    app=Path('elplan_qt/qt_app.py').read_text(encoding='utf-8')
     assert 'Vis rumnavne' in src
     assert 'Vis rumafgrænsninger' in src
     assert "self.project.raw.get('room_labels_visible',True)" in src

@@ -6,7 +6,7 @@ from pathlib import Path
 import ezdxf
 
 import core_logic as core
-from project_model import ProjectDocument, cable_from_raw, APP_VERSION
+from elplan_project.project_model import ProjectDocument, cable_from_raw, APP_VERSION
 
 
 def test_patch_cable_has_dedicated_layer_and_type():
@@ -58,7 +58,7 @@ def test_patch_cable_dxf_keeps_dedicated_layer():
 
 
 def test_qt_source_has_separate_patch_cable_quick_filter():
-    source = Path("qt_app.py").read_text(encoding="utf-8") + Path("qt_cable_panel.py").read_text(encoding="utf-8")
+    source = Path("elplan_qt/qt_app.py").read_text(encoding="utf-8") + Path("elplan_qt/qt_cable_panel.py").read_text(encoding="utf-8")
     assert 'QAction("Patchkabler", self, checkable=True)' in source
     assert '"patch_cables": bool(self.app_settings.get("quick_show_patch_cables", True))' in source
     assert 'def _quick_cable_visible(self, cable: core.CablePlacement)' in source

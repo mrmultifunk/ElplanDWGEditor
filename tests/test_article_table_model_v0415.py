@@ -2,8 +2,8 @@ from pathlib import Path
 
 
 def test_picker_and_standard_library_use_model_based_tables():
-    source = Path("qt_articles.py").read_text(encoding="utf-8")
-    table_utils = Path("qt_table_utils.py").read_text(encoding="utf-8")
+    source = Path("elplan_qt/qt_articles.py").read_text(encoding="utf-8")
+    table_utils = Path("elplan_qt/qt_table_utils.py").read_text(encoding="utf-8")
     assert "class ArticleTableModel(QAbstractTableModel)" in table_utils
     picker = source[source.index("class ArticlePickerDialog"):source.index("class AssemblyEditDialog")]
     assert "self.table=QTableView()" in picker
@@ -17,7 +17,7 @@ def test_picker_and_standard_library_use_model_based_tables():
 
 
 def test_dynamic_article_refreshes_do_not_rebuild_widget_cells():
-    source = Path("qt_articles.py").read_text(encoding="utf-8")
+    source = Path("elplan_qt/qt_articles.py").read_text(encoding="utf-8")
     picker = source[source.index("class ArticlePickerDialog"):source.index("class AssemblyEditDialog")]
     assert "self.table_model.set_rows(visible)" in picker
     assert "_populate_visible_chunk" not in picker
@@ -30,7 +30,7 @@ def test_dynamic_article_refreshes_do_not_rebuild_widget_cells():
 
 
 def test_article_preview_debounces_and_cancels_old_requests():
-    source = Path("qt_articles.py").read_text(encoding="utf-8")
+    source = Path("elplan_qt/qt_articles.py").read_text(encoding="utf-8")
     preview = source[source.index("class ArticleVisualPreview"):source.index("class ArticlePickerDialog")]
     assert "self._load_timer.setInterval(300)" in preview
     assert "if not reply.isFinished(): reply.abort()" in preview

@@ -2,7 +2,7 @@ from pathlib import Path
 import tempfile
 
 import core_logic as core
-from project_model import ProjectDocument, APP_VERSION
+from elplan_project.project_model import ProjectDocument, APP_VERSION
 
 
 def _room(name, code, x0, y0, x1, y1):

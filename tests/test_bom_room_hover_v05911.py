@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import core_logic as core
-from project_model import APP_VERSION
+from elplan_project.project_model import APP_VERSION
 
 
 def _rooms():
@@ -30,7 +30,7 @@ def test_bom_article_room_usage_tracks_symbol_and_cable_rooms_without_changing_b
 
 def test_bom_ui_has_room_sort_field_and_non_interactive_hover_image_popup():
     assert APP_VERSION == core.APP_VERSION == '0.59.85'
-    src=Path('qt_articles.py').read_text(encoding='utf-8')
+    src=Path('elplan_qt/qt_articles.py').read_text(encoding='utf-8')
     assert '"Rum"' in src
     assert 'Sortér efter' in src
     # Rumfordelingen er domænelogik og må ikke være koblet til Qt-modulet.

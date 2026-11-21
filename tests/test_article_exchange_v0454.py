@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-import article_exchange
+from elplan_catalog import article_exchange
 
 
 def test_json_roundtrip_preserves_article_metadata(tmp_path):
@@ -65,7 +65,7 @@ def test_overwrite_merge_replaces_nonempty_imported_fields():
 
 
 def test_qt_source_uses_one_article_database_tab():
-    src=(Path(__file__).resolve().parents[1] / "qt_articles.py").read_text(encoding="utf-8")
+    src=(Path(__file__).resolve().parents[1] / "elplan_qt/qt_articles.py").read_text(encoding="utf-8")
     init=src[src.index("class BomManagerDialog"):src.index("    # ---- faner",src.index("class BomManagerDialog"))]
     assert "self._build_library_tab()" in init
     assert "self._build_predefined_tab()" not in init
@@ -78,7 +78,7 @@ def test_qt_source_uses_one_article_database_tab():
 
 
 def test_manual_article_editor_has_image_and_datasheet_fields():
-    src=(Path(__file__).resolve().parents[1] / "qt_articles.py").read_text(encoding="utf-8")
+    src=(Path(__file__).resolve().parents[1] / "elplan_qt/qt_articles.py").read_text(encoding="utf-8")
     block=src[src.index("class ArticleEditDialog"):src.index("class ArticlePriceDialog")]
     assert 'self.image_url=QLineEdit' in block
     assert 'self.datasheet_url=QLineEdit' in block

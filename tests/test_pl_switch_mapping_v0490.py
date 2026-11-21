@@ -145,7 +145,7 @@ def test_related_switch_without_direct_cable_is_information_not_hard_requirement
 
 
 def test_qt_source_exposes_switch_requirements_and_extra_cable_marking():
-    source=Path("qt_pl_box.py").read_text(encoding="utf-8")
+    source=Path("elplan_qt/qt_pl_box.py").read_text(encoding="utf-8")
     assert "Forventede tændinger fra tilhørsforhold" in source
     assert "Afbryderkanal" in source
     assert "Én fysisk leder kan kun have én funktion" in source

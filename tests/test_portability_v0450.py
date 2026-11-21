@@ -4,9 +4,9 @@ import zipfile
 from pathlib import Path
 
 import core_logic as core
-import portability
-import user_library
-from project_model import ProjectDocument, APP_VERSION
+from elplan_project import portability
+from elplan_catalog import user_library
+from elplan_project.project_model import ProjectDocument, APP_VERSION
 
 
 def _set_user_dir(tmp_path, monkeypatch):
@@ -165,7 +165,7 @@ def test_reopening_legacy_project_cannot_roll_back_newer_core_article(tmp_path, 
 
 
 def test_qt_menu_exposes_separate_core_and_project_transfer_actions():
-    source=Path('qt_app.py').read_text(encoding='utf-8')
+    source=Path('elplan_qt/qt_app.py').read_text(encoding='utf-8')
     assert 'Eksportér kernedata…' in source
     assert 'Importér kernedata…' in source
     assert 'Eksportér projektpakke…' in source

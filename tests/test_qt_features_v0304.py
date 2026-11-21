@@ -8,7 +8,7 @@ pytest.importorskip("PySide6")
 from PySide6.QtWidgets import QApplication
 
 import core_logic as core
-from qt_app import MainWindow
+from elplan_qt.qt_app import MainWindow
 
 
 def _app():
@@ -16,7 +16,7 @@ def _app():
 
 
 def test_pattern_point_helpers():
-    from qt_graphics import CadGraphicsView
+    from elplan_qt.qt_graphics import CadGraphicsView
     pts=CadGraphicsView._row_points((0,0),(300,0),4)
     assert pts==[(0.0,0.0),(100.0,0.0),(200.0,0.0),(300.0,0.0)]
     rect=CadGraphicsView._rect_points((0,0),(200,100),3,2)

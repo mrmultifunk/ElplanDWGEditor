@@ -60,7 +60,7 @@ def test_optional_included_component_is_counted_and_usage_preserves_metadata():
 
 
 def test_assembly_management_ui_exposes_v2_features():
-    source=Path('qt_articles.py').read_text(encoding='utf-8')
+    source=Path('elplan_qt/qt_articles.py').read_text(encoding='utf-8')
     for token in (
         'Styklister','Kun brugt i projekt','Vis anvendelser på plan',
         'Valgfri komponent','Medtag i BOM','Styklistepreview','category','variant','tags',

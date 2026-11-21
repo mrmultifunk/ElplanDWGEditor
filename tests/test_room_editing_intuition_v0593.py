@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from interaction_math import room_axis_assist
+from elplan_shared.interaction_math import room_axis_assist
 
 
 def test_room_axis_assist_is_soft_and_alt_can_disable_it():
@@ -26,8 +26,8 @@ def test_vertex_assist_can_align_to_both_neighbour_axes():
 
 
 def test_room_double_click_and_axis_help_are_explicit_in_ui_source():
-    rooms=Path('qt_rooms.py').read_text(encoding='utf-8')
-    graphics=Path('qt_graphics.py').read_text(encoding='utf-8')
+    rooms=Path('elplan_qt/qt_rooms.py').read_text(encoding='utf-8')
+    graphics=Path('elplan_qt/qt_graphics.py').read_text(encoding='utf-8')
     assert "Dobbeltklik på rumkonturen for at redigere afgrænsningen" in rooms
     assert "if not boundary_visible and callable(self.boundary_edit_callback):" in rooms
     assert "self.boundary_edit_callback(self.room)" in rooms
@@ -35,12 +35,12 @@ def test_room_double_click_and_axis_help_are_explicit_in_ui_source():
     assert "Qt.KeyboardModifier.AltModifier" in rooms
     assert "room_axis_assist" in rooms
     assert "room_axis_assist" in graphics
-    assert "VANDRET" in Path('interaction_math.py').read_text(encoding='utf-8')
+    assert "VANDRET" in Path('elplan_shared/interaction_math.py').read_text(encoding='utf-8')
     assert "Alt = fri/skrå" in rooms
 
 
 def test_visible_room_outline_hit_testing_is_outline_only():
-    rooms=Path('qt_rooms.py').read_text(encoding='utf-8')
+    rooms=Path('elplan_qt/qt_rooms.py').read_text(encoding='utf-8')
     assert "def shape(self):" in rooms
     assert "QPainterPathStroker" in rooms
     assert "return stroker.createStroke(self.path())" in rooms

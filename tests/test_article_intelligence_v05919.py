@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import json
 
-import article_exchange
-import article_intelligence as intel
-import article_quality
+from elplan_catalog import article_exchange
+from elplan_catalog import article_intelligence as intel
+from elplan_catalog import article_quality
 import core_logic as core
 
 
@@ -128,7 +128,7 @@ def test_article_exchange_json_roundtrip_keeps_structured_manual_data(tmp_path):
 
 
 def test_article_ui_source_exposes_new_relations_and_quality_workflows():
-    source = open("qt_articles.py", encoding="utf-8").read()
+    source = open("elplan_qt/qt_articles.py", encoding="utf-8").read()
     for token in (
         "Standardkategori", "Tekniske egenskaber", "Relationer…", "Bekræftede relationer",
         "Forslag", "Datakvalitet:", "quality_score", "category_normalized",

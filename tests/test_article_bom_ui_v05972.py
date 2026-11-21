@@ -1,12 +1,12 @@
 from pathlib import Path
 
 import core_logic as core
-from project_model import APP_VERSION
+from elplan_project.project_model import APP_VERSION
 
 
 def test_version_and_article_bom_ui_contract():
     assert APP_VERSION == core.APP_VERSION == "0.59.85"
-    source=Path(__file__).resolve().parents[1].joinpath("qt_articles.py").read_text(encoding="utf-8")
+    source=Path(__file__).resolve().parents[1].joinpath("elplan_qt/qt_articles.py").read_text(encoding="utf-8")
     assert "class ArticleUsageDialog" in source
     assert 'QPushButton("Hvor bruges?")' in source
     assert 'self.bom_view_tabs.addTab(quality_page,"Kontrol")' in source

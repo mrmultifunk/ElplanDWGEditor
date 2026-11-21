@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import core_logic as core
-from project_model import APP_VERSION
+from elplan_project.project_model import APP_VERSION
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -11,8 +11,8 @@ def test_version_0540():
 
 
 def test_global_search_and_command_palette_are_wired():
-    source = (ROOT / "qt_app.py").read_text(encoding="utf-8")
-    search = (ROOT / "qt_search.py").read_text(encoding="utf-8")
+    source = (ROOT / "elplan_qt/qt_app.py").read_text(encoding="utf-8")
+    search = (ROOT / "elplan_qt/qt_search.py").read_text(encoding="utf-8")
     assert 'QKeySequence.StandardKey.Find' in source
     assert 'Ctrl+Shift+P' in source
     assert 'class SearchUiMixin' in search
@@ -22,8 +22,8 @@ def test_global_search_and_command_palette_are_wired():
 
 
 def test_start_page_and_recent_projects_are_central_workspace():
-    source = (ROOT / "qt_app.py").read_text(encoding="utf-8")
-    welcome = (ROOT / "qt_welcome.py").read_text(encoding="utf-8")
+    source = (ROOT / "elplan_qt/qt_app.py").read_text(encoding="utf-8")
+    welcome = (ROOT / "elplan_qt/qt_welcome.py").read_text(encoding="utf-8")
     assert 'self._create_central_pages()' in source
     assert 'class WelcomePage' in welcome
     assert 'Seneste projekter' in welcome
@@ -32,9 +32,9 @@ def test_start_page_and_recent_projects_are_central_workspace():
 
 
 def test_progressive_disclosure_and_toasts_are_used():
-    source = (ROOT / "qt_app.py").read_text(encoding="utf-8") + (ROOT / "qt_cable_panel.py").read_text(encoding="utf-8")
-    ui = (ROOT / "qt_ui.py").read_text(encoding="utf-8")
-    feedback = (ROOT / "qt_feedback.py").read_text(encoding="utf-8")
+    source = (ROOT / "elplan_qt/qt_app.py").read_text(encoding="utf-8") + (ROOT / "elplan_qt/qt_cable_panel.py").read_text(encoding="utf-8")
+    ui = (ROOT / "elplan_qt/qt_ui.py").read_text(encoding="utf-8")
+    feedback = (ROOT / "elplan_qt/qt_feedback.py").read_text(encoding="utf-8")
     assert 'class DisclosureSection' in ui
     assert 'Udseende og placering' in source
     assert 'Parallel visning' in source
@@ -45,10 +45,10 @@ def test_progressive_disclosure_and_toasts_are_used():
 
 
 def test_dialog_and_table_foundations_are_consistent():
-    source = (ROOT / "qt_app.py").read_text(encoding="utf-8")
-    tables = (ROOT / "qt_table_utils.py").read_text(encoding="utf-8")
-    theme = (ROOT / "qt_theme.py").read_text(encoding="utf-8")
-    dialogs = source + (ROOT / "qt_articles.py").read_text(encoding="utf-8") + (ROOT / "qt_pl_box.py").read_text(encoding="utf-8")
+    source = (ROOT / "elplan_qt/qt_app.py").read_text(encoding="utf-8")
+    tables = (ROOT / "elplan_qt/qt_table_utils.py").read_text(encoding="utf-8")
+    theme = (ROOT / "elplan_qt/qt_theme.py").read_text(encoding="utf-8")
+    dialogs = source + (ROOT / "elplan_qt/qt_articles.py").read_text(encoding="utf-8") + (ROOT / "elplan_qt/qt_pl_box.py").read_text(encoding="utf-8")
     assert dialogs.count('configure_modern_dialog(') >= 4
     assert 'make_dialog_header(' in dialogs
     assert 'Tilpas kolonner til indhold' in tables
@@ -58,8 +58,8 @@ def test_dialog_and_table_foundations_are_consistent():
 
 
 def test_hover_bom_cache_avoids_rebuilding_every_hover():
-    app = (ROOT / "qt_app.py").read_text(encoding="utf-8")
-    hover = (ROOT / "qt_hover.py").read_text(encoding="utf-8")
+    app = (ROOT / "elplan_qt/qt_app.py").read_text(encoding="utf-8")
+    hover = (ROOT / "elplan_qt/qt_hover.py").read_text(encoding="utf-8")
     assert 'self._hover_bom_cache = {}' in app
     assert 'getattr(self,"_hover_bom_cache",{}).get(uid)' in hover
     assert '_hover_price_lookup_signature' in hover

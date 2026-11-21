@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 import core_logic as core
-from project_model import APP_VERSION, ProjectDocument
+from elplan_project.project_model import APP_VERSION, ProjectDocument
 
 
 def test_version_05974():
@@ -48,7 +48,7 @@ def test_requested_supply_and_protective_conductor_presets():
 
 
 def test_main_cable_type_dropdown_uses_shared_presets():
-    source = Path("qt_cable_panel.py").read_text(encoding="utf-8")
+    source = Path("elplan_qt/qt_cable_panel.py").read_text(encoding="utf-8")
     assert "self.cable_spec_combo.addItems(" in source
     assert "list(core.CABLE_SPEC_PRESETS)" in source
     assert '"1G2,5", "1G6", "1G10"' not in source

@@ -1,8 +1,8 @@
 from pathlib import Path
 
-import assembly_naming
+from elplan_catalog import assembly_naming
 import core_logic as core
-from project_model import APP_VERSION
+from elplan_project.project_model import APP_VERSION
 
 
 def test_version_and_compact_name_keep_canonical_filter_value_separate():
@@ -17,7 +17,7 @@ def test_version_and_compact_name_keep_canonical_filter_value_separate():
 
 
 def test_stylist_editor_exposes_same_naming_fields_as_assistant():
-    src=Path("qt_articles.py").read_text(encoding="utf-8")
+    src=Path("elplan_qt/qt_articles.py").read_text(encoding="utf-8")
     for token in (
         "self.naming_type", "self.naming_configuration", "self.naming_function",
         "self.naming_system", "self.naming_mounting", "self.naming_color",
@@ -33,7 +33,7 @@ def test_stylist_editor_exposes_same_naming_fields_as_assistant():
 
 
 def test_manual_name_remains_supported_and_parameter_refresh_is_explicit():
-    src=Path("qt_articles.py").read_text(encoding="utf-8")
+    src=Path("elplan_qt/qt_articles.py").read_text(encoding="utf-8")
     assert 'self.name.setReadOnly(True)' not in src
     assert 'aktuelt navn er manuelt' in src
     assert 'record["naming"]={}' in src  # assistant can re-infer from current content

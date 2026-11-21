@@ -1,7 +1,7 @@
-import article_intelligence as ai
-import article_quality
+from elplan_catalog import article_intelligence as ai
+from elplan_catalog import article_quality
 import core_logic as core
-import lk_catalog_sync
+from elplan_catalog import lk_catalog_sync
 
 
 def _article(no, description, product_type="Forfradåse", **extra):
@@ -92,13 +92,13 @@ def test_variant_group_separates_standard_and_slim_box_identity():
 
 def test_ui_exposes_family_variant_and_compatibility_as_separate_concepts():
     from pathlib import Path
-    source=(Path(__file__).resolve().parents[1] / "qt_articles.py").read_text(encoding="utf-8")
+    source=(Path(__file__).resolve().parents[1] / "elplan_qt/qt_articles.py").read_text(encoding="utf-8")
     for token in ("Produktfamilie", "Produktvariant", "Kompatibilitet", "product_family", "product_variant"):
         assert token in source
 
 
 def test_exchange_roundtrip_preserves_semantic_identity_and_compatibility(tmp_path):
-    import article_exchange
+    from elplan_catalog import article_exchange
     row=core.normalize_article_catalog([_article(
         "504D6010", "LK FUGA® AIR indstøbningsdåse 1 modul", product_type="Indstøbningsdåse"
     )])[0]

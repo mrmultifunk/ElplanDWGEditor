@@ -8,7 +8,7 @@ import re
 from functools import lru_cache
 from pathlib import Path
 
-import article_intelligence
+from elplan_catalog import article_intelligence
 
 from elplan_core.constants import CABLE_LAYER, CABLE_TYPES
 
@@ -483,7 +483,7 @@ def _predefined_article_catalog_cached():
         records=payload.get("articles",[]) if isinstance(payload,dict) else []
     except Exception:
         try:
-            from predefined_articles_data import ARTICLES as records
+            from elplan_catalog.predefined_articles_data import ARTICLES as records
         except Exception:
             records=[]
     return tuple(tuple(sorted(item.items())) for item in normalize_article_catalog(records))

@@ -5,8 +5,8 @@ import pytest
 pytest.importorskip("PySide6")
 
 from PySide6.QtWidgets import QApplication
-from qt_app import MainWindow
-from qt_graphics import QtSnapEngine
+from elplan_qt.qt_app import MainWindow
+from elplan_qt.qt_graphics import QtSnapEngine
 import core_logic as core
 
 

@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import core_logic as core
-from project_model import APP_VERSION
+from elplan_project.project_model import APP_VERSION
 
 
 def test_version_0520():
@@ -54,7 +54,7 @@ def test_free_route_can_be_converted_back_to_orthogonal():
 
 
 def test_cable_panel_applies_geometry_conversion_not_only_flag():
-    source=Path("qt_app.py").read_text(encoding="utf-8")
+    source=Path("elplan_qt/qt_app.py").read_text(encoding="utf-8")
     block=source[source.index("    def apply_selected_cable_properties"):source.index("    def _remove_cable",source.index("    def apply_selected_cable_properties"))]
     assert "convert_cable_route_mode_geometry" in block
     assert 'after["points"]=points' in block

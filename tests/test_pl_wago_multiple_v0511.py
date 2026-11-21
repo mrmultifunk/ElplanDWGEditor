@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import core_logic as core
-from project_model import ProjectDocument, APP_VERSION
+from elplan_project.project_model import ProjectDocument, APP_VERSION
 
 
 def ref(uid, function="n"):
@@ -83,7 +83,7 @@ def test_project_roundtrip_preserves_multiple_wagos_same_function(tmp_path):
 
 
 def test_qt_new_wago_is_function_based_and_not_limited_by_existing_function():
-    source=Path("qt_pl_box.py").read_text(encoding="utf-8")
+    source=Path("elplan_qt/qt_pl_box.py").read_text(encoding="utf-8")
     assert "def _show_function_context_menu" in source
     assert "+ Opret Wago for" in source
     assert "Administrér Wago…" in source

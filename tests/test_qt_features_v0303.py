@@ -8,7 +8,7 @@ pytest.importorskip("PySide6")
 from PySide6.QtWidgets import QApplication
 
 import core_logic as core
-from qt_app import ComboConfiguratorDialog, MainWindow
+from elplan_qt.qt_app import ComboConfiguratorDialog, MainWindow
 
 
 def _app():

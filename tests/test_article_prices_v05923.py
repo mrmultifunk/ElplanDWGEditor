@@ -4,7 +4,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import core_logic as core
-import user_library
+from elplan_catalog import user_library
 
 
 def test_manual_price_overrides_estimate_without_destroying_it():

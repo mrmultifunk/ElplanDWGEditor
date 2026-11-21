@@ -2,7 +2,7 @@ import threading
 import time
 import urllib.parse
 
-import lk_catalog_sync as sync
+from elplan_catalog import lk_catalog_sync as sync
 
 
 def _index(article_nos):
@@ -137,7 +137,7 @@ def test_recent_core_rows_can_seed_fast_sync_without_old_cache(monkeypatch):
 
 def test_qt_sync_thread_enables_polite_single_connection_cache_pipeline():
     from pathlib import Path
-    source = (Path(__file__).resolve().parents[1] / 'qt_articles.py').read_text(encoding='utf-8')
+    source = (Path(__file__).resolve().parents[1] / 'elplan_qt/qt_articles.py').read_text(encoding='utf-8')
     assert 'workers=1' in source
     assert 'product_timeout=8.0' in source
     assert 'lk_catalog_cache.json' in source

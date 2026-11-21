@@ -3,7 +3,7 @@ import ast
 
 
 def _bom_manager_class():
-    source = (Path(__file__).resolve().parents[1] / "qt_articles.py").read_text(encoding="utf-8")
+    source = (Path(__file__).resolve().parents[1] / "elplan_qt/qt_articles.py").read_text(encoding="utf-8")
     tree = ast.parse(source)
     for node in tree.body:
         if isinstance(node, ast.ClassDef) and node.name == "BomManagerDialog":

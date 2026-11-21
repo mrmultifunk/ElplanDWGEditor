@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import core_logic as core
-from project_model import APP_VERSION
+from elplan_project.project_model import APP_VERSION
 
 
 def test_version_0524():
@@ -33,8 +33,8 @@ def test_switch_conductor_usage_location_contains_group_and_marking():
 
 
 def test_pl_dialog_keeps_footer_visible_and_shows_marking_in_usage_card():
-    source = Path("qt_pl_box.py").read_text(encoding="utf-8")
-    helper = Path("qt_pl_usage.py").read_text(encoding="utf-8")
+    source = Path("elplan_qt/qt_pl_box.py").read_text(encoding="utf-8")
+    helper = Path("elplan_qt/qt_pl_usage.py").read_text(encoding="utf-8")
     assert "_resize_dialog(self,1240,820)" in source
     assert "wiring_tab=QScrollArea()" in source
     assert "wiring_tab.setWidgetResizable(True)" in source

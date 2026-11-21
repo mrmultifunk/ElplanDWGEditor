@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from article_index import build_article_search_index, article_search_score, facet_value_counts, normalize_search_text
+from elplan_catalog.article_index import build_article_search_index, article_search_score, facet_value_counts, normalize_search_text
 
 
 def test_search_normalization_is_danish_and_fraction_friendly():
@@ -30,7 +30,7 @@ def test_facets_return_counts_not_just_names():
 
 
 def test_article_browser_source_has_productivity_scopes_cascading_facets_and_variants():
-    source=Path("qt_articles.py").read_text(encoding="utf-8")
+    source=Path("elplan_qt/qt_articles.py").read_text(encoding="utf-8")
     for text in ("★ Favoritter","Senest anvendte","Brugt i projekt","Kun komplette data","facet_value_counts","_select_adjacent_variant","Bruges i styklister"):
         assert text in source
     assert 'data["favorite_articles"]' in source

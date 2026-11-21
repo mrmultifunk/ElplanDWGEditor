@@ -1,8 +1,8 @@
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
-SRC=(ROOT/'qt_articles.py').read_text(encoding='utf-8')
-XLSX=(ROOT/'bom_xlsx_export.py').read_text(encoding='utf-8')
+SRC=(ROOT/'elplan_qt/qt_articles.py').read_text(encoding='utf-8')
+XLSX=(ROOT/'elplan_catalog/bom_xlsx_export.py').read_text(encoding='utf-8')
 
 
 def test_bom_has_article_assembly_and_source_views():

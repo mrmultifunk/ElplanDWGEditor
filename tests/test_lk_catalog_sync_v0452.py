@@ -1,4 +1,4 @@
-from lk_catalog_sync import (
+from elplan_catalog.lk_catalog_sync import (
     extract_category_ids, extract_product_refs, parse_product_page,
     merge_lk_articles, product_detail_url,
 )
@@ -76,7 +76,7 @@ def test_parse_direct_vnr_catalog_page_uses_varenummer_label():
 
 def test_qt_article_database_uses_model_table_and_exposes_lk_sync_action():
     from pathlib import Path
-    source=(Path(__file__).resolve().parents[1] / 'qt_articles.py').read_text(encoding='utf-8')
+    source=(Path(__file__).resolve().parents[1] / 'elplan_qt/qt_articles.py').read_text(encoding='utf-8')
     block=source[source.index('def _build_library_tab'):source.index('def _build_bom_tab')]
     assert 'self.library_table=QTableView()' in block
     assert 'ArticleTableModel' in block
@@ -119,7 +119,7 @@ def test_all_html_attribute_values_are_discovery_candidates():
 
 def test_full_catalog_collection_works_when_index_exposes_only_product_images(monkeypatch):
     import urllib.parse
-    import lk_catalog_sync as sync
+    from elplan_catalog import lk_catalog_sync as sync
 
     article_nos=[f'500D{i:04d}' for i in range(100)]
     index='<html><body>'+''.join(

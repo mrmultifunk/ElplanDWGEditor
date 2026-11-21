@@ -1,8 +1,8 @@
 import json
 
 import core_logic as core
-import pl_daase_api
-from project_model import APP_VERSION, ProjectDocument
+from elplan_project import pl_daase_api
+from elplan_project.project_model import APP_VERSION, ProjectDocument
 
 
 def _leg(uid, spec="3G1,5", leg="endpoint", point_index=0):
@@ -98,7 +98,7 @@ def test_api_client_uses_bearer_token_and_read_only_export(monkeypatch):
 
 
 def test_import_surface_explicitly_keeps_conductor_work_outside_pwa():
-    source=(__import__("pathlib").Path(__file__).resolve().parents[1]/"qt_pl_field.py").read_text(encoding="utf-8")
+    source=(__import__("pathlib").Path(__file__).resolve().parents[1]/"elplan_qt/qt_pl_field.py").read_text(encoding="utf-8")
     assert "Lederfordelingen ændres ikke" in source
     assert "Den overføres ikke til lederfunktioner" in source
     assert "pl_box_wiring" not in source

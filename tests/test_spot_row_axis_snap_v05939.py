@@ -1,5 +1,5 @@
-from interaction_math import spot_row_axis_assist
-from project_model import APP_VERSION
+from elplan_shared.interaction_math import spot_row_axis_assist
+from elplan_project.project_model import APP_VERSION
 import core_logic as core
 
 

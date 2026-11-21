@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 
 import core_logic as core
-from project_model import APP_VERSION, ProjectDocument
+from elplan_project.project_model import APP_VERSION, ProjectDocument
 
 
 def _legacy_chain(*, uid="old-cable", cable_id="K01", spec="3G1,5"):

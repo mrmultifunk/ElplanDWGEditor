@@ -2,8 +2,8 @@ import json
 from pathlib import Path
 
 from elplan_core import settings as app_settings
-import portability
-import user_library
+from elplan_project import portability
+from elplan_catalog import user_library
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -85,8 +85,8 @@ def test_migration_merges_into_onedrive_with_target_priority_and_backup(tmp_path
 
 
 def test_storage_ui_keeps_article_data_outside_projects_and_settings_portable():
-    dialog = (ROOT / "qt_project_storage.py").read_text(encoding="utf-8")
-    app = (ROOT / "qt_app.py").read_text(encoding="utf-8")
+    dialog = (ROOT / "elplan_qt/qt_project_storage.py").read_text(encoding="utf-8")
+    app = (ROOT / "elplan_qt/qt_app.py").read_text(encoding="utf-8")
     assert '"Elplan"/"Artikeldata"' in dialog
     assert "Artikelmappen skal ligge uden for projektlageret" in dialog
     assert "Projektfiler ændres ikke" in dialog

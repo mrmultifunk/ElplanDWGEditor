@@ -31,7 +31,7 @@ def test_parallel_layout_separates_shared_diagonal_routes():
 
 
 def test_cable_panel_exposes_route_mode_as_primary_control():
-    source = Path("qt_app.py").read_text(encoding="utf-8") + Path("qt_cable_panel.py").read_text(encoding="utf-8")
+    source = Path("elplan_qt/qt_app.py").read_text(encoding="utf-8") + Path("elplan_qt/qt_cable_panel.py").read_text(encoding="utf-8")
     assert 'self.cable_route_mode_combo.addItem("Fri / diagonal", "free")' in source
     assert 'self.cable_route_mode_combo.addItem("Ortogonal (90°)", "orthogonal")' in source
     assert 'self.app_settings.get("cable_route_mode", "free")' in source

@@ -3,7 +3,7 @@ from tempfile import TemporaryDirectory
 from zipfile import ZipFile
 import xml.etree.ElementTree as ET
 
-from bom_xlsx_export import build_room_summary, write_bom_xlsx
+from elplan_catalog.bom_xlsx_export import build_room_summary, write_bom_xlsx
 
 
 def _row(article_no, room, line_total, currency="DKK", unit_price=10.0):
@@ -67,7 +67,7 @@ def test_excel_adds_room_summary_before_filterable_room_details():
 
 
 def test_bom_cable_toggle_recalculates_data_sources_totals_and_export():
-    source=(Path(__file__).resolve().parents[1]/"qt_articles.py").read_text(encoding="utf-8")
+    source=(Path(__file__).resolve().parents[1]/"elplan_qt/qt_articles.py").read_text(encoding="utf-8")
     assert 'self.bom_show_cables=QCheckBox("Vis kabler")' in source
     assert "def _bom_cable_inputs(self):" in source
     assert "cables,cable_bindings=self._bom_cable_inputs()" in source

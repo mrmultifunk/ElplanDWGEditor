@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import core_logic as core
-import user_library
+from elplan_catalog import user_library
 
 
 def test_fast_price_overlay_matches_safe_overlay_for_normalized_rows():
@@ -26,7 +26,7 @@ def test_fast_price_overlay_matches_safe_overlay_for_normalized_rows():
 
 
 def test_bom_dialog_open_path_avoids_redundant_full_catalog_work():
-    source = Path("qt_articles.py").read_text(encoding="utf-8")
+    source = Path("elplan_qt/qt_articles.py").read_text(encoding="utf-8")
     block = source[source.index("class BomManagerDialog"):]
     assert "self._refresh_all(normalize_state=False)" in block
     assert "assume_normalized=True,prices_normalized=True" in block
@@ -40,7 +40,7 @@ def test_bom_dialog_open_path_avoids_redundant_full_catalog_work():
 
 
 def test_stykliste_naming_can_reuse_article_lookup_mapping():
-    import assembly_naming
+    from elplan_catalog import assembly_naming
 
     lookup = {
         "X1": {"article_no": "X1", "description": "LK FUGA SLIM stikkontakt koksgrå"},

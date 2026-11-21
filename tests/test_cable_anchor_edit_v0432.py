@@ -28,7 +28,7 @@ def test_free_endpoint_next_to_anchor_can_create_dogleg():
 
 
 def test_connected_handle_is_explicitly_non_movable_in_qt_item():
-    source=((Path(__file__).resolve().parents[1] / 'qt_graphics.py')).read_text(encoding='utf-8')
+    source=((Path(__file__).resolve().parents[1] / 'elplan_qt/qt_graphics.py')).read_text(encoding='utf-8')
     block=source[source.index('class CablePointHandle'):source.index('class CableItem')]
     assert 'self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, False)' in block
     assert 'Fysisk kabeltilslutning – låst til symbol' in block
@@ -36,7 +36,7 @@ def test_connected_handle_is_explicitly_non_movable_in_qt_item():
 
 
 def test_cable_item_uses_locked_indices_during_geometry_edit():
-    source=((Path(__file__).resolve().parents[1] / 'qt_graphics.py')).read_text(encoding='utf-8')
+    source=((Path(__file__).resolve().parents[1] / 'elplan_qt/qt_graphics.py')).read_text(encoding='utf-8')
     block=source[source.index('def handle_moved'):source.index('def insert_breakpoint')]
     assert 'locked_indices' in block
     assert 'move_polyline_endpoint_flexible' in block
@@ -44,7 +44,7 @@ def test_cable_item_uses_locked_indices_during_geometry_edit():
 
 
 def test_mainwindow_repairs_saved_anchor_drift_and_reanchors_after_edit():
-    source=((Path(__file__).resolve().parents[1] / 'qt_app.py')).read_text(encoding='utf-8')
+    source=((Path(__file__).resolve().parents[1] / 'elplan_qt/qt_app.py')).read_text(encoding='utf-8')
     assert 'if self._repair_cable_symbol_anchors():' in source
     edit=source[source.index('def _cable_handle_edit_finished'):source.index('def _cable_insert_breakpoint')]
     assert 'self._anchor_cable_connections(item.cable)' in edit

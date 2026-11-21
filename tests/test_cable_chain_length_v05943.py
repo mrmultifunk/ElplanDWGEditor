@@ -1,7 +1,7 @@
 import math
 
 import core_logic as core
-from project_model import APP_VERSION
+from elplan_project.project_model import APP_VERSION
 
 
 def _cable(uid, chain, length):
@@ -31,8 +31,8 @@ def test_legacy_blank_chain_does_not_join_unrelated_cables():
 
 def test_cable_panel_contains_piece_and_complete_pull_labels():
     from pathlib import Path
-    source=(Path(__file__).resolve().parents[1]/"qt_cable_panel.py").read_text(encoding="utf-8")
-    app=(Path(__file__).resolve().parents[1]/"qt_app.py").read_text(encoding="utf-8")
+    source=(Path(__file__).resolve().parents[1]/"elplan_qt/qt_cable_panel.py").read_text(encoding="utf-8")
+    app=(Path(__file__).resolve().parents[1]/"elplan_qt/qt_app.py").read_text(encoding="utf-8")
     assert "Markeret kabelstykke" in source
     assert "Hele kabeltrækket" in source
     assert "cable_route_chain_length_metres" in app

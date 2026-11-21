@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import core_logic as core
-from project_model import APP_VERSION
+from elplan_project.project_model import APP_VERSION
 
 
 def _cable(category="switch_cable"):
@@ -25,7 +25,7 @@ def test_pl_cable_legs_keep_category_and_contour_metadata():
 
 
 def test_pl_configurator_exposes_project_cable_categories_visually():
-    source=Path("qt_pl_box.py").read_text(encoding="utf-8") + Path("qt_app.py").read_text(encoding="utf-8")
+    source=Path("elplan_qt/qt_pl_box.py").read_text(encoding="utf-8") + Path("elplan_qt/qt_app.py").read_text(encoding="utf-8")
     assert "cable_categories=None" in source
     assert "self.category_legend=QLabel()" in source
     assert 'form.addRow("Kategori",self.category_value)' in source
@@ -39,7 +39,7 @@ def test_pl_configurator_exposes_project_cable_categories_visually():
 
 
 def test_leader_distribution_cards_show_cable_category_between_id_and_spec():
-    source=Path("qt_pl_box.py").read_text(encoding="utf-8") + Path("qt_app.py").read_text(encoding="utf-8")
+    source=Path("elplan_qt/qt_pl_box.py").read_text(encoding="utf-8") + Path("elplan_qt/qt_app.py").read_text(encoding="utf-8")
     assert "self._category_records=core.default_cable_category_records()" in source
     assert "cable_categories=None" in source
     assert "category=self._category_for_leg(leg)" in source

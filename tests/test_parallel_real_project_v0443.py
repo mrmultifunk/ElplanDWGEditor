@@ -48,8 +48,8 @@ def test_real_panel_departure_is_ten_pixels_apart_at_six_percent_zoom():
 
 
 def test_qt_render_pipeline_receives_calculated_path_directly():
-    app=Path('qt_app.py').read_text(encoding='utf-8')
-    graphics=Path('qt_graphics.py').read_text(encoding='utf-8')
+    app=Path('elplan_qt/qt_app.py').read_text(encoding='utf-8')
+    graphics=Path('elplan_qt/qt_graphics.py').read_text(encoding='utf-8')
     assert 'item.set_visual_points(self._cable_visual_cache.get(id(cable),cable.points),refresh=False)' in app
     assert 'self._visual_points_override' in graphics
     assert 'if self._edit_before is not None:' in graphics

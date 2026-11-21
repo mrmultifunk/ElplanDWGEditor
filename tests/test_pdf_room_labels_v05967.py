@@ -2,7 +2,7 @@ from pathlib import Path
 
 import core_logic as core
 from elplan_core.export import pdf
-from project_model import APP_VERSION
+from elplan_project.project_model import APP_VERSION
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -69,7 +69,7 @@ def test_pdf_room_visibility_and_boundary_are_separate(monkeypatch):
 
 
 def test_qt_pdf_preview_export_and_print_pass_room_state():
-    source=(ROOT / "qt_app.py").read_text(encoding="utf-8")
+    source=(ROOT / "elplan_qt/qt_app.py").read_text(encoding="utf-8")
     assert source.count("rooms=self.project.rooms") >= 2
     assert "rooms=self.window.project.rooms" in source
     assert source.count('room_labels_visible=bool(') >= 3

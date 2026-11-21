@@ -7,8 +7,8 @@ pytest.importorskip("PySide6")
 def test_light_palette_and_view_background():
     from PySide6.QtGui import QPalette
     from PySide6.QtWidgets import QApplication, QProxyStyle
-    from qt_app import MainWindow
-    from qt_theme import ElplanProxyStyle, _application_stylesheet, _apply_application_palette
+    from elplan_qt.qt_app import MainWindow
+    from elplan_qt.qt_theme import ElplanProxyStyle, _application_stylesheet, _apply_application_palette
     app=QApplication.instance() or QApplication([])
     _apply_application_palette(app,"light")
     # Nyere PySide-versioner returnerer den indpakkede native stil som

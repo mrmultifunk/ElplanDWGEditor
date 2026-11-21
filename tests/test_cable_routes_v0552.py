@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import core_logic as core
-from cable_routes import UNGROUPED_CIRCUIT, build_cable_route_groups, cable_route_plain_text
+from elplan_project.cable_routes import UNGROUPED_CIRCUIT, build_cable_route_groups, cable_route_plain_text
 
 
 def placement(uid, symbol, label="", group=""):
@@ -118,9 +118,9 @@ def test_cycle_is_finite_and_every_cable_is_represented():
 
 
 def test_qt_main_window_exposes_modeless_cable_route_overview():
-    source = Path(__file__).resolve().parents[1].joinpath("qt_app.py").read_text(encoding="utf-8")
+    source = Path(__file__).resolve().parents[1].joinpath("elplan_qt/qt_app.py").read_text(encoding="utf-8")
     assert 'QAction("Kabeltræk / ruteforløb…"' in source
     assert "tools_menu.addAction(self.act_cable_routes)" in source
     assert "def show_cable_routes_overview" in source
-    assert "from qt_cable_routes import CableRoutesDialog" in source
+    assert "from elplan_qt.qt_cable_routes import CableRoutesDialog" in source
     assert "highlight_callback=self._highlight_cable_route_uids" in source

@@ -2,7 +2,7 @@ from pathlib import Path
 
 
 def _qt_articles_source():
-    return (Path(__file__).resolve().parents[1] / "qt_articles.py").read_text(encoding="utf-8")
+    return (Path(__file__).resolve().parents[1] / "elplan_qt/qt_articles.py").read_text(encoding="utf-8")
 
 
 def test_bom_tab_has_distinct_current_view_total_label():

@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 
-import article_exchange
+from elplan_catalog import article_exchange
 import core_logic as core
 
 

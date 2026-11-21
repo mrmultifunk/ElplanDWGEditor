@@ -1,6 +1,6 @@
-import article_normalization as norm
+from elplan_catalog import article_normalization as norm
 import core_logic as core
-from lk_catalog_sync import extract_product_refs, merge_lk_articles, parse_product_page
+from elplan_catalog.lk_catalog_sync import extract_product_refs, merge_lk_articles, parse_product_page
 
 
 def test_image_asset_refs_are_not_products_but_real_schneider_codes_are_kept():

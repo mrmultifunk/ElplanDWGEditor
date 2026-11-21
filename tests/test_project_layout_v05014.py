@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import core_logic as core
-from project_model import APP_VERSION
+from elplan_project.project_model import APP_VERSION
 
 
 def test_version_05014():
@@ -20,9 +20,9 @@ def test_distribution_root_is_organized():
 
 def test_hover_cards_have_visual_preview_and_detailed_bom():
     root=Path(__file__).resolve().parents[1]
-    source=(root / "qt_app.py").read_text(encoding="utf-8")
-    hover=(root / "qt_hover.py").read_text(encoding="utf-8")
-    hover_bom=(root / "hover_bom.py").read_text(encoding="utf-8")
+    source=(root / "elplan_qt/qt_app.py").read_text(encoding="utf-8")
+    hover=(root / "elplan_qt/qt_hover.py").read_text(encoding="utf-8")
+    hover_bom=(root / "elplan_catalog/hover_bom.py").read_text(encoding="utf-8")
     assert "class _HoverPreviewWidget" in hover
     assert 'self._mode=="pl"' in hover
     assert 'self._mode=="symbol"' in hover

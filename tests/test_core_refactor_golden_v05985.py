@@ -9,7 +9,7 @@ from pathlib import Path
 from pypdf import PdfReader
 
 import core_logic as core
-from project_model import ProjectDocument
+from elplan_project.project_model import ProjectDocument
 
 
 ROOT = Path(__file__).resolve().parents[1]

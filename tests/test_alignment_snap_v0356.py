@@ -1,4 +1,4 @@
-from interaction_math import axis_alignment_snap
+from elplan_shared.interaction_math import axis_alignment_snap
 
 
 def test_axis_alignment_snaps_x_and_y_independently():

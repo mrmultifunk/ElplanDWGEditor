@@ -1,6 +1,6 @@
 from datetime import date
 
-import bom_quality
+from elplan_catalog import bom_quality
 
 
 def test_quality_audit_collects_price_packaging_and_binding_findings():

@@ -5,7 +5,7 @@ import pytest
 pytest.importorskip("PySide6")
 
 from PySide6.QtWidgets import QApplication
-from qt_app import MainWindow
+from elplan_qt.qt_app import MainWindow
 
 
 def test_main_window_constructs():

@@ -1,6 +1,6 @@
 from pathlib import Path
 
-import article_quality
+from elplan_catalog import article_quality
 import core_logic as core
 
 
@@ -51,6 +51,6 @@ def test_quality_audit_reports_bad_module_duplicate_color_and_identity_gaps_with
 
 
 def test_article_manager_exposes_non_destructive_data_quality_tab():
-    source=(Path(__file__).resolve().parents[1]/'qt_articles.py').read_text(encoding='utf-8')
+    source=(Path(__file__).resolve().parents[1]/'elplan_qt/qt_articles.py').read_text(encoding='utf-8')
     for token in ('Datakvalitet','Aktiv artikeldatabase','Medfølgende grunddata','Kør audit','Eksportér audit CSV','_run_article_quality_audit'):
         assert token in source

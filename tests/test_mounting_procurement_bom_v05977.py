@@ -4,8 +4,8 @@ from pathlib import Path
 from zipfile import ZipFile
 
 import core_logic as core
-from bom_xlsx_export import write_bom_xlsx
-from project_model import APP_VERSION, ProjectDocument, placement_from_raw
+from elplan_catalog.bom_xlsx_export import write_bom_xlsx
+from elplan_project.project_model import APP_VERSION, ProjectDocument, placement_from_raw
 
 
 def _placement(uid,zone,height,color,purchased):
@@ -69,8 +69,8 @@ def test_excel_contains_filterable_mounting_and_purchase_columns(tmp_path):
 
 def test_ui_exposes_mounting_controls_and_bom_filters():
     root=Path(__file__).resolve().parents[1]
-    app=(root/"qt_app.py").read_text(encoding="utf-8")
-    articles=(root/"qt_articles.py").read_text(encoding="utf-8")
+    app=(root/"elplan_qt/qt_app.py").read_text(encoding="utf-8")
+    articles=(root/"elplan_qt/qt_articles.py").read_text(encoding="utf-8")
     assert APP_VERSION==core.APP_VERSION=="0.59.85"
     assert "prop_mounting_zone" in app and "prop_mounting_height" in app
     assert "prop_material_color" in app and "prop_already_purchased" in app

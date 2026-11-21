@@ -8,7 +8,7 @@ from reportlab.lib import colors
 from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.pdfgen import canvas as pdfcanvas
 
-from annotation_layout import choose_label_origin, expand_rect
+from elplan_shared.annotation_layout import choose_label_origin, expand_rect
 from elplan_core.appearance import normalize_hex_color
 from elplan_core.associations import (
     association_channel_letters,

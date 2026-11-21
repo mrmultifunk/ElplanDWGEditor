@@ -5,7 +5,7 @@ ROOT=Path(__file__).resolve().parents[1]
 
 
 def _editor_source():
-    source=(ROOT/"qt_articles.py").read_text(encoding="utf-8")
+    source=(ROOT/"elplan_qt/qt_articles.py").read_text(encoding="utf-8")
     start=source.index("class AssemblyEditDialog")
     end=source.index("class BomManagerDialog",start)
     return source[start:end]

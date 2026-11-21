@@ -12,13 +12,13 @@ def _source(name: str) -> str:
 
 
 def test_performance_sources_are_valid_python():
-    ast.parse(_source("qt_app.py"))
-    ast.parse(_source("qt_graphics.py"))
+    ast.parse(_source("elplan_qt/qt_app.py"))
+    ast.parse(_source("elplan_qt/qt_graphics.py"))
 
 
 def test_symbol_drag_is_frame_coalesced_and_annotation_has_fast_path():
-    app=_source("qt_app.py")
-    graphics=_source("qt_graphics.py")
+    app=_source("elplan_qt/qt_app.py")
+    graphics=_source("elplan_qt/qt_graphics.py")
     assert "_symbol_drag_visual_timer.setInterval(16)" in app
     assert "def _flush_symbol_drag_visuals" in app
     assert "if not self._symbol_drag_visual_timer.isActive()" in app
@@ -27,8 +27,8 @@ def test_symbol_drag_is_frame_coalesced_and_annotation_has_fast_path():
 
 
 def test_snap_candidates_are_cached_for_active_gestures():
-    app=_source("qt_app.py")
-    graphics=_source("qt_graphics.py")
+    app=_source("elplan_qt/qt_app.py")
+    graphics=_source("elplan_qt/qt_graphics.py")
     assert "begin_lighting_alignment_snapshot" in graphics
     assert "self._lighting_alignment_snapshot" in graphics
     assert "begin_cable_interaction_snapshot" in graphics
@@ -38,8 +38,8 @@ def test_snap_candidates_are_cached_for_active_gestures():
 
 
 def test_hover_and_anchor_lookups_avoid_redundant_global_work():
-    app=_source("qt_app.py")
-    graphics=_source("qt_graphics.py")
+    app=_source("elplan_qt/qt_app.py")
+    graphics=_source("elplan_qt/qt_graphics.py")
     assert "symmetric_difference(wanted)" in app
     assert "_chain_highlight_target" in graphics
     assert "if abs(target-self._chain_highlight_target) <= 1e-9" in graphics

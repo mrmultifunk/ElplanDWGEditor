@@ -2,7 +2,7 @@ from pathlib import Path
 
 
 def test_forms_and_dialog_buttons_share_common_polish():
-    source = Path("qt_app.py").read_text(encoding="utf-8") + Path("qt_theme.py").read_text(encoding="utf-8") + Path("qt_widgets.py").read_text(encoding="utf-8") + Path("qt_articles.py").read_text(encoding="utf-8")
+    source = Path("elplan_qt/qt_app.py").read_text(encoding="utf-8") + Path("elplan_qt/qt_theme.py").read_text(encoding="utf-8") + Path("elplan_qt/qt_widgets.py").read_text(encoding="utf-8") + Path("elplan_qt/qt_articles.py").read_text(encoding="utf-8")
     assert "class QFormLayout(_QtQFormLayout)" in source
     assert "self.setHorizontalSpacing(12)" in source
     assert "self.setVerticalSpacing(8)" in source
@@ -13,7 +13,7 @@ def test_forms_and_dialog_buttons_share_common_polish():
 
 
 def test_theme_has_complete_control_states_and_visual_roles():
-    source = Path("qt_app.py").read_text(encoding="utf-8") + Path("qt_theme.py").read_text(encoding="utf-8") + Path("qt_widgets.py").read_text(encoding="utf-8") + Path("qt_articles.py").read_text(encoding="utf-8")
+    source = Path("elplan_qt/qt_app.py").read_text(encoding="utf-8") + Path("elplan_qt/qt_theme.py").read_text(encoding="utf-8") + Path("elplan_qt/qt_widgets.py").read_text(encoding="utf-8") + Path("elplan_qt/qt_articles.py").read_text(encoding="utf-8")
     for token in (
         "QMainWindow, QDialog, QMessageBox",
         "QDockWidget::close-button",
@@ -29,7 +29,7 @@ def test_theme_has_complete_control_states_and_visual_roles():
 
 
 def test_common_tables_receive_same_row_header_and_scroll_polish():
-    source = Path("qt_table_utils.py").read_text(encoding="utf-8")
+    source = Path("elplan_qt/qt_table_utils.py").read_text(encoding="utf-8")
     assert "table.setAlternatingRowColors(True)" in source
     assert "vertical.setVisible(False)" in source
     assert "vertical.setDefaultSectionSize(28)" in source
@@ -37,7 +37,7 @@ def test_common_tables_receive_same_row_header_and_scroll_polish():
 
 
 def test_article_picker_and_standard_library_have_bounded_detail_panels():
-    source = Path("qt_app.py").read_text(encoding="utf-8") + Path("qt_theme.py").read_text(encoding="utf-8") + Path("qt_widgets.py").read_text(encoding="utf-8") + Path("qt_articles.py").read_text(encoding="utf-8")
+    source = Path("elplan_qt/qt_app.py").read_text(encoding="utf-8") + Path("elplan_qt/qt_theme.py").read_text(encoding="utf-8") + Path("elplan_qt/qt_widgets.py").read_text(encoding="utf-8") + Path("elplan_qt/qt_articles.py").read_text(encoding="utf-8")
     assert 'filter_box=QGroupBox("Filtre")' in source
     assert 'right_panel.setObjectName("detailPanel")' in source
     assert 'detail.setObjectName("detailPanel")' in source
@@ -45,14 +45,14 @@ def test_article_picker_and_standard_library_have_bounded_detail_panels():
 
 
 def test_colour_buttons_show_actual_selected_colour():
-    source = Path("qt_app.py").read_text(encoding="utf-8") + Path("qt_theme.py").read_text(encoding="utf-8") + Path("qt_widgets.py").read_text(encoding="utf-8") + Path("qt_articles.py").read_text(encoding="utf-8")
+    source = Path("elplan_qt/qt_app.py").read_text(encoding="utf-8") + Path("elplan_qt/qt_theme.py").read_text(encoding="utf-8") + Path("elplan_qt/qt_widgets.py").read_text(encoding="utf-8") + Path("elplan_qt/qt_articles.py").read_text(encoding="utf-8")
     assert "def _set_color_button" in source
     assert "_set_color_button(self.prop_color" in source
     assert "_set_color_button(color,item.color)" in source
 
 
 def test_combo_boxes_use_deterministic_visible_chevron():
-    source = Path("qt_app.py").read_text(encoding="utf-8") + Path("qt_theme.py").read_text(encoding="utf-8") + Path("qt_widgets.py").read_text(encoding="utf-8") + Path("qt_articles.py").read_text(encoding="utf-8")
+    source = Path("elplan_qt/qt_app.py").read_text(encoding="utf-8") + Path("elplan_qt/qt_theme.py").read_text(encoding="utf-8") + Path("elplan_qt/qt_widgets.py").read_text(encoding="utf-8") + Path("elplan_qt/qt_articles.py").read_text(encoding="utf-8")
     assert "QComboBox as _QtQComboBox" in source
     assert "class QComboBox(_QtQComboBox)" in source
     assert "def paintEvent(self, event)" in source
@@ -61,7 +61,7 @@ def test_combo_boxes_use_deterministic_visible_chevron():
 
 
 def test_primary_secondary_and_destructive_actions_are_visually_distinct():
-    source = Path("qt_app.py").read_text(encoding="utf-8") + Path("qt_theme.py").read_text(encoding="utf-8") + Path("qt_widgets.py").read_text(encoding="utf-8") + Path("qt_articles.py").read_text(encoding="utf-8")
+    source = Path("elplan_qt/qt_app.py").read_text(encoding="utf-8") + Path("elplan_qt/qt_theme.py").read_text(encoding="utf-8") + Path("elplan_qt/qt_widgets.py").read_text(encoding="utf-8") + Path("elplan_qt/qt_articles.py").read_text(encoding="utf-8")
     assert '_set_role(QPushButton("Gem"), "primaryButton")' in source
     assert '_set_role(QPushButton("Brug stykliste"), "primaryButton")' in source
     assert '_set_role(QPushButton("Fjern tilknytning"), "dangerButton")' in source

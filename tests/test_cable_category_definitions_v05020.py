@@ -2,7 +2,7 @@ from pathlib import Path
 import json
 
 import core_logic as core
-from project_model import ProjectDocument, APP_VERSION
+from elplan_project.project_model import ProjectDocument, APP_VERSION
 
 
 def test_version_05020():
@@ -58,7 +58,7 @@ def test_project_saved_in_05019_does_not_readd_deleted_standard_category(tmp_pat
 
 
 def test_qt_exposes_definition_in_category_dialog_menu_and_cable_tool():
-    source = Path("qt_app.py").read_text(encoding="utf-8")
+    source = Path("elplan_qt/qt_app.py").read_text(encoding="utf-8")
     assert '"Definition"' in source
     assert 'rec.get("description","")' in source
     assert "self.cable_category_definition" in source

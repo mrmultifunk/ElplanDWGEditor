@@ -6,8 +6,8 @@ pytest.importorskip("PySide6")
 from PySide6.QtWidgets import QApplication
 
 import core_logic as core
-from project_model import APP_VERSION
-from qt_app import MainWindow
+from elplan_project.project_model import APP_VERSION
+from elplan_qt.qt_app import MainWindow
 
 
 def _app():
@@ -58,7 +58,7 @@ def test_current_view_layout_fits_inside_instead_of_cropping_sides():
 
 def test_pdf_call_sites_use_effective_visibility_and_do_not_crop_current_view():
     from pathlib import Path
-    src=(Path(__file__).resolve().parents[1]/"qt_app.py").read_text(encoding="utf-8")
+    src=(Path(__file__).resolve().parents[1]/"elplan_qt/qt_app.py").read_text(encoding="utf-8")
     assert "self.window._output_layer_visibility()" in src
     assert "self._output_layer_visibility(),paper,orientation" in src
     assert "fill_page=(scope==\"Aktuel visning\")" not in src

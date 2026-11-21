@@ -4,7 +4,7 @@ import ast
 from pathlib import Path
 
 import core_logic as core
-from project_model import APP_VERSION, ProjectDocument, placement_from_raw
+from elplan_project.project_model import APP_VERSION, ProjectDocument, placement_from_raw
 
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -65,8 +65,8 @@ def test_project_control_validates_each_output_separately():
 
 
 def test_gui_exposes_output_editor_and_graphical_count_badge():
-    app=(ROOT/"qt_app.py").read_text(encoding="utf-8")
-    graphics=(ROOT/"qt_graphics.py").read_text(encoding="utf-8")
+    app=(ROOT/"elplan_qt/qt_app.py").read_text(encoding="utf-8")
+    graphics=(ROOT/"elplan_qt/qt_graphics.py").read_text(encoding="utf-8")
     ast.parse(app); ast.parse(graphics)
     assert APP_VERSION==core.APP_VERSION=="0.59.85"
     assert "light_outputs_table" in app

@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import core_logic as core
-from project_model import APP_VERSION, placement_from_raw
+from elplan_project.project_model import APP_VERSION, placement_from_raw
 
 
 def test_version_and_spot_group_fields_are_persistent():
@@ -53,7 +53,7 @@ def test_downlight_cable_is_in_predefined_article_catalog():
 
 
 def test_qt_spot_group_workflow_is_wired_into_existing_parent_relation():
-    source = "\n".join((Path(__file__).resolve().parents[1] / name).read_text(encoding="utf-8") for name in ("qt_app.py", "qt_spots.py"))
+    source = "\n".join((Path(__file__).resolve().parents[1] / name).read_text(encoding="utf-8") for name in ("elplan_qt/qt_app.py", "elplan_qt/qt_spots.py"))
     assert "def group_selected_spots(self)" in source
     assert "def select_spot_group(self)" in source
     assert "def dissolve_spot_group(self)" in source

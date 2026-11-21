@@ -16,7 +16,7 @@ __all__ = [name for name in dir(_core) if not name.startswith("_")] + ["ElplanEd
 
 def __getattr__(name: str):
     if name == "ElplanEditor":
-        from legacy_tk_app import ElplanEditor
+        from elplan_legacy.legacy_tk_app import ElplanEditor
         return ElplanEditor
     try:
         return getattr(_core, name)

@@ -3,7 +3,7 @@ from pathlib import Path
 import ezdxf
 
 import core_logic as core
-from project_model import ProjectDocument, APP_VERSION
+from elplan_project.project_model import ProjectDocument, APP_VERSION
 
 
 def test_version_05020():
@@ -60,7 +60,7 @@ def test_category_layer_is_used_for_dxf_export():
 
 
 def test_qt_ui_exposes_category_assignment_configuration_and_layer_menu():
-    source=Path('qt_app.py').read_text(encoding='utf-8') + Path('qt_cable_panel.py').read_text(encoding='utf-8')
+    source=Path('elplan_qt/qt_app.py').read_text(encoding='utf-8') + Path('elplan_qt/qt_cable_panel.py').read_text(encoding='utf-8')
     assert 'class CableCategoryDialog' in source
     assert 'self.cable_category_combo = QComboBox()' in source
     assert 'Konfigurér kabelkategorier…' in source

@@ -23,11 +23,11 @@ def test_project_control_collects_actionable_missing_bom_and_cable_items():
 
 def test_ui_sources_expose_project_control_room_dashboard_and_bom_to_plan_navigation():
     root=Path(__file__).resolve().parents[1]
-    app=(root/"qt_app.py").read_text(encoding="utf-8")
-    rooms=(root/"qt_rooms.py").read_text(encoding="utf-8")
-    articles=(root/"qt_articles.py").read_text(encoding="utf-8")
-    control=(root/"qt_project_control.py").read_text(encoding="utf-8")
-    visual=(root/"qt_visual_workspace.py").read_text(encoding="utf-8")
+    app=(root/"elplan_qt/qt_app.py").read_text(encoding="utf-8")
+    rooms=(root/"elplan_qt/qt_rooms.py").read_text(encoding="utf-8")
+    articles=(root/"elplan_qt/qt_articles.py").read_text(encoding="utf-8")
+    control=(root/"elplan_qt/qt_project_control.py").read_text(encoding="utf-8")
+    visual=(root/"elplan_qt/qt_visual_workspace.py").read_text(encoding="utf-8")
     for token in ("Projektkontrol…","open_project_control","Ekstra BOM-rum…","open_bom_manager_for_room"):
         assert token in app
     for token in ("class RoomDashboardDialog","Vis kun dette rum","Åbn rum-BOM…","class PlacementBomRoomsDialog"):

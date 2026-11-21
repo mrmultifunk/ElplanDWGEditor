@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import core_logic as core
-from interaction_math import room_wall_axis_snap
+from elplan_shared.interaction_math import room_wall_axis_snap
 
 
 def test_room_wall_snap_can_be_horizontal_and_on_wall_at_same_time():
@@ -33,8 +33,8 @@ def test_room_color_is_per_room_project_data():
 
 
 def test_room_ui_combines_wall_and_axis_snap_and_exposes_color_swatches():
-    graphics=Path('qt_graphics.py').read_text(encoding='utf-8')
-    rooms=Path('qt_rooms.py').read_text(encoding='utf-8')
+    graphics=Path('elplan_qt/qt_graphics.py').read_text(encoding='utf-8')
+    rooms=Path('elplan_qt/qt_rooms.py').read_text(encoding='utf-8')
     assert 'room_wall_axis_snap' in graphics
     assert 'self.snap_engine.nearest_wall' in graphics
     assert 'VÆG · {axis_kind}' in graphics
@@ -42,5 +42,5 @@ def test_room_ui_combines_wall_and_axis_snap_and_exposes_color_swatches():
     assert "after['color']=dlg.selected_color()" in rooms
     assert 'self._room_vertex_wall_snap' in rooms
     # Existing EL-RUM isolation remains explicit.
-    snap=Path('qt_graphics.py').read_text(encoding='utf-8')
+    snap=Path('elplan_qt/qt_graphics.py').read_text(encoding='utf-8')
     assert 'EL-RUM' in snap

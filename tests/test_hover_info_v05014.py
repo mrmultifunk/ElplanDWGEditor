@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import core_logic as core
-from project_model import APP_VERSION
+from elplan_project.project_model import APP_VERSION
 
 
 def test_version_05016():
@@ -24,10 +24,10 @@ def test_pl_entry_data_supports_compact_hover_summary():
 
 
 def test_hover_source_uses_half_second_timer_bom_and_pl_entries_only():
-    app_source=Path("qt_app.py").read_text(encoding="utf-8")
-    hover_source=Path("qt_hover.py").read_text(encoding="utf-8")
-    hover_bom_source=Path("hover_bom.py").read_text(encoding="utf-8")
-    gfx_source=Path("qt_graphics.py").read_text(encoding="utf-8")
+    app_source=Path("elplan_qt/qt_app.py").read_text(encoding="utf-8")
+    hover_source=Path("elplan_qt/qt_hover.py").read_text(encoding="utf-8")
+    hover_bom_source=Path("elplan_catalog/hover_bom.py").read_text(encoding="utf-8")
+    gfx_source=Path("elplan_qt/qt_graphics.py").read_text(encoding="utf-8")
     assert 'self._hover_info_timer.start(180 if str(kind)=="cable" else 500)' in hover_source
     assert "QCursor" in hover_source
     assert "def _hover_info_move" in hover_source
@@ -45,17 +45,17 @@ def test_hover_source_uses_half_second_timer_bom_and_pl_entries_only():
 
 
 def test_hover_popup_does_not_add_project_fields():
-    source=Path("project_model.py").read_text(encoding="utf-8")
+    source=Path("elplan_project/project_model.py").read_text(encoding="utf-8")
     assert "hover_info" not in source
     assert '"pl_box_entries": {}' in source
 
 
 def test_pl_hover_shows_port_numbers_in_preview_and_cable_id_only_in_text():
-    source=Path("qt_app.py").read_text(encoding="utf-8")
+    source=Path("elplan_qt/qt_app.py").read_text(encoding="utf-8")
     assert "Kabelnr." in source
     assert 'cable_id=str(leg.get("cable_id")' in source
     assert 'leg.get("cable_extra_label")' in source
-    hover=Path("qt_hover.py").read_text(encoding="utf-8")
+    hover=Path("elplan_qt/qt_hover.py").read_text(encoding="utf-8")
     assert 'badge_center=QPointF((outside.x()+edge.x())/2.0' in hover
     assert 'p.drawText(badge_rect,Qt.AlignmentFlag.AlignCenter,str(port))' in hover
     assert "kabel-ID-tag" not in source

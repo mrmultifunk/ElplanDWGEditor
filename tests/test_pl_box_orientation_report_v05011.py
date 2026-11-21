@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import core_logic as core
-from project_model import ProjectDocument, APP_VERSION
+from elplan_project.project_model import ProjectDocument, APP_VERSION
 
 
 def _lamp(uid, group, orientation):
@@ -57,7 +57,7 @@ def test_pl_box_report_pdf_is_created(tmp_path: Path):
 
 
 def test_qt_pl_box_dialog_exposes_orientation_and_report_action():
-    source=Path("qt_pl_box.py").read_text(encoding="utf-8") + Path("qt_app.py").read_text(encoding="utf-8")
+    source=Path("elplan_qt/qt_pl_box.py").read_text(encoding="utf-8") + Path("elplan_qt/qt_app.py").read_text(encoding="utf-8")
     assert 'QLabel("Fysisk orientering:")' in source
     assert 'QPushButton("Rotér 90°")' in source
     assert 'QAction("PL-dåserapport…", self)' in source

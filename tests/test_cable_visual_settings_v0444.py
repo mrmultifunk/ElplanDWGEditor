@@ -33,8 +33,8 @@ def test_user_choice_is_preserved_after_repair_marker():
 
 
 def test_cable_controls_restore_with_signals_blocked():
-    panel=Path("qt_cable_panel.py").read_text(encoding="utf-8")
-    app=Path("qt_app.py").read_text(encoding="utf-8")
+    panel=Path("elplan_qt/qt_cable_panel.py").read_text(encoding="utf-8")
+    app=Path("elplan_qt/qt_app.py").read_text(encoding="utf-8")
     block=panel.split("# Restore defaults/settings atomically.",1)[1].split("def _set_cable_panel_context",1)[0]
     assert "self._loading_cable_panel = True" in block
     assert "QSignalBlocker" in block

@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-import article_exchange
+from elplan_catalog import article_exchange
 
 
 def test_import_guide_schema_has_one_required_key_and_unique_fields():
@@ -48,7 +48,7 @@ def test_generated_csv_template_uses_documented_headers_and_roundtrips(tmp_path)
 
 
 def test_qt_article_database_exposes_import_guide_and_template_buttons():
-    src=(Path(__file__).resolve().parents[1] / 'qt_articles.py').read_text(encoding='utf-8')
+    src=(Path(__file__).resolve().parents[1] / 'elplan_qt/qt_articles.py').read_text(encoding='utf-8')
     build=src[src.index('    def _build_library_tab'):src.index('    def _sync_lk_catalog',src.index('    def _build_library_tab'))]
     assert 'Importguide…' in build
     assert 'self._show_article_import_guide' in build

@@ -2,10 +2,10 @@ import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-import retail_price_sync as retail
-import user_library
+from elplan_catalog import retail_price_sync as retail
+from elplan_catalog import user_library
 import core_logic as core
-from project_model import APP_VERSION
+from elplan_project.project_model import APP_VERSION
 
 
 def _wago(**extra):

@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from project_model import APP_VERSION
+from elplan_project.project_model import APP_VERSION
 import core_logic as core
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -11,7 +11,7 @@ def test_version_v05957():
 
 
 def test_room_name_and_room_code_can_be_shown_independently():
-    src=(ROOT / "qt_rooms.py").read_text(encoding="utf-8")
+    src=(ROOT / "elplan_qt/qt_rooms.py").read_text(encoding="utf-8")
     assert 'QAction("Vis rumnavne"' in src
     assert 'QAction("Vis rummærkning"' in src
     assert "room_codes_visible" in src
@@ -23,7 +23,7 @@ def test_room_name_and_room_code_can_be_shown_independently():
 
 
 def test_room_label_defaults_to_clean_name_only():
-    src=(ROOT / "qt_rooms.py").read_text(encoding="utf-8")
+    src=(ROOT / "elplan_qt/qt_rooms.py").read_text(encoding="utf-8")
     assert "self._show_code=False" in src
     assert 'label=name or "Rum"' in src
     assert "room_codes_visible',False" in src

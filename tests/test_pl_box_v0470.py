@@ -2,7 +2,7 @@ from pathlib import Path
 import json
 
 import core_logic as core
-from project_model import ProjectDocument, APP_VERSION
+from elplan_project.project_model import ProjectDocument, APP_VERSION
 
 
 def _lamp(uid="lamp1"):
@@ -77,8 +77,8 @@ def test_clipboard_does_not_copy_pl_physical_relations():
 
 
 def test_qt_source_wires_pl_dialog_and_double_click():
-    app=Path("qt_pl_box.py").read_text(encoding="utf-8") + Path("qt_app.py").read_text(encoding="utf-8")
-    graphics=Path("qt_graphics.py").read_text(encoding="utf-8")
+    app=Path("elplan_qt/qt_pl_box.py").read_text(encoding="utf-8") + Path("elplan_qt/qt_app.py").read_text(encoding="utf-8")
+    graphics=Path("elplan_qt/qt_graphics.py").read_text(encoding="utf-8")
     assert "class PLBoxDiagramWidget" in app
     assert "class PLBoxDialog" in app
     assert "Konfigurer PL-dåse…" in app
@@ -90,7 +90,7 @@ def test_qt_source_wires_pl_dialog_and_double_click():
 
 
 def test_pl_box_entry_diagram_has_visual_cable_glands_and_connectors():
-    app=Path("qt_pl_box.py").read_text(encoding="utf-8")
+    app=Path("elplan_qt/qt_pl_box.py").read_text(encoding="utf-8")
     assert "def _draw_entry_connector" in app
     assert "def _port_connector_geometry" in app
     assert "kabelindføringen fortsætter nu" in app
@@ -100,7 +100,7 @@ def test_pl_box_entry_diagram_has_visual_cable_glands_and_connectors():
 
 
 def test_pl_box_entry_diagram_previews_3g_5g_7g_conductors_inside_box():
-    app=Path("qt_pl_box.py").read_text(encoding="utf-8")
+    app=Path("elplan_qt/qt_pl_box.py").read_text(encoding="utf-8")
     docs=(Path(__file__).resolve().parents[1] / "docs" / "history" / "PL_BOX_0.50.10.md").read_text(encoding="utf-8")
     assert "def _draw_conductor_preview" in app
     assert 'core.cable_conductor_preset(str(leg.get("cable_spec") or ""))' in app

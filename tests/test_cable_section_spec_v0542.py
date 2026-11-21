@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import core_logic as core
-from project_model import APP_VERSION, ProjectDocument
+from elplan_project.project_model import APP_VERSION, ProjectDocument
 
 
 def _three_stop_cable():
@@ -96,9 +96,9 @@ def test_legacy_section_spec_materialises_on_physical_cables(tmp_path):
 
 
 def test_qt_source_exposes_section_spec_editor_and_context_menu():
-    app=Path("qt_app.py").read_text(encoding="utf-8") + Path("qt_cable_panel.py").read_text(encoding="utf-8")
-    mixin=Path("qt_cable_sections.py").read_text(encoding="utf-8")
-    graphics=Path("qt_graphics.py").read_text(encoding="utf-8")
+    app=Path("elplan_qt/qt_app.py").read_text(encoding="utf-8") + Path("elplan_qt/qt_cable_panel.py").read_text(encoding="utf-8")
+    mixin=Path("elplan_qt/qt_cable_sections.py").read_text(encoding="utf-8")
+    graphics=Path("elplan_qt/qt_graphics.py").read_text(encoding="utf-8")
     assert 'QGroupBox("Indstillinger pr. afsnit")' in app
     assert 'self.cable_section_group.setVisible(False)' in app
     assert 'Kabeltype for dette kabel' in mixin

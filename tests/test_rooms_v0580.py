@@ -2,7 +2,7 @@ from pathlib import Path
 import json
 
 import core_logic as core
-from project_model import ProjectDocument, APP_VERSION
+from elplan_project.project_model import ProjectDocument, APP_VERSION
 
 
 def test_version_and_room_layer():
@@ -37,9 +37,9 @@ def test_room_project_roundtrip(tmp_path):
 
 
 def test_room_ui_source_has_quiet_default_and_room_based_cable_marking():
-    src=Path('qt_rooms.py').read_text(encoding='utf-8')
-    app=Path('qt_app.py').read_text(encoding='utf-8')
-    graphics=Path('qt_graphics.py').read_text(encoding='utf-8')
+    src=Path('elplan_qt/qt_rooms.py').read_text(encoding='utf-8')
+    app=Path('elplan_qt/qt_app.py').read_text(encoding='utf-8')
+    graphics=Path('elplan_qt/qt_graphics.py').read_text(encoding='utf-8')
     assert "room_boundaries_visible" in src
     assert "self.room_edit_mode or self.project.raw.get('room_boundaries_visible',False)" in src
     assert 'mark_symbols_in_room' not in src

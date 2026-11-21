@@ -1,6 +1,6 @@
 from pathlib import Path
 
-import assembly_naming
+from elplan_catalog import assembly_naming
 import core_logic as core
 
 
@@ -29,7 +29,7 @@ def test_unknown_system_is_not_promoted_to_structured_filter_value():
 
 
 def test_stylist_library_exposes_all_naming_parameters_for_filter_and_sort():
-    src=Path('qt_articles.py').read_text(encoding='utf-8')
+    src=Path('elplan_qt/qt_articles.py').read_text(encoding='utf-8')
     for token in ('assembly_type_filter','assembly_configuration_filter','assembly_function_filter',
                   'assembly_system_filter','assembly_mounting_filter','assembly_color_filter'):
         assert token in src

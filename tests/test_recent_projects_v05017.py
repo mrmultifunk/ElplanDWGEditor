@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import core_logic as core
-from project_model import APP_VERSION
+from elplan_project.project_model import APP_VERSION
 
 
 def test_version_05017():
@@ -21,8 +21,8 @@ def test_recent_project_paths_are_deduplicated_filtered_and_limited(tmp_path):
 
 
 def test_recent_projects_menu_and_tracking_are_wired():
-    source = Path("qt_app.py").read_text(encoding="utf-8")
-    opening = Path("qt_project_open.py").read_text(encoding="utf-8")
+    source = Path("elplan_qt/qt_app.py").read_text(encoding="utf-8")
+    opening = Path("elplan_qt/qt_project_open.py").read_text(encoding="utf-8")
     assert 'addMenu("Åbn seneste…")' in source
     assert '"recent_projects"' in source
     assert 'QKeySequence("Ctrl+Shift+O")' in source

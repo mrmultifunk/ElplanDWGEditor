@@ -2,7 +2,7 @@ from pathlib import Path
 
 
 def test_spinboxes_have_visible_button_zones_and_custom_arrows():
-    source = Path("qt_app.py").read_text(encoding="utf-8") + Path("qt_theme.py").read_text(encoding="utf-8") + Path("qt_widgets.py").read_text(encoding="utf-8")
+    source = Path("elplan_qt/qt_app.py").read_text(encoding="utf-8") + Path("elplan_qt/qt_theme.py").read_text(encoding="utf-8") + Path("elplan_qt/qt_widgets.py").read_text(encoding="utf-8")
     assert "class ElplanProxyStyle(QProxyStyle)" in source
     assert "PE_IndicatorArrowUp" in source
     assert "PE_IndicatorArrowDown" in source
@@ -18,7 +18,7 @@ def test_spinboxes_have_visible_button_zones_and_custom_arrows():
 
 
 def test_common_controls_have_consistent_visual_feedback():
-    source = Path("qt_app.py").read_text(encoding="utf-8") + Path("qt_theme.py").read_text(encoding="utf-8") + Path("qt_widgets.py").read_text(encoding="utf-8")
+    source = Path("elplan_qt/qt_app.py").read_text(encoding="utf-8") + Path("elplan_qt/qt_theme.py").read_text(encoding="utf-8") + Path("elplan_qt/qt_widgets.py").read_text(encoding="utf-8")
     assert "QComboBox::drop-down" in source
     assert "QPushButton:focus" in source
     assert "QTableView, QTableWidget" in source

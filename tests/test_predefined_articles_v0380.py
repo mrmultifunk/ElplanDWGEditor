@@ -3,7 +3,7 @@ from pathlib import Path
 import tempfile
 
 import core_logic as core
-from project_model import ProjectDocument, APP_VERSION
+from elplan_project.project_model import ProjectDocument, APP_VERSION
 
 
 def test_predefined_library_contains_expected_families_and_known_refs():
@@ -133,7 +133,7 @@ def test_article_facets_support_63_slim_boxes_and_do_not_treat_cable_rolls_as_mo
 
 
 def test_qt_article_browser_has_visual_preview_and_spec_filters_without_importing_qt():
-    source=((Path(__file__).resolve().parents[1] / 'qt_articles.py')).read_text(encoding='utf-8')
+    source=((Path(__file__).resolve().parents[1] / 'elplan_qt/qt_articles.py')).read_text(encoding='utf-8')
     assert 'class ArticleVisualPreview' in source
     for token in ('self.std_type','self.std_design','self.std_variant','self.std_module','self.std_color','Nulstil filtre'):
         assert token in source
