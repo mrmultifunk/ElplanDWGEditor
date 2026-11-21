@@ -172,3 +172,13 @@ Gennemført 17. november 2026 uden ændring af programadfærd:
 - `core_logic.py` reduceret videre til 3.954 linjer og 87 definitioner
 - alle fire nye moduler er under 800 linjer, og den resterende modulplan har 0 kendte cykler
 - elleve Linux-målinger gav en median på 286 ms, uden importtidsregression
+
+### Fase 2.8 – artikel- og BOM-logik
+
+- Artikelkatalog, pakningsberegning og kabelartikelbindinger ligger i `bom/articles.py`; montage og indkøbssegmentering ligger i `bom/procurement.py`.
+- Styklistemodellen ligger i `bom/assemblies.py`, den delte rumafgrænsning i `bom/scope.py` og BOM-beregning, sporbarhed og projektkontrol i `bom/build.py`.
+- 47 funktioner er flyttet. Kun stien til det eksisterende JSON-katalog er tilpasset; der er stadig én cache og en Python-fallback til builds uden JSON-filen.
+- `core_logic.py` er reduceret fra 3.954 til 2.412 linjer og fra 87 til 40 definitioner. De gamle navne re-eksporteres stadig, og API-manifestet er uændret.
+- 145 målrettede tests blev kørt direkte via Python, inklusive alle referenceoutput og nye tests for katalogets JSON-sti, cache og fallback. Der er ingen kendte modulcykler.
+- Importtidsmedian på Linux: 266 ms mod 272 ms for fase 2.7 (11 målinger pr. version i samme miljø).
+- Fuld pytest-suite, `lint-imports` og Windows-pakning er ikke kørt i dette miljø. Den fulde lokale regression afventer `tools/verify_refactor.ps1`.

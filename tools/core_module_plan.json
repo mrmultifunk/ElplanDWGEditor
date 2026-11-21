@@ -1,24 +1,6 @@
 {
-  "completed_modules": ["appearance", "associations", "cables.categories", "cables.connections", "cables.geometry", "cables.lengths", "cables.sections", "constants", "export.pl_report", "models", "pl_box.model", "pl_box.wago", "pl_box.wiring", "platform.oda", "rooms", "settings", "symbols.clipboard", "symbols.geometry", "symbols.registry"],
+  "completed_modules": ["appearance", "associations", "bom.articles", "bom.assemblies", "bom.build", "bom.procurement", "bom.scope", "cables.categories", "cables.connections", "cables.geometry", "cables.lengths", "cables.sections", "constants", "export.pl_report", "models", "pl_box.model", "pl_box.wago", "pl_box.wiring", "platform.oda", "rooms", "settings", "symbols.clipboard", "symbols.geometry", "symbols.registry"],
   "modules": [
-    {
-      "name": "bom.articles",
-      "patterns": ["normalize_article_.*", "cable_article_key.*"],
-      "names": ["article_packaging", "article_purchase_requirement", "bom_article_category", "article_filter_facets", "normalize_article_catalog", "load_predefined_article_catalog"]
-    },
-    {
-      "name": "bom.procurement",
-      "names": ["normalize_mounting_zone", "normalize_mounting_height_mm", "placement_procurement_context", "bom_purchase_segment_key"]
-    },
-    {
-      "name": "bom.assemblies",
-      "patterns": ["bom_assembly_.*", "normalize_bom_assemblies"],
-      "names": ["normalize_symbol_assembly_bindings", "normalize_symbol_article_bindings"]
-    },
-    {
-      "name": "bom.build",
-      "names": ["bom_symbol_parts", "bom_source_breakdown", "bom_article_room_usage", "project_control_issues", "build_bom", "bom_binding_summary"]
-    },
     {
       "name": "export.output_profiles",
       "patterns": ["output_.*"],
