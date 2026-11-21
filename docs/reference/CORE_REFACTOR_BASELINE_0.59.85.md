@@ -192,3 +192,12 @@ Gennemført 17. november 2026 uden ændring af programadfærd:
 - 178 målrettede tests blev kørt direkte via Python, inklusive golden-tests, API-manifest og ny DXF-genindlæsning. DWG-kaldet til ODA er testet med en erstatning; ODA-konverteren er ikke kørt. Statisk importkontrol fandt ingen cykler eller lagbrud.
 - Importtidsmedian på Linux: 275 ms mod 267 ms for fase 2.8 (11 målinger pr. version i samme miljø).
 - Fuld pytest-suite og `lint-imports` afventer fortsat et miljø med projektets udviklingsafhængigheder.
+
+### Fase 2.10 – Windows-print
+
+- `print_vector_windows` er flyttet uændret til `elplan_core/platform/printing.py` og re-eksporteres fortsat fra `core_logic.py`.
+- Importkontrakten undtager kun printmodulets fem direkte pywin32-afhængigheder. Arkitekturtesten kontrollerer, at importerne udelukkende ligger inde i Windows-printfunktionen, og at facaden kan indlæses med Qt og pywin32 blokeret.
+- 183 målrettede tests blev kørt direkte via Python. En simuleret Windows-printer verificerer A3/landskab, mærkning og korrekt afslutning af printjobbet. En fysisk Windows-printer er ikke testet.
+- Importtidsmedian på Linux: 276 ms mod 275 ms for fase 2.9 (11 målinger pr. version i samme miljø).
+- `core_logic.py` er nu 433 linjer med fire hjælpefunktioner. Flyttefasen er afsluttet; de resterende hjælpere og facadeimporter hører til oprydningen.
+- Fuld pytest-suite og `lint-imports` afventer fortsat projektets udviklingsafhængigheder.

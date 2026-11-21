@@ -15,7 +15,15 @@ forbidden_modules = ["PySide6"]
 name = "Win32 er isoleret i platform.printing"
 type = "forbidden"
 source_modules = ["elplan_core"]
-forbidden_modules = ["win32api", "win32con", "win32gui", "win32print"]
+forbidden_modules = ["pywintypes", "win32api", "win32con", "win32gui", "win32print"]
+# Laziness for these exact dependencies is checked by the architecture test.
+ignore_imports = [
+  "elplan_core.platform.printing -> pywintypes",
+  "elplan_core.platform.printing -> win32api",
+  "elplan_core.platform.printing -> win32con",
+  "elplan_core.platform.printing -> win32gui",
+  "elplan_core.platform.printing -> win32print",
+]
 
 [[tool.importlinter.contracts]]
 name = "Lagdeling i elplan_core"

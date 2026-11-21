@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import ast
 import importlib
+import subprocess
+import sys
 from pathlib import Path
 
 
@@ -21,6 +23,30 @@ def _imports(path: Path):
 def test_elplan_core_imports_without_qt_or_win32_installed():
     module = importlib.import_module("elplan_core")
     assert module.__name__ == "elplan_core"
+    subprocess.run(
+        [sys.executable, "-c", """
+import sys
+
+blocked = {"PySide6", "pywintypes", "win32api", "win32con", "win32gui", "win32print"}
+attempted = []
+
+class BlockPlatformModules:
+    def find_spec(self, fullname, path=None, target=None):
+        if fullname.split(".", 1)[0] in blocked:
+            attempted.append(fullname)
+            raise ModuleNotFoundError(fullname)
+
+assert not (blocked & sys.modules.keys())
+sys.meta_path.insert(0, BlockPlatformModules())
+import core_logic as core
+from elplan_core.platform import printing
+assert core.print_vector_windows is printing.print_vector_windows
+assert not attempted, attempted
+"""],
+        cwd=ROOT,
+        check=True,
+        timeout=20,
+    )
 
 
 def test_elplan_core_never_imports_pyside6():
@@ -44,7 +70,7 @@ def test_win32_imports_are_lazy_and_confined_to_platform_printing():
             elif isinstance(node, ast.ImportFrom):
                 import_nodes.append((node, [node.module or ""]))
         for node, modules in import_nodes:
-            win32 = [name for name in modules if name.startswith("win32")]
+            win32 = [name for name in modules if name.startswith(("win32", "pywintypes"))]
             if not win32:
                 continue
             assert path == CORE_PACKAGE / "platform" / "printing.py"
