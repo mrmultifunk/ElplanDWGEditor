@@ -1,29 +1,6 @@
 {
-  "completed_modules": ["appearance", "associations", "cables.categories", "cables.connections", "cables.geometry", "cables.lengths", "cables.sections", "constants", "models", "platform.oda", "rooms", "settings", "symbols.clipboard", "symbols.geometry", "symbols.registry"],
+  "completed_modules": ["appearance", "associations", "cables.categories", "cables.connections", "cables.geometry", "cables.lengths", "cables.sections", "constants", "export.pl_report", "models", "pl_box.model", "pl_box.wago", "pl_box.wiring", "platform.oda", "rooms", "settings", "symbols.clipboard", "symbols.geometry", "symbols.registry"],
   "modules": [
-    {
-      "name": "pl_box.model",
-      "patterns": ["normalize_pl_.*", "pl_field_.*"],
-      "names": ["pl_box_port_layout", "pl_outlet_profile", "reconcile_pl_box_entries", "auto_assign_pl_box_entries", "pl_box_status"]
-    },
-    {
-      "name": "pl_box.wiring",
-      "patterns": ["pl_wiring_(?!workflow_issues$).*", "cable_switch_conductor_.*"],
-      "names": ["pl_expected_switch_connections", "pl_switch_requirement_status", "cable_conductor_preset", "cable_legs_at_symbol", "reconcile_pl_box_wiring"]
-    },
-    {
-      "name": "pl_box.wago",
-      "patterns": ["pl_wago_.*"],
-      "names": ["pl_recommended_wago_article", "reconcile_pl_box_splices", "pl_terminal_occupancy", "pl_outlet_capacity_issues"]
-    },
-    {
-      "name": "pl_box.status",
-      "names": ["pl_wiring_workflow_issues", "pl_montage_status"]
-    },
-    {
-      "name": "export.pl_report",
-      "names": ["_pdf_wrap_lines", "_pdf_fit_text", "pl_report_wiring_rows", "_draw_pl_report_box", "export_pl_box_report_pdf"]
-    },
     {
       "name": "bom.articles",
       "patterns": ["normalize_article_.*", "cable_article_key.*"],

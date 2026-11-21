@@ -28,5 +28,5 @@ def test_manual_wago_state_is_persisted():
 
 
 def test_brown_conductor_color_is_lighter_for_readability():
-    source=Path("core_logic.py").read_text(encoding="utf-8")
+    source=Path("elplan_core/pl_box/wiring.py").read_text(encoding="utf-8")
     assert "#a87943" in source

@@ -60,9 +60,9 @@ Golden-testene låser følgende adfærd:
 - 0 cykler i den korrigerede, foreløbige modulplan
 
 Analysen fandt to cykler i den oprindelige arbejdsliste. Tre
-`cable_route_*`-hjælpere er derfor placeret sammen med kabelsektionerne, og
-tværgående PL-kontrol er udskilt som `pl_box.status`. Dermed har den planlagte
-modulgraf ingen kendte cykler før første flytning.
+`cable_route_*`-hjælpere er derfor placeret sammen med kabelsektionerne, mens
+PL-normalisering ligger under leder- og montagekontrollen. Dermed har den
+planlagte modulgraf ingen kendte cykler før første flytning.
 
 ## Importtid
 
@@ -156,3 +156,19 @@ Gennemført 17. november 2026 uden ændring af programadfærd:
 - `core_logic.py` reduceret videre til 5.741 linjer og 142 definitioner
 - den resterende modulplan har fortsat 0 kendte cykler
 - elleve Linux-målinger gav en median på 290 ms, uden importtidsregression
+
+### Fase 2.7 – PL-dåser og montagerapport
+
+Gennemført 17. november 2026 uden ændring af programadfærd:
+
+- PL-dåsens normalisering, indføringer og stabile referencer flyttet til `elplan_core/pl_box/model.py`
+- kabelben, lederprofiler, tændingskrav og forslag flyttet til `elplan_core/pl_box/wiring.py`
+- Wago-samlinger, terminalbelastning og montagekontrol flyttet til `elplan_core/pl_box/wago.py`
+- den komplette ReportLab-baserede montagerapport flyttet til `elplan_core/export/pl_report.py`
+- 55 funktioner og 7 modulkonstanter er verificeret AST-identiske med udgangspunktet
+- alle tidligere navne re-eksporteres fortsat fra `core_logic.py`
+- tre ældre kildekodetests peger nu på de respektive nye moduler; Qt-koden er uændret
+- 883 tests og alle tre importkontrakter består
+- `core_logic.py` reduceret videre til 3.954 linjer og 87 definitioner
+- alle fire nye moduler er under 800 linjer, og den resterende modulplan har 0 kendte cykler
+- elleve Linux-målinger gav en median på 286 ms, uden importtidsregression

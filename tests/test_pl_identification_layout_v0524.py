@@ -45,6 +45,6 @@ def test_pl_dialog_keeps_footer_visible_and_shows_marking_in_usage_card():
 
 
 def test_pl_report_prints_group_and_marking_as_explicit_fields():
-    source = Path("core_logic.py").read_text(encoding="utf-8")
+    source = Path("elplan_core/export/pl_report.py").read_text(encoding="utf-8")
     assert 'f"Gruppe/kreds: {group or \'—\'}   |   Mærkning: {label or \'—\'}"' in source
     assert "placement_identification_caption(placement)" in source

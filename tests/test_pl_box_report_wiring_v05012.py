@@ -53,7 +53,7 @@ def test_report_wiring_rows_show_direct_wago_and_loose_destinations():
 
 
 def test_pdf_report_source_has_dedicated_wiring_section_and_one_box_per_page():
-    source=Path("core_logic.py").read_text(encoding="utf-8")
+    source=Path("elplan_core/export/pl_report.py").read_text(encoding="utf-8")
     assert "Lederfordeling - fysisk montage" in source
     assert "Hver række er én fysisk leder" in source
     assert "pl_report_wiring_rows" in source
