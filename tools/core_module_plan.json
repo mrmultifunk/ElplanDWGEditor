@@ -1,27 +1,6 @@
 {
-  "completed_modules": ["appearance", "associations", "bom.articles", "bom.assemblies", "bom.build", "bom.procurement", "bom.scope", "cables.categories", "cables.connections", "cables.geometry", "cables.lengths", "cables.sections", "constants", "export.pl_report", "models", "pl_box.model", "pl_box.wago", "pl_box.wiring", "platform.oda", "rooms", "settings", "symbols.clipboard", "symbols.geometry", "symbols.registry"],
+  "completed_modules": ["appearance", "associations", "bom.articles", "bom.assemblies", "bom.build", "bom.procurement", "bom.scope", "cables.categories", "cables.connections", "cables.geometry", "cables.lengths", "cables.sections", "cables.visual", "cad_io", "constants", "export.dxf_writer", "export.extents", "export.output_profiles", "export.pdf", "export.pl_report", "models", "pl_box.model", "pl_box.wago", "pl_box.wiring", "platform.oda", "rooms", "settings", "symbols.clipboard", "symbols.geometry", "symbols.registry"],
   "modules": [
-    {
-      "name": "export.output_profiles",
-      "patterns": ["output_.*"],
-      "names": ["annotation_visual_profile"]
-    },
-    {
-      "name": "export.dxf_writer",
-      "names": ["ensure_layers", "add_placement_to_dxf", "add_cable_to_dxf", "add_free_text_to_dxf"]
-    },
-    {
-      "name": "export.extents",
-      "names": ["print_extents", "fit_view_extents", "crop_extents_to_aspect", "page_layout", "resolve_page_size"]
-    },
-    {
-      "name": "export.pdf",
-      "names": ["export_vector_pdf"]
-    },
-    {
-      "name": "cad_io",
-      "names": ["load_document", "document_extents", "extract_cad_primitives", "drawing_unit_info"]
-    },
     {
       "name": "platform.printing",
       "names": ["print_vector_windows"]

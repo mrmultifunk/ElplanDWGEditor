@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import core_logic as core
+from elplan_core.export import pdf
 from project_model import APP_VERSION
 
 
@@ -27,7 +28,7 @@ class _FakeCanvas:
 
 def _render(monkeypatch,room,**kwargs):
     canvas=_FakeCanvas()
-    monkeypatch.setattr(core.pdfcanvas,"Canvas",lambda *_args,**_kwargs:canvas)
+    monkeypatch.setattr(pdf.pdfcanvas,"Canvas",lambda *_args,**_kwargs:canvas)
     core.export_vector_pdf("ignored.pdf",[],[],rooms=[room],**kwargs)
     return canvas
 

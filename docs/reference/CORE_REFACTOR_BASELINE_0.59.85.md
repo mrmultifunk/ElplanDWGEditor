@@ -182,3 +182,13 @@ Gennemført 17. november 2026 uden ændring af programadfærd:
 - 145 målrettede tests blev kørt direkte via Python, inklusive alle referenceoutput og nye tests for katalogets JSON-sti, cache og fallback. Der er ingen kendte modulcykler.
 - Importtidsmedian på Linux: 266 ms mod 272 ms for fase 2.7 (11 målinger pr. version i samme miljø).
 - Fuld pytest-suite, `lint-imports` og Windows-pakning er ikke kørt i dette miljø. Den fulde lokale regression afventer `tools/verify_refactor.ps1`.
+
+### Fase 2.9 – CAD, DXF og PDF
+
+- CAD-indlæsning, tegneenheder og vektorudtræk ligger i `elplan_core/cad_io.py`.
+- DXF-skrivning, visningsudsnit/papirlayout, visuelle outputprofiler og PDF-eksport ligger i hver sit modul under `elplan_core/export/`.
+- Kabelmærkning og visuelle kabelbaner ligger i `elplan_core/cables/visual.py`, så eksporten ikke behøver importere facaden.
+- 35 funktioner og én konstant er flyttet uændret og re-eksporteret fra `core_logic.py`. Facaden er nu 803 linjer med fem funktionsdefinitioner. Windows-print er stadig i facaden til fase 2.10.
+- 178 målrettede tests blev kørt direkte via Python, inklusive golden-tests, API-manifest og ny DXF-genindlæsning. DWG-kaldet til ODA er testet med en erstatning; ODA-konverteren er ikke kørt. Statisk importkontrol fandt ingen cykler eller lagbrud.
+- Importtidsmedian på Linux: 275 ms mod 267 ms for fase 2.8 (11 målinger pr. version i samme miljø).
+- Fuld pytest-suite og `lint-imports` afventer fortsat et miljø med projektets udviklingsafhængigheder.

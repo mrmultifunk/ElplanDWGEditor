@@ -31,9 +31,9 @@ def test_collision_layout_avoids_neighbour_symbol_as_hard_blocker():
 def test_qt_and_pdf_use_shared_collision_layout():
     app=(ROOT/"qt_app.py").read_text(encoding="utf-8")
     qt=(ROOT/"qt_annotation_layout.py").read_text(encoding="utf-8")
-    core=(ROOT/"core_logic.py").read_text(encoding="utf-8")
+    pdf=(ROOT/"elplan_core"/"export"/"pdf.py").read_text(encoding="utf-8")
     assert "layout_symbol_metadata" in app
     assert "choose_label_origin" in qt
-    assert "symbol_blockers" in core
-    assert "metadata_occupied" in core
-    assert "choose_label_origin(" in core
+    assert "symbol_blockers" in pdf
+    assert "metadata_occupied" in pdf
+    assert "choose_label_origin(" in pdf

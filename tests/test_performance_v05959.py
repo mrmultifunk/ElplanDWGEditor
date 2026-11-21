@@ -54,10 +54,10 @@ def test_spatial_collision_index_preserves_exact_label_choice():
 
 def test_zoom_render_items_are_reused_within_same_semantic_profile():
     graphics = (ROOT / "qt_graphics.py").read_text(encoding="utf-8")
-    core_source = (ROOT / "core_logic.py").read_text(encoding="utf-8")
+    cable_visual = (ROOT / "elplan_core" / "cables" / "visual.py").read_text(encoding="utf-8")
 
     assert APP_VERSION == core.APP_VERSION == "0.59.85"
     assert "render_signature==self._render_signature" in graphics
     annotation_qt = (ROOT / "qt_annotation_layout.py").read_text(encoding="utf-8")
     assert "signature==window._switch_badge_render_signature" in annotation_qt
-    assert "for other_row in sweep[pos+1:]" not in core_source
+    assert "for other_row in sweep[pos+1:]" not in cable_visual
